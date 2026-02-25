@@ -1,0 +1,735 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum UserRole {
+  OWNER
+  CLIENT
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ClientStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum LocationType {
+  GYM
+  HOME
+  OUTDOOR
+  ONLINE
+  OTHER
+}
+
+enum PackageType {
+  SESSION_BUNDLE
+  MONTHLY
+}
+
+//////////////////////
+// IDENTITY
+//////////////////////
+
+model Tenant {
+  id         String    @id @default(cuid()) @map("_id")
+  name       String
+  slug       String    @unique
+  email      String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  users            User[]
+  clients          Client[]
+  packages         Package[]
+  appointments     Appointment[]
+  workoutTemplates WorkoutTemplate[]
+  workoutPlans     WorkoutPlan[]
+
+  packagePurchases     PackagePurchase[]
+  sessionCreditLedgers SessionCreditLedger[]
+  workoutSessions      WorkoutSession[]
+  progressEntries      ProgressEntry[]
+}
+
+model User {
+  id            String        @id @default(cuid()) @map("_id")
+  tenantId      String?
+  role          UserRole      @default(OWNER)
+  email         String        @unique
+  emailVerified DateTime?
+  fullName      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  passwordHash  String?
+  tenant        Tenant?       @relation(fields: [tenantId], references: [id])
+  clients       Client[]
+  accounts      Account[]
+  sessions      Session[]
+  appointments  Appointment[]
+
+  @@index([tenantId])
+}
+
+//////////////////////
+// CLIENTS
+//////////////////////
+
+model Client {
+  id         String       @id @default(cuid()) @map("_id")
+  tenantId   String
+  userId     String?
+  slug       String
+  fullName   String
+  email      String?
+  phone      String?
+  status     ClientStatus @default(ACTIVE)
+  notes      String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  archivedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  appointments     Appointment[]
+  packagePurchases PackagePurchase[]
+  workoutPlans     WorkoutPlan[]
+  workoutSessions  WorkoutSession[]
+  progressEntries  ProgressEntry[]
+
+  profile ClientProfile?
+  metrics BodyMetricsEntry[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model ClientProfile {
+  id       String @id @default(cuid()) @map("_id")
+  tenantId String
+  clientId String @unique
+
+  // esempio campi profilo
+  heightMm  Int?
+  sex       String? // o enum se vuoi
+  birthDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@index([tenantId])
+}
+
+model BodyMetricsEntry {
+  id       String @id @default(cuid()) @map("_id")
+  tenantId String
+  clientId String
+
+  measuredAt DateTime @default(now())
+
+  // antropometria
+  weightG    Int?
+  waistMm    Int?
+  hipsMm     Int?
+  armLmm     Int?
+  armRmm     Int?
+  forearmLmm Int?
+  forearmRmm Int?
+
+  thighLmm  Int?
+  thighRmm  Int?
+  calfLmm   Int?
+  calfRmm   Int?
+  bodyFatBp Int?
+
+  // --- BIA (lean, numeri normalizzati) ---
+  tbwBp        Int? // Total Body Water %  (es 54.2 => 5420)
+  icwBp        Int? // Intracellular Water %
+  ecwBp        Int? // Extracellular Water %
+  muscleMassG  Int? // Muscle mass kg -> g
+  fatMassG     Int? // Fat mass kg -> g
+  ffmG         Int? // Fat free mass kg -> g
+  bmrKcal      Int? // kcal/day
+  visceralFat  Int? // scala device (spesso 1..59)
+  metabolicAge Int? // anni
+  phaseAngleBp Int? // (es 5.6 => 560)
+
+  notes     String?
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@index([tenantId, clientId, measuredAt])
+}
+
+//////////////////////
+// APPOINTMENTS
+//////////////////////
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+}
+
+model Appointment {
+  id       String @id @default(cuid()) @map("_id")
+  tenantId String
+  clientId String
+
+  startsAt     DateTime
+  endsAt       DateTime
+  location     String?
+  locationType LocationType
+  notes        String?
+  status       AppointmentStatus @default(SCHEDULED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  client        Client    @relation(fields: [clientId], references: [id])
+  user          User?     @relation(fields: [userId], references: [id])
+  userId        String?
+  priceCents    Int?
+  currency      String?
+  paidAt        DateTime?
+  paymentMethod String?
+  deletedAt     DateTime?
+
+  workoutTemplateId String?          @db.ObjectId
+  workoutTemplate   WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
+
+  // se vuoi storico immutabile:
+  workoutSnapshotJson Json?
+  appointmentWorkout  AppointmentWorkout?
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([startsAt])
+}
+
+model AppointmentWorkout {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId String
+
+  appointmentId    String  @unique
+  planId           String  @db.ObjectId
+  planVersionId    String  @db.ObjectId
+  workoutSessionId String? @db.ObjectId
+
+  appointment                Appointment                 @relation(fields: [appointmentId], references: [id])
+  plan                       WorkoutPlan                 @relation(fields: [planId], references: [id])
+  planVersion                WorkoutPlanVersion          @relation(fields: [planVersionId], references: [id])
+  workoutSession             WorkoutSession?             @relation(fields: [workoutSessionId], references: [id])
+  appointmentWorkoutItemLogs AppointmentWorkoutItemLog[]
+  createdAt                  DateTime                    @default(now())
+
+  @@index([tenantId, planId])
+  @@index([tenantId, planVersionId])
+  @@index([tenantId, workoutSessionId])
+}
+
+model AppointmentWorkoutItemLog {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId String
+
+  appointmentWorkoutId String             @db.ObjectId
+  appointmentWorkout   AppointmentWorkout @relation(fields: [appointmentWorkoutId], references: [id])
+
+  planVersionItemId String @db.ObjectId
+  // NON metto relation diretta per evitare query pesanti; se vuoi la metti:
+  // planVersionItem     WorkoutPlanVersionItem @relation(fields: [planVersionItemId], references: [id])
+
+  order Int
+
+  // snapshot ridondante (utile per render senza join)
+  nameSnapshot     String
+  imageUrlSnapshot String?
+  setsPlanned      Int?
+
+  // output effettivo
+  setsDone         Int?
+  repsDoneBySet    String[] // ["10","10","8","8"] oppure vuoto
+  loadsKgDoneBySet Float[] // [40, 45, 50, 50]
+  restSecDoneBySet Int[] // [60,60,75,75]
+  rpeDoneBySet     Int[] // [8,8,9,9] opzionale
+
+  isCompleted Boolean @default(false)
+  itemNotes   String?
+
+  @@index([tenantId, appointmentWorkoutId])
+}
+
+//////////////////////
+// PACKAGES & CREDITS
+//////////////////////
+
+model Package {
+  id           String      @id @default(cuid()) @map("_id")
+  tenantId     String
+  name         String
+  type         PackageType
+  sessionCount Int? // per bundle
+  monthlyPrice Float?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id])
+  purchases PackagePurchase[]
+
+  @@index([tenantId])
+}
+
+model PackagePurchase {
+  id                String    @id @default(cuid()) @map("_id")
+  tenantId          String
+  clientId          String
+  packageId         String
+  remainingSessions Int?
+  active            Boolean   @default(true)
+  startedAt         DateTime  @default(now())
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+
+  tenant  Tenant                @relation(fields: [tenantId], references: [id])
+  client  Client                @relation(fields: [clientId], references: [id])
+  package Package               @relation(fields: [packageId], references: [id])
+  ledger  SessionCreditLedger[]
+
+  @@index([tenantId])
+  @@index([clientId])
+}
+
+model SessionCreditLedger {
+  id                String   @id @default(cuid()) @map("_id")
+  tenantId          String
+  packagePurchaseId String
+  delta             Int // +10 acquisto, -1 utilizzo
+  reason            String?
+  createdAt         DateTime @default(now())
+
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  packagePurchase PackagePurchase @relation(fields: [packagePurchaseId], references: [id])
+
+  @@index([tenantId])
+}
+
+//////////////////////
+// WORKOUT ENGINE
+//////////////////////
+
+model WorkoutTemplateDay {
+  id         String                    @id @default(cuid()) @map("_id")
+  templateId String
+  name       String
+  order      Int
+  exercises  WorkoutTemplateExercise[]
+
+  template WorkoutTemplate @relation(fields: [templateId], references: [id])
+}
+
+model WorkoutTemplateExercise {
+  id      String @id @default(cuid()) @map("_id")
+  dayId   String
+  name    String
+  sets    Int
+  reps    Int?
+  restSec Int?
+  order   Int
+
+  day WorkoutTemplateDay @relation(fields: [dayId], references: [id])
+}
+
+model WorkoutSession {
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId      String
+  clientId      String
+  planId        String  @db.ObjectId
+  planVersionId String  @db.ObjectId
+  appointmentId String?
+
+  status String @default("planned") // planned|in_progress|done
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items WorkoutSessionItem[]
+
+  plan                WorkoutPlan          @relation(fields: [planId], references: [id])
+  planVersion         WorkoutPlanVersion   @relation(fields: [planVersionId], references: [id])
+  tenant              Tenant               @relation(fields: [tenantId], references: [id])
+  client              Client               @relation(fields: [clientId], references: [id])
+  appointmentWorkouts AppointmentWorkout[]
+  workoutSetLogs      WorkoutSetLog[]
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, planId])
+  @@index([tenantId, appointmentId])
+}
+
+model WorkoutSessionItem {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId  String
+  sessionId String         @db.ObjectId
+  session   WorkoutSession @relation(fields: [sessionId], references: [id])
+
+  order Int
+
+  globalExerciseId String? @db.ObjectId
+  tenantExerciseId String? @db.ObjectId
+
+  nameSnapshot     String
+  tipsSnapshot     String?
+  imageUrlSnapshot String?
+  tagsSnapshot     String[]
+
+  // programmati (copiati dalla version)
+  sets         Int?
+  reps         String?
+  restSec      Int?
+  tempo        String?
+  rpe          Int?
+  loadsKg      Float[]
+  restSecBySet Int[]
+  itemNotes    String?
+
+  // (opzionale) “eseguiti” per futuro
+  performedLoadsKg      Float[]
+  performedRestSecBySet Int[]
+  performedRepsBySet    String[] // se vuoi “10,10,8,8”
+
+  @@index([tenantId, sessionId])
+}
+
+model WorkoutSetLog {
+  id           String @id @default(cuid()) @map("_id")
+  sessionId    String
+  exerciseName String
+  setNumber    Int
+  weight       Float?
+  reps         Int?
+  rir          Int?
+  rpe          Float?
+
+  session WorkoutSession @relation(fields: [sessionId], references: [id])
+}
+
+//////////////////////
+// PROGRESS TRACKING
+//////////////////////
+
+model ProgressEntry {
+  id        String   @id @default(cuid()) @map("_id")
+  tenantId  String
+  clientId  String
+  weight    Float?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant          @relation(fields: [tenantId], references: [id])
+  client Client          @relation(fields: [clientId], references: [id])
+  photos ProgressPhoto[]
+
+  @@index([tenantId])
+  @@index([clientId])
+}
+
+model ProgressPhoto {
+  id        String   @id @default(cuid()) @map("_id")
+  entryId   String
+  fileKey   String
+  angle     String?
+  createdAt DateTime @default(now())
+
+  entry ProgressEntry @relation(fields: [entryId], references: [id])
+}
+
+//////////////////////
+// MAGIC LINK (MVP)
+//////////////////////
+
+model MagicLinkToken {
+  id        String   @id @default(cuid()) @map("_id")
+  email     String
+  token     String   @unique
+  tenantId  String
+  clientId  String?
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model Account {
+  id                String  @id @default(cuid()) @map("_id")
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid()) @map("_id")
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid()) @map("_id")
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Exercise {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name        String
+  description String?
+  coachTips   String? // tips del PT
+  imageUrl    String? // o storageKey
+
+  // opzionali per filtro/ricerca
+  tags         String[]
+  tagsText     String?
+  isArchived   Boolean       @default(false)
+  workoutItems WorkoutItem[]
+
+  @@index([tenantId, name])
+}
+
+///WORKOUTS///
+
+model WorkoutTemplate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title      String
+  notes      String?
+  isArchived Boolean @default(false)
+
+  items               WorkoutItem[]
+  tenant              Tenant               @relation(fields: [tenantId], references: [id])
+  appointments        Appointment[]
+  workoutTemplateDays WorkoutTemplateDay[]
+  workoutPlans        WorkoutPlan[]
+
+  @@index([tenantId, createdAt])
+}
+
+model WorkoutItem {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId String
+
+  workoutId String          @db.ObjectId
+  workout   WorkoutTemplate @relation(fields: [workoutId], references: [id])
+
+  globalExerciseId String?         @db.ObjectId
+  globalExercise   GlobalExercise? @relation(fields: [globalExerciseId], references: [id])
+
+  tenantExerciseId String?         @db.ObjectId
+  tenantExercise   TenantExercise? @relation(fields: [tenantExerciseId], references: [id])
+
+  order        Int
+  sets         Int?
+  reps         String?
+  restSec      Int?
+  restSecBySet Int[]
+  tempo        String?
+  rpe          Int?
+  itemNotes    String?
+  nameSnapshot String?
+  tipsSnapshot String?
+  exercise     Exercise? @relation(fields: [exerciseId], references: [id])
+  exerciseId   String?   @db.ObjectId
+  loadsKg      Float[]
+
+  @@index([tenantId, workoutId])
+}
+
+model WorkoutPlan {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId String
+  clientId String
+
+  // da quale template nasce (opzionale ma utile)
+  workoutTemplateId String?          @db.ObjectId
+  workoutTemplate   WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
+
+  title   String
+  notes   String?
+  status  String    @default("active") // active|paused|ended
+  startAt DateTime  @default(now())
+  endAt   DateTime?
+
+  currentVersion Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions        WorkoutPlanVersion[]
+  appointments    AppointmentWorkout[] // log sessioni collegate al plan
+  tenant          Tenant               @relation(fields: [tenantId], references: [id])
+  client          Client               @relation(fields: [clientId], references: [id])
+  workoutSessions WorkoutSession[]
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, workoutTemplateId])
+}
+
+model WorkoutPlanVersion {
+  id       String      @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId String
+  planId   String      @db.ObjectId
+  plan     WorkoutPlan @relation(fields: [planId], references: [id])
+
+  version Int
+  title   String
+  notes   String?
+
+  // chi l'ha creata, opzionale
+  createdByUserId String?
+
+  createdAt DateTime @default(now())
+
+  items               WorkoutPlanVersionItem[]
+  appointmentWorkouts AppointmentWorkout[]
+  workoutSessions     WorkoutSession[]
+
+  @@unique([planId, version])
+  @@index([tenantId, planId, createdAt])
+}
+
+model WorkoutPlanVersionItem {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId String
+
+  planVersionId String             @db.ObjectId
+  planVersion   WorkoutPlanVersion @relation(fields: [planVersionId], references: [id])
+
+  order Int
+
+  // relazione esercizio (stessa logica che hai in WorkoutItem)
+  globalExerciseId String?         @db.ObjectId
+  globalExercise   GlobalExercise? @relation(fields: [globalExerciseId], references: [id])
+
+  tenantExerciseId String?         @db.ObjectId
+  tenantExercise   TenantExercise? @relation(fields: [tenantExerciseId], references: [id])
+
+  // snapshot
+  nameSnapshot     String
+  tipsSnapshot     String?
+  imageUrlSnapshot String?
+  tagsSnapshot     String[]
+
+  // parametri programmati
+  sets    Int?
+  reps    String?
+  restSec Int?
+  tempo   String?
+  rpe     Int?
+
+  // per-set (come stai facendo ora)
+  loadsKg      Float[] // kg programmati per set
+  restSecBySet Int[] // recupero programmato per set
+
+  itemNotes String?
+
+  @@index([tenantId, planVersionId])
+}
+
+//////
+model GlobalExercise {
+  id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
+  slug                    String                   @unique
+  name                    String
+  description             String?
+  imageUrl                String?
+  tags                    String[]                 @default([])
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  workoutItems            WorkoutItem[]
+  tenantExerciseOverrides TenantExerciseOverride[]
+  workoutPlanVersionItems WorkoutPlanVersionItem[]
+}
+
+model TenantExerciseOverride {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId         String
+  globalExerciseId String         @db.ObjectId
+  globalExercise   GlobalExercise @relation(fields: [globalExerciseId], references: [id])
+
+  // override opzionali (se null => usa global)
+  nameOverride        String?
+  descriptionOverride String?
+  coachTips           String?
+  imageUrlOverride    String?
+  tagsOverride        String[] @default([])
+
+  isHidden  Boolean  @default(false) // se il PT non lo vuole vedere
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, globalExerciseId]) // 1 override per PT per esercizio globale
+}
+
+model TenantExercise {
+  id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId                String
+  name                    String
+  description             String?
+  coachTips               String?
+  imageUrl                String?
+  tags                    String[]                 @default([])
+  tagsText                String                   @default("")
+  isArchived              Boolean                  @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  workoutItems            WorkoutItem[]
+  workoutPlanVersionItems WorkoutPlanVersionItem[]
+}

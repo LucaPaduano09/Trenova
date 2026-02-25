@@ -1,0 +1,373 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer components {
+  /* Glass surfaces (light + dark) */
+  .cf-surface {
+    @apply rounded-3xl border backdrop-blur-xl shadow-sm;
+    @apply bg-white/70 border-neutral-200/70;
+    @apply dark:bg-neutral-950/35 dark:border-white/10;
+  }
+
+  .cf-card {
+    @apply rounded-3xl border backdrop-blur-xl shadow-sm p-6;
+    @apply bg-white/70 border-neutral-200/70;
+    @apply dark:bg-neutral-950/35 dark:border-white/10;
+  }
+
+  .cf-soft {
+    @apply rounded-3xl border backdrop-blur-xl;
+    @apply bg-white/55 border-neutral-200/60;
+    @apply dark:bg-neutral-950/25 dark:border-white/10;
+  }
+
+  /* Hairline + subtle inner highlight (Apple-ish) */
+  .cf-hairline {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+      0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Chips / pills */
+  .cf-chip {
+    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs;
+    @apply bg-white/70 border-neutral-200/70 text-neutral-700;
+    @apply dark:bg-white/5 dark:border-white/10 dark:text-neutral-200;
+  }
+
+  /* Muted text helpers */
+  .cf-muted {
+    @apply text-neutral-600 dark:text-neutral-300;
+  }
+  .cf-strong {
+    @apply text-neutral-900 dark:text-neutral-50;
+  }
+}
+@layer components {
+  .cf-input {
+    @apply w-full rounded-2xl border rounded-3xl border backdrop-blur-xl bg-white/70 border-neutral-200/70 dark:bg-neutral-950/35 dark:border-white/10 shadow-sm  px-4 py-2.5 text-sm outline-none text-neutral-900 dark:text-neutral-50;
+  }
+}
+@layer components {
+  .cf-hairline {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+      0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+}
+@layer components {
+  .cf-text {
+    @apply text-neutral-900 dark:text-neutral-50;
+  }
+  .cf-muted {
+    @apply text-neutral-600 dark:text-neutral-300;
+  }
+  .cf-faint {
+    @apply text-neutral-500 dark:text-neutral-400;
+  }
+}
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes navsheen {
+  0% {
+    transform: translateX(-10%);
+  }
+  50% {
+    transform: translateX(10%);
+  }
+  100% {
+    transform: translateX(-10%);
+  }
+}
+@keyframes cf-pop {
+  0% {
+    transform: scale(0.96);
+    filter: blur(0px);
+  }
+  55% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes cf-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+.cf-wow {
+  animation: cf-pop 420ms ease-out;
+}
+
+.cf-wow-glow {
+  position: absolute;
+  inset: -10px;
+  border-radius: 9999px;
+  animation: cf-glow 650ms ease-out;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(16, 185, 129, 0.25),
+    transparent 55%
+  );
+  pointer-events: none;
+}
+.kinetiq-bg {
+  background: radial-gradient(
+      900px 420px at 30% 40%,
+      rgba(52, 211, 153, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 460px at 70% 45%,
+      rgba(59, 130, 246, 0.12),
+      transparent 62%
+    ),
+    radial-gradient(
+      700px 420px at 50% 60%,
+      rgba(34, 211, 238, 0.1),
+      transparent 65%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0));
+  filter: saturate(1.1);
+}
+
+.kinetiq-grid {
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(
+    closest-side at 50% 50%,
+    rgba(0, 0, 0, 1),
+    rgba(0, 0, 0, 0)
+  );
+}
+
+.kinetiq-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+  mix-blend-mode: overlay;
+}
+
+.kinetiq-vignette {
+  background: radial-gradient(
+    closest-side at 50% 40%,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.25) 55%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+  pointer-events: none;
+}
+
+.kinetiq-sweep {
+  background: radial-gradient(
+    400px 220px at 0% 50%,
+    rgba(34, 211, 238, 0),
+    rgba(34, 211, 238, 0.18),
+    rgba(34, 211, 238, 0)
+  );
+  transform: translateX(-40%);
+  animation: sweep 6.5s ease-in-out infinite;
+  mix-blend-mode: screen;
+  filter: blur(0.5px);
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-45%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateX(45%);
+    opacity: 0.75;
+  }
+  85% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(55%);
+    opacity: 0;
+  }
+}
+
+.kinetiq-particles {
+  background-image: radial-gradient(
+      circle at 18% 40%,
+      rgba(52, 211, 153, 0.35) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 48% 25%,
+      rgba(34, 211, 238, 0.35) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 76% 55%,
+      rgba(59, 130, 246, 0.35) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 62% 70%,
+      rgba(52, 211, 153, 0.25) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 30% 75%,
+      rgba(34, 211, 238, 0.25) 0 1px,
+      transparent 2px
+    );
+  animation: floaty 7s ease-in-out infinite;
+  filter: blur(0.2px);
+  mix-blend-mode: screen;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0px);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.75;
+  }
+}
+
+.kinetiq-chart-glow {
+  background: radial-gradient(
+      420px 240px at 25% 30%,
+      rgba(52, 211, 153, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      520px 300px at 80% 55%,
+      rgba(59, 130, 246, 0.18),
+      transparent 62%
+    );
+  filter: blur(14px);
+  opacity: 0.75;
+}
+
+.kinetiq-line {
+  stroke-dasharray: 1800;
+  stroke-dashoffset: 1800;
+  animation: draw 2.8s ease forwards, pulse 3.8s ease-in-out infinite 2.8s;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    filter: url(#softGlow);
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.kinetiq-fill {
+  opacity: 0;
+  animation: fillIn 1.2s ease forwards 1.8s;
+}
+
+@keyframes fillIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.kinetiq-shine {
+  animation: shineMove 3.8s ease-in-out infinite 1.6s;
+}
+
+@keyframes shineMove {
+  0% {
+    transform: translateX(-420px);
+  }
+  55% {
+    transform: translateX(1400px);
+  }
+  100% {
+    transform: translateX(1400px);
+  }
+}
+
+.kinetiq-orb1 {
+  animation: orb1 6.8s ease-in-out infinite;
+}
+.kinetiq-orb2 {
+  animation: orb2 7.6s ease-in-out infinite;
+}
+
+@keyframes orb1 {
+  0%,
+  100% {
+    transform: translate(0px, 0px);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(18px, 10px);
+    opacity: 0.8;
+  }
+}
+
+@keyframes orb2 {
+  0%,
+  100% {
+    transform: translate(0px, 0px);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-22px, -14px);
+    opacity: 0.78;
+  }
+}

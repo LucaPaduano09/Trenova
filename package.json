@@ -1,0 +1,11 @@
+{
+  "name": "kinetiq",
+  "private": true,
+  "packageManager": "pnpm@10.30.2",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "start:web": "pnpm --filter web start",
+    "dev:mobile": "pnpm --filter mobile dev"
+  }
+}

@@ -1,0 +1,834 @@
+import { prisma } from "@/lib/db";
+import { requireTenantFromSession } from "@/lib/tenant";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import DeleteSessionButton from "../../../_components/DeleteSessionButton";
+import {
+  deleteSession,
+  markSessionPaid,
+  markSessionUnpaid,
+} from "../../../../../actions/sessions";
+import { listMetricsEntries } from "../../../../../actions/metrics";
+import { getClientProfile } from "../../../../../actions/profile";
+import { createMetricsEntry } from "../../../../../actions/metrics";
+import Image from "next/image";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
+}
+
+function formatMoneyEUR(priceCents?: number | null) {
+  if (priceCents == null) return "—";
+  const eur = (priceCents / 100).toFixed(2).replace(".", ",");
+  return `€ ${eur}`;
+}
+
+function formatTime(d: Date) {
+  return d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString("it-IT", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function labelLocationType(v: string) {
+  const map: Record<string, string> = {
+    GYM: "Palestra",
+    HOME: "A domicilio",
+    OUTDOOR: "Outdoor",
+    ONLINE: "Online",
+    OTHER: "Altro",
+  };
+  return map[v] ?? v;
+}
+function bpToPct(v?: number | null) {
+  if (v == null) return "—";
+  return (v / 100).toFixed(1).replace(".", ",") + "%";
+}
+function gToKg(v?: number | null) {
+  if (v == null) return "—";
+  return (v / 1000).toFixed(1).replace(".", ",") + " kg";
+}
+function mmToCm(v?: number | null) {
+  if (v == null) return "—";
+  return (v / 10).toFixed(1).replace(".", ",") + " cm";
+}
+
+type TabKey = "overview" | "packages" | "sessions" | "progress";
+
+export default async function ClientDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?:
+    | { tab?: string; flash?: string; sid?: string }
+    | Promise<{ tab?: string; flash?: string; sid?: string }>;
+}) {
+  const { slug } = await params;
+  const sp = await searchParams;
+  const flash = sp?.flash;
+  const sid = sp?.sid;
+
+  const activeTab: TabKey =
+    (sp?.tab as TabKey) &&
+    ["overview", "packages", "sessions", "progress"].includes(sp?.tab as string)
+      ? (sp?.tab as TabKey)
+      : "overview";
+
+  const { tenant } = await requireTenantFromSession();
+
+  const client = await prisma.client.findUnique({
+    where: { tenantId_slug: { tenantId: tenant.id, slug } },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      email: true,
+      phone: true,
+      notes: true,
+      status: true,
+      createdAt: true,
+    },
+  });
+
+  if (!client) return notFound();
+
+  const sessions =
+    activeTab === "sessions"
+      ? await prisma.appointment.findMany({
+          where: {
+            tenantId: tenant.id,
+            clientId: client.id,
+            OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+          },
+          orderBy: { startsAt: "desc" },
+          select: {
+            id: true,
+            startsAt: true,
+            endsAt: true,
+            locationType: true,
+            location: true,
+            notes: true,
+            priceCents: true,
+            currency: true,
+            paidAt: true,
+            paymentMethod: true,
+            workoutTemplateId: true,
+          },
+        })
+      : [];
+
+  const avatar = initials(client.fullName || "Client");
+  const profile =
+    activeTab === "progress" ? await getClientProfile(client.id) : null;
+  const entries =
+    activeTab === "progress" ? await listMetricsEntries(client.id) : [];
+
+  //prendo il workout associato alla sessione
+  const workoutIds = Array.from(
+    new Set(sessions.map((s) => s.workoutTemplateId).filter(Boolean))
+  ) as string[];
+  const templates = await prisma.workoutTemplate.findMany({
+    where: {
+      tenantId: tenant.id,
+      id: { in: workoutIds },
+    },
+    select: { id: true, title: true },
+  });
+  const workoutTitleById = new Map(templates.map((t) => [t.id, t.title]));
+
+  return (
+    <div className="space-y-6 cf-text">
+      {/* Top hero */}
+      <div className="cf-card cf-hairline">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-2xl border bg-white/70 text-sm font-semibold cf-text shadow-sm">
+              <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_55%)]" />
+              <span className="relative">{avatar}</span>
+            </div>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold tracking-tight">
+                {client.fullName}
+              </h1>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm cf-muted">
+                <span className="truncate">{client.email ?? "—"}</span>
+                <span className="opacity-30">•</span>
+                <span className="truncate">{client.phone ?? "—"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill status={client.status} />
+            <Link
+              href="/app/clients"
+              className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-faint cf-text hover:border-black dark:hover:border-white"
+            >
+              Indietro
+            </Link>
+          </div>
+        </div>
+
+        {/* Quick actions */}
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <ActionCard
+            title="Nuova sessione"
+            subtitle="Aggiungi una sessione"
+            href={`/app/booking/new?client=${client.slug}`}
+          />
+          <ActionCard
+            title="Aggiungi pacchetto"
+            subtitle="Vendi 10/20 sessioni"
+            href={`/app/packages/new?client=${client.slug}`}
+          />
+          <ActionCard
+            title="Registra progressi"
+            subtitle="Peso, foto, note"
+            href={`/app/progress/new?client=${client.slug}`}
+          />
+        </div>
+      </div>
+
+      {/* Tabs (URL-driven) */}
+      <div className="sticky top-6 z-10 cf-surface cf-hairline p-2">
+        <div className="flex flex-wrap gap-2">
+          <TabLink
+            href={`/app/clients/${client.slug}?tab=overview`}
+            active={activeTab === "overview"}
+          >
+            Panoramica
+          </TabLink>
+          <TabLink
+            href={`/app/clients/${client.slug}?tab=packages`}
+            active={activeTab === "packages"}
+          >
+            Pacchetti
+          </TabLink>
+          <TabLink
+            href={`/app/clients/${client.slug}?tab=sessions`}
+            active={activeTab === "sessions"}
+          >
+            Sessioni
+          </TabLink>
+          <TabLink
+            href={`/app/clients/${client.slug}?tab=progress`}
+            active={activeTab === "progress"}
+          >
+            Progressi
+          </TabLink>
+        </div>
+      </div>
+
+      {/* Content */}
+      {activeTab === "sessions" ? (
+        <div className="cf-surface cf-hairline overflow-hidden">
+          <div className="p-6 flex items-start justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold cf-text">Sessioni</div>
+              <div className="mt-1 text-sm cf-muted">
+                Storico sessioni e pagamenti.
+              </div>
+            </div>
+
+            <Link
+              href={`/app/booking/new?client=${client.slug}`}
+              className="inline-flex items-center justify-center rounded-2xl cf-surface px-4 py-2 cf-text hover:border-black dark:hover:border-white"
+            >
+              Nuova sessione
+            </Link>
+          </div>
+
+          {sessions.length === 0 ? (
+            <div className="px-6 pb-8">
+              <div className="cf-soft cf-hairline p-8">
+                <div className="text-sm font-medium">Nessuna sessione</div>
+                <p className="mt-1 text-sm cf-muted">
+                  Crea la prima sessione per questo cliente.
+                </p>
+                <Link
+                  href={`/app/booking/new?client=${client.slug}`}
+                  className="mt-6 inline-flex items-center justify-center rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50"
+                >
+                  Crea prima sessione
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <ul className="divide-y">
+              {sessions.map((s, index) => {
+                const paid = !!s.paidAt;
+                const start = new Date(s.startsAt);
+                const end = new Date(s.endsAt);
+                const isFlash =
+                  sid === s.id && (flash === "paid" || flash === "unpaid");
+                const title = s.workoutTemplateId
+                  ? workoutTitleById.get(s.workoutTemplateId)
+                  : null;
+                return (
+                  <span
+                    key={s.id}
+                    className=" border-none flex items-center justify-center flex-col"
+                  >
+                    <li
+                      key={s.id}
+                      className="w-full border-none relative p-5 transition hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="font-semibold cf-text">
+                              {formatDate(start)}
+                            </div>
+                            <div className="text-sm cf-faint">
+                              {formatTime(start)}–{formatTime(end)}
+                            </div>
+
+                            <span className="cf-chip">
+                              {labelLocationType(String(s.locationType))}
+                              {s.location ? ` · ${s.location}` : ""}
+                            </span>
+                          </div>
+
+                          {s.notes ? (
+                            <div className="mt-2 text-sm cf-text line-clamp-2">
+                              {s.notes}
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-sm cf-faint">—</div>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs cf-faint">
+                            <span className="cf-chip">
+                              {formatMoneyEUR(s.priceCents)}
+                            </span>
+                            <span
+                              className={[
+                                "cf-chip relative overflow-hidden",
+                                isFlash ? "cf-wow" : "",
+                                ,
+                              ].join(" ")}
+                            >
+                              <span className="relative z-10">
+                                {paid ? "Pagata" : "Da pagare"}
+                              </span>
+                              {isFlash ? (
+                                <span className="cf-wow-glow" />
+                              ) : null}
+                            </span>
+                            {s.paymentMethod ? (
+                              <span className="cf-chip">{s.paymentMethod}</span>
+                            ) : null}
+                            {title ? (
+                              <span className="cf-chip">{title}</span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="cf-soft cf-hairline flex items-center gap-2 p-1">
+                          <Link
+                            href={`/app/sessions/${s.id}/${
+                              title ? "change-workout" : "add-workout"
+                            }`}
+                            className="group inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium border cf-soft backdrop-blur-xl cf-text shadow-sm transition-all duration-200  hover:shadow-md active:scale-[0.98] hover:border-black dark:hover:border-white"
+                            title="Assegna una scheda a questa sessione"
+                          >
+                            <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_60%)] hover:border-black dark:hover:border-white" />
+                            <span className="relative">
+                              <Image
+                                alt="aggiungi-workout"
+                                width={16}
+                                height={16}
+                                src={"/icons/add-workout.svg"}
+                                className="block dark:hidden"
+                              />
+                              <Image
+                                alt="aggiungi-workout"
+                                width={16}
+                                height={16}
+                                src={"/icons/white-add-workout.svg"}
+                                className="hidden dark:block "
+                              />
+                            </span>
+                          </Link>
+                          <Link
+                            href={`/app/sessions/${s.id}/edit`}
+                            className={[
+                              `p-2 group block rounded-3xl border backdrop-blur-xl shadow-sm transition
+           bg-white/55 border-neutral-200/60 hover:bg-white/75
+           dark:bg-neutral-950/25 dark:border-white/10 dark:hover:bg-neutral-950/35 hover:border-black dark:hover:border-white`,
+                            ].join(" ")}
+                          >
+                            <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.10),transparent_55%)]" />
+                            <span className="relative">
+                              <Image
+                                alt="modifica"
+                                width={16}
+                                height={16}
+                                src={`/icons/white-edit-alt-outline.svg`}
+                                className="hidden dark:block"
+                              />
+                              <Image
+                                alt="modifica"
+                                width={16}
+                                height={16}
+                                src={`/icons/edit-alt-outline.svg`}
+                                className="block dark:hidden"
+                              />
+                            </span>
+                          </Link>
+                          {paid ? (
+                            <form action={markSessionUnpaid}>
+                              <input
+                                type="hidden"
+                                name="sessionId"
+                                value={s.id}
+                              />
+                              <button
+                                type="submit"
+                                className="group relative inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium border cf-soft backdrop-blur-xl cf-text shadow-sm transition-all duration-200hover:shadow-md"
+                                title="Imposta come non pagata"
+                              >
+                                <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 " />
+                                <span className="relative">
+                                  <Image
+                                    alt="modifica"
+                                    width={16}
+                                    height={16}
+                                    src="/icons/pay-now.svg"
+                                    className="block dark:hidden"
+                                  />
+                                  <Image
+                                    alt="modifica"
+                                    width={16}
+                                    height={16}
+                                    src="/icons/white-pay-now.svg"
+                                    className="hidden dark:block"
+                                  />
+                                </span>
+                              </button>
+                            </form>
+                          ) : (
+                            <form action={markSessionPaid}>
+                              <input
+                                type="hidden"
+                                name="sessionId"
+                                value={s.id}
+                              />
+                              <button
+                                type="submit"
+                                className="group relative inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium border cf-soft backdrop-blur-xl text-emerald-700 shadow-sm transition-all duration-200  hover:border-emerald-300/70 hover:shadow-md active:scale-[0.98]"
+                                title="Segna come pagata"
+                              >
+                                <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 " />
+                                <span className="relative">
+                                  {" "}
+                                  <Image
+                                    alt="modifica"
+                                    width={16}
+                                    height={16}
+                                    src="/icons/pay-now.svg"
+                                    className="block dark:hidden"
+                                  />
+                                  <Image
+                                    alt="modifica"
+                                    width={16}
+                                    height={16}
+                                    src="/icons/white-pay-now.svg"
+                                    className="hidden dark:block"
+                                  />
+                                </span>
+                              </button>
+                            </form>
+                          )}
+                          <DeleteSessionButton
+                            sessionId={s.id}
+                            action={deleteSession}
+                          />
+                        </div>
+                      </div>
+                    </li>
+                    <div
+                      className={`${
+                        sessions.length === index + 1 ? "hidden" : ""
+                      } w-5 bg-black dark:bg-white h-0.5 m-3`}
+                    />
+                  </span>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      ) : activeTab === "progress" ? (
+        <div className="rounded-3xl border cf-surface p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold cf-text">
+                Nuovo check-in
+              </div>
+              <div className="mt-1 mb-4 text-sm cf-muted">
+                Peso, circonferenze e BIA (se disponibili).
+              </div>
+            </div>
+          </div>
+          <div className="rounded-3xl border cf-surface overflow-hidden">
+            <div className="p-6">
+              <div className="text-lg font-semibold cf-text">Storico</div>
+              <div className="mt-1 text-sm cf-muted">Ultimi 25 check-in.</div>
+            </div>
+
+            {entries.length === 0 ? (
+              <div className="px-6 pb-8">
+                <div className="rounded-3xl border cf-surface p-6">
+                  <div className="text-sm font-medium cf-text">
+                    Nessun check-in
+                  </div>
+                  <p className="mt-1 text-sm cf-muted">
+                    Aggiungi il primo check-in per iniziare a tracciare
+                    progressi e BIA.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ul className="divide-y divide-black/5 dark:divide-white/10">
+                {entries.map((e) => (
+                  <li key={e.id} className="p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold cf-text">
+                          {new Date(e.measuredAt).toLocaleString("it-IT", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <Pill label="Peso" value={gToKg(e.weightG)} />
+                          <Pill label="BF" value={bpToPct(e.bodyFatBp)} />
+                          <Pill label="Vita" value={mmToCm(e.waistMm)} />
+                          <Pill label="Fianchi" value={mmToCm(e.hipsMm)} />
+
+                          {/* Braccio DX/SX */}
+                          <Pill label="Braccio DX" value={mmToCm(e.armRmm)} />
+                          <Pill label="Braccio SX" value={mmToCm(e.armLmm)} />
+
+                          {/* Avambraccio DX/SX */}
+                          <Pill
+                            label="Avambr. DX"
+                            value={mmToCm(e.forearmRmm)}
+                          />
+                          <Pill
+                            label="Avambr. SX"
+                            value={mmToCm(e.forearmLmm)}
+                          />
+
+                          {/* Coscia DX/SX */}
+                          <Pill label="Coscia DX" value={mmToCm(e.thighRmm)} />
+                          <Pill label="Coscia SX" value={mmToCm(e.thighLmm)} />
+
+                          {/* Polpaccio DX/SX */}
+                          <Pill label="Polp. DX" value={mmToCm(e.calfRmm)} />
+                          <Pill label="Polp. SX" value={mmToCm(e.calfLmm)} />
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <Pill label="TBW" value={bpToPct(e.tbwBp)} />
+                          <Pill label="ICW" value={bpToPct(e.icwBp)} />
+                          <Pill label="ECW" value={bpToPct(e.ecwBp)} />
+                          <Pill label="Phase" value={bpToPct(e.phaseAngleBp)} />
+                          <Pill
+                            label="BMR"
+                            value={
+                              e.bmrKcal != null ? `${e.bmrKcal} kcal` : "—"
+                            }
+                          />
+                          <Pill label="Muscolo" value={gToKg(e.muscleMassG)} />
+                          <Pill label="Grasso" value={gToKg(e.fatMassG)} />
+                          <Pill label="FFM" value={gToKg(e.ffmG)} />
+                          <Pill label="Visc." value={e.visceralFat ?? "—"} />
+                          <Pill label="Età" value={e.metabolicAge ?? "—"} />
+                        </div>
+
+                        {e.notes ? (
+                          <div className="mt-3 text-sm cf-muted whitespace-pre-wrap">
+                            {e.notes}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* (Step successivo) azioni edit/delete */}
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-2xl border cf-surface px-3 py-2 text-xs cf-faint">
+                          Check-in
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <form action={createMetricsEntry} className="mt-5 space-y-4">
+            <input type="hidden" name="clientId" value={client.id} />
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Field label="Data/Ora" name="measuredAt" type="datetime-local" />
+              <Field label="Peso (kg)" name="weightKg" placeholder="78,4" />
+              <Field label="BF (%)" name="bodyFatPct" placeholder="21,5" />
+            </div>
+            <div className="mt-4 text-sm font-semibold cf-text">Misure</div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <Field label="Vita (cm)" name="waistCm" placeholder="82" />
+              <Field label="Fianchi (cm)" name="hipsCm" placeholder="96" />
+              <Field label="Braccio Dx (cm)" name="armRmm" placeholder="34" />
+              <Field label="Braccio Sx (cm)" name="armLmm" placeholder="34" />
+              <Field
+                label="Avambraccio Dx (cm)"
+                name="forearmRmm"
+                placeholder="34"
+              />
+              <Field
+                label="Avambraccio Sx (cm)"
+                name="forearmLmm"
+                placeholder="34"
+              />
+              <Field label="Coscia Dx (cm)" name="thighRmm" placeholder="58" />
+              <Field label="Coscia Sx (cm)" name="thighLmm" placeholder="58" />
+              <Field label="Polp. Dx (cm)" name="calfRmm" placeholder="40" />
+              <Field label="Polp. Sx (cm)" name="calfLmm" placeholder="40" />
+            </div>
+
+            <div className="mt-4 text-sm font-semibold cf-text">BIA</div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+              <Field label="TBW (%)" name="tbwPct" placeholder="54,2" />
+              <Field label="ICW (%)" name="icwPct" placeholder="31,0" />
+              <Field label="ECW (%)" name="ecwPct" placeholder="23,2" />
+              <Field label="Phase angle" name="phaseAngle" placeholder="5,6" />
+              <Field label="BMR (kcal)" name="bmrKcal" placeholder="1680" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+              <Field label="Muscolo (kg)" name="muscleKg" placeholder="32,1" />
+              <Field label="Grasso (kg)" name="fatKg" placeholder="16,8" />
+              <Field label="FFM (kg)" name="ffmKg" placeholder="61,6" />
+              <Field label="Viscerale" name="visceralFat" placeholder="10" />
+              <Field label="Età meta" name="metabolicAge" placeholder="28" />
+            </div>
+
+            <Field
+              label="Note"
+              name="notes"
+              placeholder="Osservazioni..."
+              textarea
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="submit"
+                className="rounded-2xl px-4 py-2 text-sm cf-surface cf-text hover:opacity-90"
+              >
+                Salva check-in
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Notes */}
+          <div className="lg:col-span-2 cf-surface cf-hairline p-6 shadow-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Note</div>
+              <span className="text-xs cf-faint">
+                Creato il{" "}
+                {new Date(client.createdAt).toLocaleDateString("it-IT")}
+              </span>
+            </div>
+
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed cf-text">
+              {client.notes?.trim() ? client.notes : "—"}
+            </p>
+
+            <div className="mt-6 flex items-center gap-2">
+              <button className="rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90">
+                Modifica note
+              </button>
+              <button className="rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50">
+                Archivia
+              </button>
+            </div>
+          </div>
+
+          {/* Side stats */}
+          <div className="cf-surface cf-hairline p-6">
+            <div className="text-sm font-medium">Panoramica</div>
+
+            <div className="mt-4 space-y-3">
+              <StatRow label="Stato" value={client.status} />
+              <StatRow label="Email" value={client.email ?? "—"} />
+              <StatRow label="Telefono" value={client.phone ?? "—"} />
+              <StatRow label="Slug" value={client.slug} mono />
+            </div>
+
+            <div className="mt-6 rounded-2xl border cf-soft p-4">
+              <div className="text-xs font-medium cf-text">Prossimi step</div>
+              <ul className="mt-2 space-y-2 text-xs cf-muted">
+                <li>• Crea la prima sessione</li>
+                <li>• Vendi un pacchetto</li>
+                <li>• Inizia a tracciare i progressi</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- UI bits ---------- */
+
+function StatusPill({ status }: { status: string }) {
+  const isActive = status.toUpperCase() === "ACTIVE";
+  return (
+    <span className={["cf-chip", isActive ? "" : "opacity-80"].join(" ")}>
+      {status}
+    </span>
+  );
+}
+
+function ActionCard({
+  title,
+  subtitle,
+  href,
+}: {
+  title: string;
+  subtitle: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="p-4 group block rounded-3xl border backdrop-blur-xl shadow-sm transition hover:-translate-y-[1px]
+           bg-white/55 border-neutral-200/60 hover:bg-white/75
+           dark:bg-neutral-950/25 dark:border-white/10 dark:hover:bg-neutral-950/35 hover:border-black dark:hover:border-white"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold cf-text">{title}</div>
+        <div className="cf-faint transition group-hover:translate-x-0.5">→</div>
+      </div>
+      <div className="mt-1 text-xs cf-muted">{subtitle}</div>
+    </Link>
+  );
+}
+
+function TabLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={[
+        "rounded-2xl px-4 py-2 text-sm transition cf-surface cf-text hover:border-black hover:dark:border-white",
+        active ? "border-1 border-black dark:border-white" : "",
+      ].join(" ")}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function StatRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="text-xs cf-faint">{label}</div>
+      <div
+        className={[
+          "text-xs cf-text text-right break-all",
+          mono ? "font-mono" : "",
+        ].join(" ")}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+function Field({
+  label,
+  name,
+  placeholder,
+  type = "text",
+  textarea,
+}: {
+  label: string;
+  name: string;
+  placeholder?: string;
+  type?: string;
+  textarea?: boolean;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-1 text-xs cf-faint">{label}</div>
+      {textarea ? (
+        <textarea
+          name={name}
+          placeholder={placeholder}
+          className="w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text outline-none"
+          rows={3}
+        />
+      ) : (
+        <input
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          className="w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text outline-none"
+        />
+      )}
+    </label>
+  );
+}
+function Pill({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number | null | undefined;
+}) {
+  const v =
+    value === null || value === undefined || value === "" ? "—" : String(value);
+
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border cf-surface px-2.5 py-1 text-[11px] leading-none">
+      <span className="cf-faint">{label}</span>
+      <span className="cf-text font-medium">{v}</span>
+    </span>
+  );
+}
