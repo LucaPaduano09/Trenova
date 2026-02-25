@@ -1,0 +1,17 @@
+# deps
+node_modules/
+**/node_modules/
+
+# next
+.next/
+**/.next/
+out/
+.vercel/
+
+# env
+.env
+.env.*
+!.env.example
+
+# misc
+.DS_Store
