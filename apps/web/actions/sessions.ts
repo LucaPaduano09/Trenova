@@ -46,7 +46,7 @@ export async function updateSession(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const { sessionId, startsAt, durationMin, locationType } = parsed.data;
@@ -56,11 +56,9 @@ export async function updateSession(formData: FormData) {
     select: { id: true, client: { select: { slug: true } } },
   });
 
-  if (!existing)
-    return {
-      ok: false as const,
-      error: { sessionId: ["Sessione non trovata"] },
-    };
+  if (!existing) {
+    throw new Error("Appuntamento non trovato");
+  }
 
   const start = new Date(startsAt);
   const end = new Date(start.getTime() + durationMin * 60 * 1000);
@@ -102,7 +100,7 @@ export async function deleteSession(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const existing = await prisma.appointment.findFirst({
@@ -110,11 +108,9 @@ export async function deleteSession(formData: FormData) {
     select: { id: true, client: { select: { slug: true } } },
   });
 
-  if (!existing)
-    return {
-      ok: false as const,
-      error: { sessionId: ["Sessione non trovata"] },
-    };
+  if (!existing) {
+    throw new Error("Sessione non trovata");
+  }
 
   await prisma.appointment.update({
     where: { id: existing.id },

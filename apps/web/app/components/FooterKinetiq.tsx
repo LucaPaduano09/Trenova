@@ -80,7 +80,7 @@ export function FooterKinetiq() {
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white transition" href="/pricing">
+                  <a className="hover:text-white transition" href="/price">
                     Prezzi
                   </a>
                 </li>

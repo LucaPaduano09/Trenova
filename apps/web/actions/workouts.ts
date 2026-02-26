@@ -120,6 +120,7 @@ async function resolveExerciseForItem(args: { tenantId: string; ref: string }) {
 const createWorkoutSchema = z.object({
   title: z.string().min(2, "Titolo troppo corto"),
   notes: z.string().optional().or(z.literal("")),
+  restSecBySet: z.string().optional().or(z.literal("")),
 });
 
 const updateWorkoutSchema = z.object({
@@ -174,10 +175,11 @@ export async function createWorkoutTemplate(formData: FormData) {
   const parsed = createWorkoutSchema.safeParse({
     title: String(formData.get("title") ?? ""),
     notes: String(formData.get("notes") ?? ""),
+    restSecBySet: String(formData.get("restSecBySet") ?? ""),
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
   const restRaw = parseCsvNumbers(parsed.data.restSecBySet);
 
@@ -207,14 +209,16 @@ export async function updateWorkoutTemplate(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const w = await prisma.workoutTemplate.findFirst({
     where: { id: parsed.data.id, tenantId: tenant.id },
     select: { id: true },
   });
-  if (!w) return { ok: false as const };
+  if (!w) {
+    throw new Error("Workout non trovato");
+  }
 
   await prisma.workoutTemplate.update({
     where: { id: w.id },
@@ -288,6 +292,7 @@ export async function getWorkoutTemplate(id: string) {
           tipsSnapshot: true,
           globalExerciseId: true,
           tenantExerciseId: true,
+          restSecBySet: true,
         },
       },
     },
@@ -314,14 +319,16 @@ export async function addWorkoutItem(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const w = await prisma.workoutTemplate.findFirst({
     where: { id: parsed.data.workoutId, tenantId: tenant.id },
     select: { id: true },
   });
-  if (!w) return { ok: false as const };
+  if (!w) {
+    throw new Error("Workout non valida");
+  }
 
   const resolved = await resolveExerciseForItem({
     tenantId: tenant.id,
@@ -401,14 +408,16 @@ export async function updateWorkoutItem(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const item = await prisma.workoutItem.findFirst({
     where: { id: parsed.data.itemId, tenantId: tenant.id },
     select: { id: true, workoutId: true },
   });
-  if (!item) return { ok: false as const };
+  if (!item) {
+    throw new Error("Workout non valida");
+  }
 
   const sets = parsed.data.sets?.trim() ? Number(parsed.data.sets) : null;
   const restSec = parsed.data.restSec?.trim()
@@ -454,13 +463,17 @@ export async function moveWorkoutItem(formData: FormData) {
     dir: String(formData.get("dir") ?? ""),
   });
 
-  if (!parsed.success) return { ok: false as const };
+  if (!parsed.success) {
+    throw new Error("Validazione non valida");
+  }
 
   const w = await prisma.workoutTemplate.findFirst({
     where: { id: parsed.data.workoutId, tenantId: tenant.id },
     select: { id: true },
   });
-  if (!w) return { ok: false as const };
+  if (!w) {
+    throw new Error("Workout non trovato");
+  }
 
   const items = await prisma.workoutItem.findMany({
     where: { tenantId: tenant.id, workoutId: w.id },
@@ -469,7 +482,9 @@ export async function moveWorkoutItem(formData: FormData) {
   });
 
   const idx = items.findIndex((x) => x.id === parsed.data.itemId);
-  if (idx === -1) return { ok: false as const };
+  if (idx === -1) {
+    throw new Error("workout item non valida");
+  }
 
   const swapWith = parsed.data.dir === "up" ? idx - 1 : idx + 1;
   if (swapWith < 0 || swapWith >= items.length) {
@@ -503,7 +518,9 @@ export async function deleteWorkoutItem(formData: FormData) {
     itemId: String(formData.get("itemId") ?? ""),
   });
 
-  if (!parsed.success) return { ok: false as const };
+  if (!parsed.success) {
+    throw new Error("Validazione non trovata");
+  }
 
   const item = await prisma.workoutItem.findFirst({
     where: {
@@ -513,7 +530,9 @@ export async function deleteWorkoutItem(formData: FormData) {
     },
     select: { id: true, workoutId: true },
   });
-  if (!item) return { ok: false as const };
+  if (!item) {
+    throw new Error("Workout non trovato");
+  }
 
   await prisma.workoutItem.delete({ where: { id: item.id } });
 

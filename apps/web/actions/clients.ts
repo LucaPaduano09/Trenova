@@ -151,10 +151,10 @@ export async function listClients(filters: ClientsFilters = {}) {
 
   const orderBy =
     sort === "name"
-      ? [{ fullName: "asc" }]
+      ? [{ fullName: "asc" as "asc" }]
       : sort === "old"
-      ? [{ createdAt: "asc" }]
-      : [{ createdAt: "desc" }];
+      ? [{ createdAt: "asc" as "asc" }]
+      : [{ createdAt: "desc" as "desc" }];
 
   return prisma.client.findMany({
     where,

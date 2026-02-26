@@ -88,7 +88,7 @@ export async function createExercise(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const { tags, tagsText } = splitTags(parsed.data.tags);
@@ -136,7 +136,7 @@ export async function updateExercise(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const ref = parseRef(parsed.data.ref);
@@ -146,7 +146,9 @@ export async function updateExercise(formData: FormData) {
     "KIND:",
     ref?.kind
   );
-  if (!ref) return { ok: false as const, error: { ref: ["Ref non valida"] } };
+  if (!ref) {
+    throw new Error("Ref non valida");
+  }
 
   const { tags, tagsText } = splitTags(parsed.data.tags);
 
@@ -200,7 +202,9 @@ export async function updateExercise(formData: FormData) {
       where: { id: ref.id },
       select: { id: true },
     });
-    if (!g) return { ok: false as const };
+    if (!g) {
+      throw new Error("Global exercise non trovato");
+    }
 
     await prisma.tenantExerciseOverride.upsert({
       where: {
@@ -236,8 +240,6 @@ export async function updateExercise(formData: FormData) {
     );
     redirect("/app/exercises?flash=updated");
   }
-
-  return { ok: false as const };
 }
 
 /** ---------------- ARCHIVE / RESTORE ---------------- */
@@ -247,19 +249,19 @@ export async function archiveExercise(formData: FormData) {
   const { tenant } = await requireTenantFromSession();
 
   const ref = parseRef(formData.get("ref"));
-  if (!ref) return { ok: false as const };
+  if (!ref) {
+    throw new Error("Ref non valida");
+  }
 
-  // custom -> isArchived (TenantExercise)
   if (ref.kind === "c") {
     await prisma.tenantExercise.update({
       where: { id: ref.id },
       data: { tenantId: tenant.id, isArchived: true },
     });
     revalidatePath("/app/exercises");
-    return { ok: true as const };
+    // return { ok: true as const };
   }
 
-  // global -> isHidden (override)
   if (ref.kind === "g") {
     await prisma.tenantExerciseOverride.upsert({
       where: {
@@ -277,10 +279,7 @@ export async function archiveExercise(formData: FormData) {
       select: { id: true },
     });
     revalidatePath("/app/exercises");
-    return { ok: true as const };
   }
-
-  return { ok: false as const };
 }
 
 export async function restoreExercise(formData: FormData) {
@@ -288,7 +287,9 @@ export async function restoreExercise(formData: FormData) {
   const { tenant } = await requireTenantFromSession();
 
   const ref = parseRef(formData.get("ref"));
-  if (!ref) return { ok: false as const };
+  if (!ref) {
+    throw new Error("Validazione non valida");
+  }
 
   if (ref.kind === "c") {
     await prisma.tenantExercise.update({
@@ -296,7 +297,6 @@ export async function restoreExercise(formData: FormData) {
       data: { tenantId: tenant.id, isArchived: false },
     });
     revalidatePath("/app/exercises");
-    return { ok: true as const };
   }
 
   if (ref.kind === "g") {
@@ -316,10 +316,7 @@ export async function restoreExercise(formData: FormData) {
       select: { id: true },
     });
     revalidatePath("/app/exercises");
-    return { ok: true as const };
   }
-
-  return { ok: false as const };
 }
 
 /** ---------------- LIST (MERGED) ---------------- */

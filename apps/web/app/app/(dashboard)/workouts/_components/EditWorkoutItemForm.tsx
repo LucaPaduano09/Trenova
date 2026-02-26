@@ -46,7 +46,6 @@ export default function EditWorkoutItemForm({
   restSec,
   tempo,
   rpe,
-  loadsKg,
   restSecBySet,
   itemNotes,
 }: {
@@ -56,7 +55,6 @@ export default function EditWorkoutItemForm({
   restSec: number | null;
   tempo: string | null;
   rpe: number | null;
-  loadsKg: number[] | null;
   restSecBySet: number[] | null;
   itemNotes: string | null;
 }) {
@@ -89,11 +87,7 @@ export default function EditWorkoutItemForm({
             defaultValue={(restSecBySet ?? []).join(", ")}
             placeholder="90, 75, 60, 60"
           />
-          <LoadsPerSet
-            sets={sets}
-            name="loadsKg"
-            defaultLoadsKg={loadsKg ?? undefined}
-          />
+          <LoadsPerSet sets={sets} name="loadsKg" defaultLoadsKg={undefined} />
         </div>
       </div>
 

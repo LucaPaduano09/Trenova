@@ -8,6 +8,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { LocationType } from "@prisma/client";
 
+export type CreateSessionState =
+  | { ok: true; error: Record<string, string[]> }
+  | { ok: false; error: Record<string, string[]> };
+
 const createSessionSchema = z.object({
   clientSlug: z.string().min(1),
   startsAt: z.string().min(1, "Seleziona data e ora"),
@@ -33,7 +37,10 @@ function parseEuroToCents(value?: string | null) {
   return Math.round(n * 100);
 }
 
-export async function createSession(_prevState: any, formData: FormData) {
+export async function createSession(
+  _prevState: { ok: boolean; error: Record<string, string[]> },
+  formData: FormData
+): Promise<CreateSessionState> {
   await requireOwner();
   const { tenant } = await requireTenantFromSession();
 
@@ -99,4 +106,5 @@ export async function createSession(_prevState: any, formData: FormData) {
   revalidatePath(`/app/clients/${client.slug}`);
 
   redirect(`/app/clients/${client.slug}`);
+  return { ok: true, error: {} };
 }

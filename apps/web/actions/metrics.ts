@@ -101,52 +101,54 @@ export async function createMetricsEntry(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    // return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    window.alert("error unsuccessful");
+  } else {
+    const measuredAt = parsed.data.measuredAt?.trim()
+      ? new Date(parsed.data.measuredAt)
+      : new Date();
+
+    const entry = await prisma.bodyMetricsEntry.create({
+      data: {
+        tenantId: tenant.id,
+        clientId: parsed.data.clientId,
+        measuredAt,
+
+        weightG: kgToG(parsed.data.weightKg),
+        waistMm: cmToMm(parsed.data.waistCm),
+        hipsMm: cmToMm(parsed.data.hipsCm),
+        armRmm: cmToMm(parsed.data.armRmm),
+        armLmm: cmToMm(parsed.data.armLmm),
+        forearmRmm: cmToMm(parsed.data.forearmRmm),
+        forearmLmm: cmToMm(parsed.data.forearmLmm),
+        thighRmm: cmToMm(parsed.data.thighRmm),
+        thighLmm: cmToMm(parsed.data.thighLmm),
+        calfRmm: cmToMm(parsed.data.calfRmm),
+        calfLmm: cmToMm(parsed.data.calfLmm),
+        bodyFatBp: pctToBp(parsed.data.bodyFatPct),
+
+        tbwBp: pctToBp(parsed.data.tbwPct),
+        icwBp: pctToBp(parsed.data.icwPct),
+        ecwBp: pctToBp(parsed.data.ecwPct),
+
+        muscleMassG: kgToG(parsed.data.muscleKg),
+        fatMassG: kgToG(parsed.data.fatKg),
+        ffmG: kgToG(parsed.data.ffmKg),
+
+        bmrKcal: intOrNull(parsed.data.bmrKcal),
+        visceralFat: intOrNull(parsed.data.visceralFat),
+        metabolicAge: intOrNull(parsed.data.metabolicAge),
+        phaseAngleBp: pctToBp(parsed.data.phaseAngle),
+
+        notes: parsed.data.notes?.trim() || null,
+      },
+      select: { id: true },
+    });
+
+    revalidatePath("/app/clients");
   }
 
-  const measuredAt = parsed.data.measuredAt?.trim()
-    ? new Date(parsed.data.measuredAt)
-    : new Date();
-
-  const entry = await prisma.bodyMetricsEntry.create({
-    data: {
-      tenantId: tenant.id,
-      clientId: parsed.data.clientId,
-      measuredAt,
-
-      weightG: kgToG(parsed.data.weightKg),
-      waistMm: cmToMm(parsed.data.waistCm),
-      hipsMm: cmToMm(parsed.data.hipsCm),
-      armRmm: cmToMm(parsed.data.armRmm),
-      armLmm: cmToMm(parsed.data.armLmm),
-      foreArmRmm: cmToMm(parsed.data.foreArmRmm),
-      foreArmLmm: cmToMm(parsed.data.foreArmLmm),
-      thighRmm: cmToMm(parsed.data.thighRmm),
-      thighLmm: cmToMm(parsed.data.thighLmm),
-      calfRmm: cmToMm(parsed.data.calfRmm),
-      calfLmm: cmToMm(parsed.data.calfLmm),
-      bodyFatBp: pctToBp(parsed.data.bodyFatPct),
-
-      tbwBp: pctToBp(parsed.data.tbwPct),
-      icwBp: pctToBp(parsed.data.icwPct),
-      ecwBp: pctToBp(parsed.data.ecwPct),
-
-      muscleMassG: kgToG(parsed.data.muscleKg),
-      fatMassG: kgToG(parsed.data.fatKg),
-      ffmG: kgToG(parsed.data.ffmKg),
-
-      bmrKcal: intOrNull(parsed.data.bmrKcal),
-      visceralFat: intOrNull(parsed.data.visceralFat),
-      metabolicAge: intOrNull(parsed.data.metabolicAge),
-      phaseAngleBp: pctToBp(parsed.data.phaseAngle),
-
-      notes: parsed.data.notes?.trim() || null,
-    },
-    select: { id: true },
-  });
-
-  revalidatePath("/app/clients");
-  return { ok: true as const, entry };
+  // return { ok: true as const, entry };
 }
 
 export async function listMetricsEntries(clientId: string) {

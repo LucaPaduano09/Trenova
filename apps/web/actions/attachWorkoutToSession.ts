@@ -23,7 +23,7 @@ export async function attachWorkoutToSession(formData: FormData) {
     workoutTemplateId: String(formData.get("workoutTemplateId") ?? ""),
   });
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   const { appointmentId, workoutTemplateId } = parsed.data;
@@ -41,7 +41,9 @@ export async function attachWorkoutToSession(formData: FormData) {
       client: { select: { slug: true } },
     },
   });
-  if (!appt) return { ok: false as const };
+  if (!appt) {
+    throw new Error("Appuntamento non trovato");
+  }
 
   // 2) Se già attaccata -> redirect (idempotenza)
   const existing = await prisma.appointmentWorkout.findFirst({
@@ -85,7 +87,9 @@ export async function attachWorkoutToSession(formData: FormData) {
       },
     },
   });
-  if (!tpl) return { ok: false as const };
+  if (!tpl) {
+    throw new Error("Template non trovato");
+  }
 
   // 4) Transaction “seria”
   const { wsId } = await prisma.$transaction(async (tx) => {
@@ -271,7 +275,7 @@ export async function attachNewWorkoutToSession(formData: FormData) {
 
   if (!parsed.success) {
     console.log(parsed.error.format());
-    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+    throw new Error("Validazione non valida");
   }
 
   console.log("DATA: " + JSON.stringify(parsed.data));
@@ -287,13 +291,10 @@ export async function attachNewWorkoutToSession(formData: FormData) {
   });
 
   if (!template) {
-    return {
-      ok: false as const,
-      error: { workoutTemplateId: ["Template non valido"] },
-    };
+    throw new Error("Template non trovato");
   }
 
-  // aggiorna appointment (questo è il punto chiave)
+  // aggiorna appointment (questo è il punto chiavethrow new Error("Ref non valida");)
   const updated = await prisma.appointment.updateMany({
     where: {
       id: appointmentId,
@@ -307,10 +308,7 @@ export async function attachNewWorkoutToSession(formData: FormData) {
   });
 
   if (updated.count === 0) {
-    return {
-      ok: false as const,
-      error: { appointmentId: ["Appuntamento non trovato"] },
-    };
+    throw new Error("Appuntamento non trovato");
   }
 
   const client = await prisma.client.findFirst({

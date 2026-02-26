@@ -171,12 +171,12 @@ export default async function EditWorkoutPage({
                       />
                       <Pill label="Tempo" value={it.tempo ?? "—"} />
                       <Pill label="RPE" value={it.rpe ?? "—"} />
-                      <Pill
+                      {/* <Pill
                         label="Kg"
                         value={
                           it.loadsKg?.length ? it.loadsKg.join(" / ") : "—"
                         }
-                      />
+                      /> */}
                     </div>
 
                     {it.itemNotes ? (
@@ -197,7 +197,6 @@ export default async function EditWorkoutPage({
                         restSec={it.restSec ?? null}
                         tempo={it.tempo ?? null}
                         rpe={it.rpe ?? null}
-                        loadsKg={(it.loadsKg as any) ?? null}
                         restSecBySet={it.restSecBySet ?? null}
                         itemNotes={it.itemNotes ?? null}
                       />
