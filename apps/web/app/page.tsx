@@ -46,7 +46,7 @@ export default function LandingPage() {
             href="/app/sign-in?type=pt&mode=login"
             className="rounded-2xl bg-white/5 px-4 py-2 text-sm ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
           >
-            {/* test */}
+            {/* test 2*/}
             Area PT
           </Link>
           <Link
