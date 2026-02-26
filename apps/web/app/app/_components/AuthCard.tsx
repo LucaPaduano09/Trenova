@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import { registerWithPassword } from "@/actions/registerWithPassword";
 
 type Props = {
   variant: "pt" | "client";
@@ -73,10 +74,23 @@ export default function AuthCard({
 
     start(async () => {
       if (mode === "register") {
-        // TODO: quando implementi la registrazione password-based,
-        // qui puoi chiamare una server action /api/register (pt o client)
-        // poi fare signIn("credentials") subito dopo.
-        setError("Registrazione con password non ancora collegata (TODO).");
+        const r = await registerWithPassword({ email, password });
+
+        if (!r.ok) {
+          setError(r.error || "Errore registrazione.");
+          return;
+        }
+
+        const res = await signIn("credentials", {
+          email,
+          password,
+          callbackUrl,
+          redirect: false,
+        });
+
+        if (res?.error) setError("Login fallito dopo registrazione.");
+        else window.location.href = callbackUrl;
+
         return;
       }
 

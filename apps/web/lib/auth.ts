@@ -37,7 +37,7 @@ async function makeUniqueTenantSlug(base: string) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
 
   providers: [
     Nodemailer({
@@ -128,12 +128,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
-    /**
-     * Always hydrate session with tenantId + role from DB (robust across adapters).
-     */
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user?.id) token.sub = user.id;
+      return token;
+    },
+
+    async session({ session, token }) {
+      const userId = token?.sub as string | undefined;
+      if (!userId) return session;
+
       const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
+        where: { id: userId },
         select: { id: true, tenantId: true, role: true },
       });
 
@@ -141,7 +146,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         ...session,
         user: {
           ...session.user,
-          id: user.id,
+          id: userId,
           tenantId: dbUser?.tenantId ?? "",
           role: (dbUser?.role as "OWNER" | "CLIENT") ?? "OWNER",
         },
