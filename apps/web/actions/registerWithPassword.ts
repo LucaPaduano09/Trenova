@@ -21,6 +21,7 @@ export async function registerWithPassword(input: {
 }) {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
+    console.log(parsed.error.flatten());
     return { ok: false as const, error: "Dati non validi." };
   }
 

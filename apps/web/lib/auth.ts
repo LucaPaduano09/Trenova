@@ -78,11 +78,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
-        // ✅ blocca login se email non verificata (password flow)
-        // if (!user.emailVerified) {
-        //   // poi in UI intercetti res.error === "EMAIL_NOT_VERIFIED"
-        //   throw new Error("EMAIL_NOT_VERIFIED");
-        // }
+        if (!user.emailVerified) {
+          //   // poi in UI intercetti res.error === "EMAIL_NOT_VERIFIED"
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
 
         return {
           id: user.id,

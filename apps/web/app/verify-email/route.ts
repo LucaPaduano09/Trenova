@@ -8,19 +8,20 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token") ?? "";
-  const email = url.searchParams.get("email") ?? "";
+  const email = (url.searchParams.get("email") ?? "").toLowerCase();
 
-  if (!token || !email) {
-    return NextResponse.redirect(new URL("/app/sign-in?verified=0", url));
-  }
+  const bad = new URL("/app/sign-in", url.origin);
+  bad.searchParams.set("verified", "0");
 
-  const vt = await prisma.verificationToken.findUnique({
+  if (!token || !email) return NextResponse.redirect(bad);
+
+  const vt = await prisma.verificationToken.findFirst({
     where: { token },
-    select: { identifier: true, expires: true, token: true },
+    select: { identifier: true, expires: true },
   });
 
-  if (!vt || vt.identifier !== email || vt.expires < new Date()) {
-    return NextResponse.redirect(new URL("/app/sign-in?verified=0", url));
+  if (!vt || vt.identifier.toLowerCase() !== email || vt.expires < new Date()) {
+    return NextResponse.redirect(bad);
   }
 
   await prisma.$transaction([
@@ -28,8 +29,10 @@ export async function GET(req: Request) {
       where: { email },
       data: { emailVerified: new Date() },
     }),
-    prisma.verificationToken.delete({ where: { token } }),
+    prisma.verificationToken.deleteMany({ where: { token } }),
   ]);
 
-  return NextResponse.redirect(new URL("/app/sign-in?verified=1", url));
+  const ok = new URL("/app/sign-in", url.origin);
+  ok.searchParams.set("verified", "1");
+  return NextResponse.redirect(ok);
 }
