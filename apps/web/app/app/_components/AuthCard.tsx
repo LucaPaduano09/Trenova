@@ -15,7 +15,7 @@ type Props = {
 
 export default function AuthCard({
   variant,
-  brand = "Kinetiq.io",
+  brand = "Trenova",
   defaultCallbackUrl,
 }: Props) {
   const sp = useSearchParams();
@@ -115,9 +115,10 @@ export default function AuthCard({
           <div>
             <Image
               alt="logo"
-              src={"/landing/brand-image.png"}
-              width={100}
+              src={"/landing/brand-image-1.png"}
+              width={120}
               height={50}
+              className="mb-2 ml-[-7px]"
             />
 
             <div className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">

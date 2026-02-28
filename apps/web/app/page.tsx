@@ -20,7 +20,7 @@ export default function LandingPage() {
       </div>
 
       {/* Topbar */}
-      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6">
         <div className="flex items-center gap-3">
           {/* <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur"> */}
           {/* <span className="text-sm font-semibold tracking-tight">
@@ -29,12 +29,12 @@ export default function LandingPage() {
             </span> */}
           {/* </div> */}
           <div className="leading-tight">
-            <div className="text-sm font-semibold">
+            <div className="text-sm font-semibold mt-10">
               <Image
                 alt="brand"
-                width={245}
+                width={235}
                 height={101}
-                src={"/landing/brand-image.png"}
+                src={"/landing/brand-image-1.png"}
               />
             </div>
             {/* <div className="text-xs text-white/60">Minimal • Fast • Clean</div> */}
@@ -76,7 +76,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="mt-4 max-w-xl text-base text-white/70">
-              Kinetiq.io unisce <span className="text-white">clienti</span>,{" "}
+              Trenova unisce <span className="text-white">clienti</span>,{" "}
               <span className="text-white">sessioni</span>,{" "}
               <span className="text-white">pagamenti</span> e{" "}
               <span className="text-white">progressi</span> in un’esperienza
@@ -211,7 +211,7 @@ export default function LandingPage() {
             <div>
               <div className="text-base font-semibold">Pronto a partire?</div>
               <div className="mt-1 text-sm text-white/70">
-                Crea il tuo spazio in Kinetiq.io e prova il flusso completo.
+                Crea il tuo spazio in Trenova e prova il flusso completo.
               </div>
             </div>
 

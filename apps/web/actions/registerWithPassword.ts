@@ -1,80 +1,59 @@
+// apps/web/actions/registerWithPassword.ts
 "use server";
 
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { createAndSendEmailVerification } from "@/lib/verification";
 
-/** Copiate da lib/auth.ts per coerenza */
-function slugify(input: string) {
-  return input
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function makeUniqueTenantSlug(base: string) {
-  const cleanBase = slugify(base) || "coach";
-  let slug = cleanBase;
-
-  for (let i = 0; i < 50; i++) {
-    const exists = await prisma.tenant.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-    if (!exists) return slug;
-    slug = `${cleanBase}-${i + 2}`;
-  }
-
-  return `${cleanBase}-${Date.now()}`;
-}
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  fullName: z.string().optional(),
+  variant: z.enum(["pt", "client"]).optional(), // <-- per set role
+});
 
 export async function registerWithPassword(input: {
   email: string;
   password: string;
   fullName?: string;
+  variant?: "pt" | "client";
 }) {
-  const email = (input.email || "").trim().toLowerCase();
-  const password = (input.password || "").toString();
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: "Dati non validi." };
+  }
 
-  if (!email || !password)
-    return { ok: false, error: "Email e password richieste." };
-  if (password.length < 8)
-    return { ok: false, error: "Password troppo corta (min 8 caratteri)." };
+  const { email, password, fullName, variant = "pt" } = parsed.data;
 
-  const existing = await prisma.user.findUnique({
+  const exists = await prisma.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, emailVerified: true },
   });
-  if (existing)
-    return { ok: false, error: "Esiste già un account con questa email." };
+
+  if (exists) {
+    // se già esiste ma non verificato => rinvia mail
+    if (!exists.emailVerified) {
+      await createAndSendEmailVerification({ email, name: fullName ?? null });
+      return { ok: true as const, needsVerify: true as const };
+    }
+    return { ok: false as const, error: "Email già registrata." };
+  }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const baseName = (email.split("@")[0] || "coach").slice(0, 40);
-  const slug = await makeUniqueTenantSlug(baseName);
-
-  // Transaction: crea tenant + user collegato
-  const { user } = await prisma.$transaction(async (tx) => {
-    const tenant = await tx.tenant.create({
-      data: { name: baseName, slug, email },
-      select: { id: true },
-    });
-
-    const user = await tx.user.create({
-      data: {
-        email,
-        passwordHash,
-        tenantId: tenant.id,
-        role: "OWNER",
-        fullName: input.fullName?.trim() || baseName,
-      },
-      select: { id: true, email: true, tenantId: true },
-    });
-
-    return { user };
+  await prisma.user.create({
+    data: {
+      email,
+      passwordHash,
+      fullName: fullName?.trim() || null,
+      role: variant === "client" ? "CLIENT" : "OWNER",
+      emailVerified: null,
+    },
+    select: { id: true },
   });
 
-  return { ok: true, userId: user.id };
+  await createAndSendEmailVerification({ email, name: fullName ?? null });
+
+  return { ok: true as const, needsVerify: true as const };
 }

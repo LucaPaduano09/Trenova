@@ -14,9 +14,9 @@ function SidebarContent() {
       <div className="mb-4">
         <Image
           alt="brand-logo"
-          width={200}
-          height={100}
-          src={"/landing/brand-image.png"}
+          width={150}
+          height={50}
+          src={"/landing/brand-image-1.png"}
           priority
         />
       </div>
@@ -124,9 +124,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <div className="mb-4 cf-soft cf-hairline p-3">
                 <Image
                   alt="brand-logo"
-                  width={220}
-                  height={110}
-                  src={"/landing/brand-image.png"}
+                  width={150}
+                  height={50}
+                  src={"/landing/brand-image-1.png"}
                   priority
                   className="h-auto w-full object-contain"
                 />

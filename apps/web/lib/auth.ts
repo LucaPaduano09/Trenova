@@ -42,20 +42,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Nodemailer({
       from: process.env.EMAIL_FROM,
-      server: process.env.EMAIL_SERVER, // smtp://resend:APIKEY@smtp.resend.com:587
+      server: process.env.EMAIL_SERVER,
     }),
+
     Credentials({
       name: "Email e Password",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
+
       async authorize(credentials) {
-        const email = (credentials?.email || "")
-          .toString()
+        const email = String(credentials?.email ?? "")
           .trim()
           .toLowerCase();
-        const password = (credentials?.password || "").toString();
+        const password = String(credentials?.password ?? "");
 
         if (!email || !password) return null;
 
@@ -68,43 +69,49 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             tenantId: true,
             role: true,
             fullName: true,
+            emailVerified: true,
           },
         });
 
-        if (!user || !user.passwordHash) return null;
+        if (!user?.passwordHash) return null;
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
-        // ritorna un oggetto user compatibile
+        // ✅ blocca login se email non verificata (password flow)
+        // if (!user.emailVerified) {
+        //   // poi in UI intercetti res.error === "EMAIL_NOT_VERIFIED"
+        //   throw new Error("EMAIL_NOT_VERIFIED");
+        // }
+
         return {
           id: user.id,
           email: user.email,
-          tenantId: user.tenantId,
-          role: user.role,
           name: user.fullName ?? undefined,
+          tenantId: user.tenantId ?? null,
+          role: user.role,
         } as any;
       },
     }),
   ],
 
   /**
-   * On first user creation: create a Tenant and attach it to the user.
-   * This removes the "missing tenantId in session" issue.
+   * Primo onboarding: crea tenant e collega l'utente.
+   * NB: con magic link non hai "variant" → quindi per ora:
+   * - se non ha tenantId, lo trattiamo come OWNER e creiamo tenant
    */
   events: {
     async createUser({ user }) {
-      // Read the user from DB (adapter created it)
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         select: { id: true, email: true, fullName: true, tenantId: true },
       });
 
       if (!dbUser) return;
-      if (dbUser.tenantId) return; // already linked
+      if (dbUser.tenantId) return;
 
-      const email = dbUser.email;
-      const baseName = (email?.split("@")[0] || "coach").slice(0, 40);
+      const email = dbUser.email ?? "";
+      const baseName = (email.split("@")[0] || "coach").slice(0, 40);
       const slug = await makeUniqueTenantSlug(baseName);
 
       const tenant = await prisma.tenant.create({
@@ -134,12 +141,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async session({ session, token }) {
-      const userId = token?.sub as string | undefined;
+      const userId = token.sub as string | undefined;
       if (!userId) return session;
 
       const dbUser = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, tenantId: true, role: true },
+        select: { id: true, tenantId: true, role: true, email: true },
       });
 
       return {
@@ -147,6 +154,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         user: {
           ...session.user,
           id: userId,
+          email: dbUser?.email ?? session.user?.email ?? "",
           tenantId: dbUser?.tenantId ?? "",
           role: (dbUser?.role as "OWNER" | "CLIENT") ?? "OWNER",
         },

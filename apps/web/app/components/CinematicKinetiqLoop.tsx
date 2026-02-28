@@ -244,7 +244,7 @@ export default function CinematicKinetiqLoop({
           <div className="pointer-events-none absolute left-4 sm:left-6 top-4 sm:top-5 flex items-center gap-3">
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.8)]" />
             <div className="text-xs sm:text-sm text-white/80">
-              Progressi in tempo reale • by Kinetiq.io
+              Progressi in tempo reale • by Trenova
             </div>
           </div>
 

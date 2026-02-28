@@ -14,9 +14,9 @@ export function FooterKinetiq() {
           {/* brand */}
           <div className="max-w-sm">
             <div className="text-2xl font-semibold text-white">
-              Kinetiq
+              Tre
               <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                .io
+                nova
               </span>
             </div>
             <p className="text-white/60 mt-3 leading-relaxed">
@@ -134,7 +134,7 @@ export function FooterKinetiq() {
         {/* bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/50 text-sm">
-            © {year} Kinetiq.io. Tutti i diritti riservati.
+            ©Trenova Tutti i diritti riservati.
           </p>
 
           <div className="flex items-center gap-3">
