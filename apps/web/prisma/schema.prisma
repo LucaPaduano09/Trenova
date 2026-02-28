@@ -806,3 +806,13 @@ model Notification {
   @@index([tenantId, appointmentId])
   @@index([tenantId, clientId])
 }
+
+model PasswordResetToken {
+  id         String   @id @default(cuid()) @map("_id")
+  identifier String   // email
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+}

@@ -36,3 +36,32 @@ export async function sendVerifyEmail(opts: {
     html,
   });
 }
+export async function sendResetPasswordEmail(args: {
+  to: string;
+  name?: string | null;
+  resetUrl: string;
+}) {
+  const { to, name, resetUrl } = args;
+
+  const html = `
+  <div style="font-family: Inter, sans-serif; padding: 24px;">
+    <h2>Reimposta la password</h2>
+    <p>Ciao ${name ?? ""},</p>
+    <p>Abbiamo ricevuto una richiesta di reset password.</p>
+    <a href="${resetUrl}"
+       style="display:inline-block;padding:12px 20px;background:#0ea5e9;color:white;border-radius:8px;text-decoration:none;font-weight:600;">
+       Reimposta password
+    </a>
+    <p style="margin-top:16px;font-size:14px;color:#666;">
+      Se non sei stato tu, ignora questa email. Il link scade tra 30 minuti.
+    </p>
+  </div>
+  `;
+
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM!,
+    to,
+    subject: "Reimposta la password — Trenova",
+    html,
+  });
+}
