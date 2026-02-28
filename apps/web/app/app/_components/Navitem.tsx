@@ -19,7 +19,7 @@ export default function NavItem({
       : pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <Link href={href} className="group relative block">
+    <Link href={href} prefetch className="group relative block">
       <div
         className={[
           "relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-2.5 text-sm",
