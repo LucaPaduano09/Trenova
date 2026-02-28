@@ -6,6 +6,23 @@ import { requireTenantFromSession } from "@/lib/tenant";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
+export type CreateClientState =
+  | {
+      ok: false;
+      error: {
+        fullName?: string[];
+        email?: string[];
+        phone?: string[];
+        notes?: string[];
+      };
+      client?: undefined;
+    }
+  | {
+      ok: true;
+      client: { id: string; slug: string };
+      error?: undefined;
+    };
+
 const createClientSchema = z.object({
   fullName: z.string().min(2, "Nome troppo corto"),
   email: z.string().email("Email non valida").optional().or(z.literal("")),
@@ -170,4 +187,10 @@ export async function listClients(filters: ClientsFilters = {}) {
       archivedAt: true,
     },
   });
+}
+export async function createClientAction(
+  _prev: CreateClientState,
+  formData: FormData
+): Promise<CreateClientState> {
+  return createClient(formData);
 }

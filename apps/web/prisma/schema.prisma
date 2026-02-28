@@ -65,6 +65,7 @@ model Tenant {
   sessionCreditLedgers SessionCreditLedger[]
   workoutSessions      WorkoutSession[]
   progressEntries      ProgressEntry[]
+  notifications Notification[]
 }
 
 model User {
@@ -82,6 +83,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   appointments  Appointment[]
+  notifications Notification[]
 
   @@index([tenantId])
 }
@@ -103,7 +105,7 @@ model Client {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   archivedAt DateTime?
-
+  bodyIssues ClientBodyIssue[]
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User?  @relation(fields: [userId], references: [id])
 
@@ -732,4 +734,75 @@ model TenantExercise {
   updatedAt               DateTime                 @updatedAt
   workoutItems            WorkoutItem[]
   workoutPlanVersionItems WorkoutPlanVersionItem[]
+}
+
+enum BodySide {
+  LEFT
+  RIGHT
+  MIDLINE
+}
+
+enum IssueType {
+  PAIN
+  STIFFNESS
+  INJURY
+  POST_OP
+  OTHER
+}
+
+model ClientBodyIssue {
+  id        String   @id @default(cuid()) @map("_id")
+  tenantId  String
+  clientId  String
+
+  zoneKey   String   // es: "shoulder", "lumbar", "knee"
+  side      BodySide @default(MIDLINE)
+
+  type      IssueType @default(PAIN)
+  severity  Int?      // 0-10
+  notes     String?
+  active    Boolean   @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, zoneKey])
+}
+
+// NOTIFICATION
+enum NotificationType {
+  APPOINTMENT_BOOKED
+  APPOINTMENT_CANCELED
+  APPOINTMENT_RESCHEDULED
+  PAYMENT_MARKED
+  GENERIC
+}
+model Notification {
+  id        String           @id @default(cuid()) @map("_id")
+  tenantId  String
+  userId    String
+  type      NotificationType @default(GENERIC)
+
+  title String
+  body  String?
+
+  // deep link nella dashboard PT (web)
+  href String?
+
+  // contesto (facoltativo ma utile)
+  appointmentId String?
+  clientId      String?
+
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, userId, readAt, createdAt])
+  @@index([tenantId, appointmentId])
+  @@index([tenantId, clientId])
 }

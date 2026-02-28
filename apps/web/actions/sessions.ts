@@ -150,6 +150,7 @@ export async function markSessionPaid(formData: FormData) {
   });
 
   revalidatePath(`/app/clients/${existing.client.slug}`);
+  revalidatePath("/app/dashboard");
   // query non serve in revalidatePath: la pagina è force-dynamic, basta questa
   redirect(
     `/app/clients/${existing.client.slug}?tab=sessions&flash=paid&sid=${existing.id}`

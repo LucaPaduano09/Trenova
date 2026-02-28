@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 
 export async function requireTenantFromSession() {
   const session = await auth();
+
   if (!session?.user) {
     redirect("/app/sign-in");
   }
@@ -18,12 +19,23 @@ export async function requireTenantFromSession() {
     redirect("/app/setup");
   }
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+  });
+
   if (!tenant) {
     redirect("/app/setup");
   }
 
-  return { session, tenant };
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email! },
+  });
+
+  if (!user) {
+    redirect("/app/sign-in");
+  }
+
+  return { session, tenant, user };
 }
 
 export async function getTenantBySlug(tenantSlug: string) {

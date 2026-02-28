@@ -38,6 +38,7 @@ export default async function AddWorkoutToSessionPage({
       <div className="rounded-3xl border cf-surface p-5">
         <form action={attachNewWorkoutToSession} className="grid gap-4">
           <input type="hidden" name="appointmentId" value={id} />
+
           <div className="grid gap-2">
             <div className="text-sm font-medium">Scheda</div>
             <select

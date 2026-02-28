@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import NavItem from "../_components/Navitem";
 import ThemeToggle from "../../../components/ThemeToggle";
 import Image from "next/image";
+import NotificationsBell from "../_components/NotificationsBell";
 
 function SidebarContent() {
   return (
@@ -182,6 +183,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </div>
 
               <div className="flex items-center gap-2">
+                <NotificationsBell />
                 <ThemeToggle />
               </div>
             </div>

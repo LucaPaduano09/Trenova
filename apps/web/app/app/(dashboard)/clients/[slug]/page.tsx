@@ -12,6 +12,10 @@ import { listMetricsEntries } from "../../../../../actions/metrics";
 import { getClientProfile } from "../../../../../actions/profile";
 import { createMetricsEntry } from "../../../../../actions/metrics";
 import Image from "next/image";
+import BodyMapCard from "./_components/BodyMapCard";
+import OverviewStatsCards from "./_components/OverviewStatsCards";
+import { getClientOverviewStats } from "@/actions/clientOverview";
+import { MiniOverviewCard } from "./_components/MiniOverviewCard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -105,7 +109,10 @@ export default async function ClientDetailPage({
   });
 
   if (!client) return notFound();
+  const overviewStats =
+    activeTab === "overview" ? await getClientOverviewStats(client.id) : null;
 
+  const churn = overviewStats?.performance?.inactivity;
   const sessions =
     activeTab === "sessions"
       ? await prisma.appointment.findMany({
@@ -136,7 +143,67 @@ export default async function ClientDetailPage({
     activeTab === "progress" ? await getClientProfile(client.id) : null;
   const entries =
     activeTab === "progress" ? await listMetricsEntries(client.id) : [];
+  const isOverview = activeTab === "overview";
 
+  const now = new Date();
+  const from30 = new Date();
+  from30.setDate(from30.getDate() - 30);
+
+  // sessioni ultimi 30gg (per revenue/paid rate)
+  const stats30 = await prisma.appointment.findMany({
+    where: {
+      tenantId: tenant.id,
+      clientId: client.id,
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+      startsAt: { gte: from30, lte: now },
+      // se vuoi includere solo sessioni svolte per revenue: metti COMPLETED (ma dipende dal tuo flow)
+      // status: "COMPLETED",
+    },
+    select: { paidAt: true, priceCents: true },
+  });
+
+  // prossima sessione pianificata
+  const nextAppt = await prisma.appointment.findFirst({
+    where: {
+      tenantId: tenant.id,
+      clientId: client.id,
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+      startsAt: { gte: now },
+      status: "SCHEDULED",
+    },
+    orderBy: { startsAt: "asc" },
+    select: { startsAt: true },
+  });
+
+  // ultima sessione (passata)
+  const lastAppt = await prisma.appointment.findFirst({
+    where: {
+      tenantId: tenant.id,
+      clientId: client.id,
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+      endsAt: { lt: now },
+    },
+    orderBy: { endsAt: "desc" },
+    select: { endsAt: true, startsAt: true },
+  });
+
+  const total30 = stats30.length;
+  const paid30 = stats30.filter((s) => !!s.paidAt);
+  const paidRate30 = total30 ? Math.round((paid30.length / total30) * 100) : 0;
+  const revenue30 = paid30.reduce((sum, s) => sum + (s.priceCents ?? 0), 0);
+
+  const daysAgo = (d?: Date | null) => {
+    if (!d) return null;
+    const ms = now.getTime() - d.getTime();
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+  };
+
+  const kpi = {
+    lastAt: lastAppt?.endsAt ?? lastAppt?.startsAt ?? null, // meglio endsAt se lo hai
+    nextAt: nextAppt?.startsAt ?? null,
+    revenue30,
+    paidRate30,
+  };
   //prendo il workout associato alla sessione
   const workoutIds = Array.from(
     new Set(sessions.map((s) => s.workoutTemplateId).filter(Boolean))
@@ -153,39 +220,48 @@ export default async function ClientDetailPage({
   return (
     <div className="space-y-6 cf-text">
       {/* Top hero */}
-      <div className="cf-card cf-hairline">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-2xl border bg-white/70 text-sm font-semibold cf-text shadow-sm">
+      <div className="cf-card cf-hairline p-6 space-y-6">
+        {/* TOP GRID */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+          {/* LEFT */}
+          <div className="flex items-start gap-4">
+            <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border bg-white/70 text-sm font-semibold cf-text shadow-sm">
               <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_55%)]" />
-              <span className="relative">{avatar}</span>
+              <span className="relative text-base">{avatar}</span>
             </div>
 
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-semibold tracking-tight">
                 {client.fullName}
               </h1>
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm cf-muted">
+
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm cf-muted">
                 <span className="truncate">{client.email ?? "—"}</span>
                 <span className="opacity-30">•</span>
                 <span className="truncate">{client.phone ?? "—"}</span>
               </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <StatusPill status={client.status} />
+                <Link
+                  href="/app/clients"
+                  className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-faint cf-text hover:border-black dark:hover:border-white"
+                >
+                  Indietro
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusPill status={client.status} />
-            <Link
-              href="/app/clients"
-              className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-faint cf-text hover:border-black dark:hover:border-white"
-            >
-              Indietro
-            </Link>
-          </div>
+          {/* RIGHT */}
+          <MiniOverviewCard client={client} kpi={kpi} />
         </div>
 
-        {/* Quick actions */}
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {/* Divider */}
+        <div className="h-px bg-black/5 dark:bg-white/10" />
+
+        {/* QUICK ACTIONS */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <ActionCard
             title="Nuova sessione"
             subtitle="Aggiungi una sessione"
@@ -649,52 +725,37 @@ export default async function ClientDetailPage({
           </form>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Notes */}
-          <div className="lg:col-span-2 cf-surface cf-hairline p-6 shadow-sm backdrop-blur-xl">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">Note</div>
-              <span className="text-xs cf-faint">
-                Creato il{" "}
-                {new Date(client.createdAt).toLocaleDateString("it-IT")}
-              </span>
-            </div>
+        <>
+          <OverviewStatsCards clientId={client.id} />
+          <div>
+            <BodyMapCard clientId={client.id} clientSlug={client.slug} />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Notes */}
+            <div className="lg:col-span-2 cf-surface cf-hairline p-6 shadow-sm backdrop-blur-xl">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Note</div>
+                <span className="text-xs cf-faint">
+                  Creato il{" "}
+                  {new Date(client.createdAt).toLocaleDateString("it-IT")}
+                </span>
+              </div>
 
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed cf-text">
-              {client.notes?.trim() ? client.notes : "—"}
-            </p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed cf-text">
+                {client.notes?.trim() ? client.notes : "—"}
+              </p>
 
-            <div className="mt-6 flex items-center gap-2">
-              <button className="rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90">
-                Modifica note
-              </button>
-              <button className="rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50">
-                Archivia
-              </button>
+              <div className="mt-6 flex items-center gap-2">
+                <button className="rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90">
+                  Modifica note
+                </button>
+                <button className="rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50">
+                  Archivia
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Side stats */}
-          <div className="cf-surface cf-hairline p-6">
-            <div className="text-sm font-medium">Panoramica</div>
-
-            <div className="mt-4 space-y-3">
-              <StatRow label="Stato" value={client.status} />
-              <StatRow label="Email" value={client.email ?? "—"} />
-              <StatRow label="Telefono" value={client.phone ?? "—"} />
-              <StatRow label="Slug" value={client.slug} mono />
-            </div>
-
-            <div className="mt-6 rounded-2xl border cf-soft p-4">
-              <div className="text-xs font-medium cf-text">Prossimi step</div>
-              <ul className="mt-2 space-y-2 text-xs cf-muted">
-                <li>• Crea la prima sessione</li>
-                <li>• Vendi un pacchetto</li>
-                <li>• Inizia a tracciare i progressi</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
