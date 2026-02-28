@@ -236,7 +236,7 @@ export default function AuthCard({
   }
 
   return (
-    <div className="relative w-full max-w-[520px] overflow-hidden rounded-3xl border cf-surface p-4 sm:p-6">
+    <div className="relative w-full max-w-[520px] lg:max-w-[820px] lg:w-[820px] overflow-hidden rounded-3xl border cf-surface p-4 sm:p-6">
       <div className="pointer-events-none absolute inset-0 cf-surface" />
 
       <div className="relative">
