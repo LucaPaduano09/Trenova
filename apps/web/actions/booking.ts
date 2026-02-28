@@ -299,3 +299,124 @@ export async function duplicateSession(
 
   redirect(`/app/booking/edit?id=${created.id}`);
 }
+const createSessionFromDashboardSchema = z.object({
+  clientId: z.string().min(1, "Seleziona un cliente"),
+  date: z.string().min(1, "Data mancante"), // YYYY-MM-DD
+  time: z.string().min(1, "Ora mancante"), // HH:mm
+  durationMin: z.coerce.number().int().min(15).max(240),
+  locationType: z.nativeEnum(LocationType),
+
+  price: z.string().optional().or(z.literal("")),
+  isPaid: z.string().optional().or(z.literal("")),
+  paymentMethod: z.string().optional().or(z.literal("")),
+  workoutTemplateId: z.string().optional().or(z.literal("")),
+  location: z.string().optional().or(z.literal("")),
+  notes: z.string().optional().or(z.literal("")),
+});
+
+export async function createSessionFromDashboard(
+  _prevState: { ok: boolean; error: Record<string, string[]> },
+  formData: FormData
+): Promise<CreateSessionState> {
+  await requireOwner();
+  const { tenant } = await requireTenantFromSession();
+
+  const parsed = createSessionFromDashboardSchema.safeParse({
+    clientId: formData.get("clientId")?.toString(),
+    date: formData.get("date")?.toString(),
+    time: formData.get("time")?.toString(),
+    durationMin: formData.get("durationMin"),
+    locationType: formData.get("locationType")?.toString(),
+
+    location: formData.get("location")?.toString(),
+    notes: formData.get("notes")?.toString(),
+    workoutTemplateId: formData.get("workoutTemplateId")?.toString(),
+    price: formData.get("price")?.toString(),
+    isPaid: formData.get("isPaid")?.toString(),
+    paymentMethod: formData.get("paymentMethod")?.toString(),
+  });
+
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+  }
+
+  // ✅ sicurezza tenant: client deve appartenere al tenant
+  const client = await prisma.client.findFirst({
+    where: { id: parsed.data.clientId, tenantId: tenant.id },
+    select: { id: true },
+  });
+
+  if (!client) {
+    return { ok: false as const, error: { clientId: ["Cliente non trovato"] } };
+  }
+
+  // date+time => startsAt locale
+  const start = new Date(`${parsed.data.date}T${parsed.data.time}:00`);
+  if (Number.isNaN(start.getTime())) {
+    return { ok: false as const, error: { time: ["Data/ora non valida"] } };
+  }
+
+  const end = new Date(start.getTime() + parsed.data.durationMin * 60 * 1000);
+
+  const priceCents = parseEuroToCents(parsed.data.price);
+  const paid = parsed.data.isPaid === "on";
+  const workoutTemplateId = parsed.data.workoutTemplateId?.trim() || null;
+
+  if (workoutTemplateId) {
+    const w = await prisma.workoutTemplate.findFirst({
+      where: { id: workoutTemplateId, tenantId: tenant.id, isArchived: false },
+      select: { id: true },
+    });
+
+    if (!w) {
+      return {
+        ok: false as const,
+        error: { workoutTemplateId: ["Workout non trovato"] },
+      };
+    }
+  }
+  const conflict = await prisma.appointment.findFirst({
+    where: {
+      tenantId: tenant.id,
+      status: { not: "CANCELED" },
+
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+
+      startsAt: { lt: end },
+      endsAt: { gt: start },
+    },
+    select: { id: true },
+  });
+
+  if (conflict) {
+    return {
+      ok: false as const,
+      error: {
+        time: ["Esiste già una sessione in questo intervallo orario"],
+      },
+    };
+  }
+  await prisma.appointment.create({
+    data: {
+      tenantId: tenant.id,
+      clientId: client.id,
+      startsAt: start,
+      endsAt: end,
+      locationType: parsed.data.locationType,
+      location: parsed.data.location?.trim() || null,
+      notes: parsed.data.notes?.trim() || null,
+      status: "SCHEDULED",
+      workoutTemplateId: workoutTemplateId ?? null,
+      priceCents,
+      currency: priceCents != null ? "EUR" : null,
+      paidAt: paid ? new Date() : null,
+      paymentMethod: parsed.data.paymentMethod?.trim() || null,
+    },
+  });
+
+  // ✅ refresh dashboard + booking + client list
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app/booking");
+
+  return { ok: true as const, error: {} };
+}

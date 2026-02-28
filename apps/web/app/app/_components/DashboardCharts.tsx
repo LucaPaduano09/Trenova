@@ -17,8 +17,10 @@ import {
 } from "recharts";
 import Heatmap from "./Heatmap";
 import type { DashboardStats } from "../../../actions/dashboard";
+import DashboardCalendar from "./DashboardCalendat";
 type Props = {
   data: DashboardStats;
+  workoutTemplates: { id: string; title: string }[];
 };
 
 function formatMoneyEUR(cents: number) {
@@ -52,7 +54,7 @@ const MIX_COLORS = [
   "#64748B",
 ];
 
-export default function DashboardCharts({ data }: Props) {
+export default function DashboardCharts({ data, workoutTemplates }: Props) {
   const { kpi, charts } = data;
 
   const compliancePie = [
@@ -98,7 +100,11 @@ export default function DashboardCharts({ data }: Props) {
           <div className="mt-1 text-xs cf-muted">Somma bundle attivi</div>
         </div>
       </div>
-
+      <DashboardCalendar
+        days={data.operational.calendar}
+        clients={data.operational.clientsLite}
+        workoutTemplates={workoutTemplates}
+      />
       <Heatmap days={data.charts.heatmap} />
 
       {/* Charts row 1 */}

@@ -65,7 +65,27 @@ export async function updateSession(formData: FormData) {
 
   const priceCents = parseEuroToCents(parsed.data.price);
   const paid = parsed.data.isPaid === "on";
+  const conflict = await prisma.appointment.findFirst({
+    where: {
+      tenantId: tenant.id,
+      status: { not: "CANCELED" },
 
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+
+      startsAt: { lt: end },
+      endsAt: { gt: start },
+    },
+    select: { id: true },
+  });
+
+  if (conflict) {
+    return {
+      ok: false as const,
+      error: {
+        time: ["Esiste già una sessione in questo intervallo orario"],
+      },
+    };
+  }
   await prisma.appointment.update({
     where: { id: existing.id },
     data: {

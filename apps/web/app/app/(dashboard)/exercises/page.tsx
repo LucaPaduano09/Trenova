@@ -1,5 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 100;
 
 import Link from "next/link";
 import { listExercises } from "../../../../actions/exercises";

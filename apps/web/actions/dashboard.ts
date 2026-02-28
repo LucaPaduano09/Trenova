@@ -345,6 +345,59 @@ export async function getDashboardStats() {
     const key = toISODate(d);
     heatmap.push({ date: key, count: heatmapCountMap.get(key) ?? 0 });
   }
+  // ================================
+  // CALENDAR (mese corrente) - appointments per day
+  // ================================
+  const calMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const calNextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const calendarAppointments = await prisma.appointment.findMany({
+    where: {
+      tenantId: tenant.id,
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+      startsAt: { gte: calMonthStart, lt: calNextMonthStart },
+    },
+    select: {
+      id: true,
+      startsAt: true,
+      endsAt: true,
+      status: true,
+      client: { select: { fullName: true, slug: true } },
+    },
+    orderBy: { startsAt: "asc" },
+  });
+
+  const calendarByDay = new Map<string, any>();
+  for (const a of calendarAppointments) {
+    const key = toISODate(a.startsAt);
+    if (!calendarByDay.has(key)) {
+      calendarByDay.set(key, {
+        date: key,
+        scheduled: 0,
+        completed: 0,
+        canceled: 0,
+        items: [] as any[],
+      });
+    }
+    const row = calendarByDay.get(key);
+    row.items.push({
+      id: a.id,
+      startsAt: a.startsAt,
+      endsAt: a.endsAt,
+      status: a.status,
+      client: a.client,
+    });
+    if (a.status === "SCHEDULED") row.scheduled += 1;
+    if (a.status === "COMPLETED") row.completed += 1;
+    if (a.status === "CANCELED") row.canceled += 1;
+  }
+
+  const calendar = Array.from(calendarByDay.values());
+  const clientsLite = await prisma.client.findMany({
+    where: { tenantId: tenant.id, status: "ACTIVE" },
+    select: { id: true, fullName: true },
+    orderBy: { fullName: "asc" },
+  });
   return {
     kpi: {
       clientsActive,
@@ -367,6 +420,8 @@ export async function getDashboardStats() {
     operational: {
       upcomingAppointments,
       clientsInactive,
+      calendar,
+      clientsLite,
     },
   };
 }

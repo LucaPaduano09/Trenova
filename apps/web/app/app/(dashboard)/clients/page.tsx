@@ -1,9 +1,7 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 100;
 
 import Link from "next/link";
 import { listClients } from "../../../../actions/clients";
-import ClientsAdvancedFilters from "./_components/ClientsAdvancedFilters";
 import ClientsFiltersBar from "./_components/ClientsFiltersBar";
 
 type SP = { [key: string]: string | string[] | undefined };
@@ -17,7 +15,7 @@ export default async function ClientsPage({
 }: {
   searchParams?: SP;
 }) {
-  const sp = (await searchParams) ?? {}; // ✅ QUESTO È IL PUNTO
+  const sp = (await searchParams) ?? {};
 
   const q = s(sp, "q") ?? "";
 
