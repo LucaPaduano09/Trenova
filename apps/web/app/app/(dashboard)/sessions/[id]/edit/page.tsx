@@ -4,9 +4,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { updateSession } from "../../../../../../actions/sessions";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 function toInputDateTimeLocal(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const yyyy = d.getFullYear();

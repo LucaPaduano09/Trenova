@@ -79,12 +79,7 @@ export async function updateSession(formData: FormData) {
   });
 
   if (conflict) {
-    return {
-      ok: false as const,
-      error: {
-        time: ["Esiste già una sessione in questo intervallo orario"],
-      },
-    };
+    throw new Error("Orario già occupato");
   }
   await prisma.appointment.update({
     where: { id: existing.id },
