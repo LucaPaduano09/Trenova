@@ -151,10 +151,11 @@ export default function DashboardCalendar({
   }, [openCreate]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+    <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[360px_1fr]">
       {/* ===================== CALENDAR (LEFT) ===================== */}
-      <div className="cf-card p-4">
-        <div className="flex items-center justify-between">
+      <div className="cf-card p-4 sm:p-5">
+        {/* Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold cf-text capitalize">
               {monthLabel}
@@ -164,6 +165,7 @@ export default function DashboardCalendar({
             </div>
           </div>
 
+          {/* Controls: su mobile “Oggi” prende spazio */}
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -177,7 +179,7 @@ export default function DashboardCalendar({
             <button
               type="button"
               onClick={() => setCursor(startOfMonth(new Date()))}
-              className="rounded-2xl border cf-surface px-3 py-2 text-xs cf-text hover:opacity-90"
+              className="flex-1 sm:flex-none rounded-2xl border cf-surface px-3 py-2 text-xs cf-text hover:opacity-90"
             >
               Oggi
             </button>
@@ -194,16 +196,16 @@ export default function DashboardCalendar({
         </div>
 
         {/* Week header */}
-        <div className="mt-4 grid grid-cols-7 gap-2 text-[11px] cf-faint">
+        <div className="mt-4 grid grid-cols-7 gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] cf-faint">
           {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((w) => (
-            <div key={w} className="px-1">
+            <div key={w} className="px-1 truncate">
               {w}
             </div>
           ))}
         </div>
 
         {/* Grid */}
-        <div className="mt-2 grid grid-cols-7 gap-2">
+        <div className="mt-2 grid grid-cols-7 gap-1.5 sm:gap-2">
           {grid.map((d) => {
             const iso = toISODate(d);
             const inMonth = d.getMonth() === cursor.getMonth();
@@ -224,16 +226,20 @@ export default function DashboardCalendar({
                 type="button"
                 onClick={() => setSelectedISO(iso)}
                 className={[
-                  "relative rounded-2xl border px-2 py-2 text-left transition",
+                  "relative w-full rounded-2xl border text-left transition",
                   "cf-surface",
                   inMonth ? "opacity-100" : "opacity-50",
                   isSelected ? "ring-2 ring-black/60 dark:ring-white/60" : "",
                   isToday ? "border-black/40 dark:border-white/30" : "",
                   "hover:opacity-90",
+
+                  // ✅ Mobile: quadrato, Desktop: più “card-like” comoda
+                  "aspect-square p-2",
+                  "lg:aspect-auto lg:h-[72px] lg:p-2",
                 ].join(" ")}
               >
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold cf-text">
+                <div className="flex items-start justify-between gap-1">
+                  <div className="text-[11px] sm:text-xs font-semibold cf-text">
                     {d.getDate()}
                   </div>
 
@@ -248,19 +254,27 @@ export default function DashboardCalendar({
                   ) : null}
                 </div>
 
-                {hasAny ? (
-                  <div className="mt-2 text-[11px] cf-faint">
-                    {info?.scheduled ? <span>{info.scheduled} S</span> : null}
-                    {info?.completed ? (
-                      <span className="ml-2">{info.completed} C</span>
-                    ) : null}
-                    {info?.canceled ? (
-                      <span className="ml-2">{info.canceled} X</span>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="mt-2 text-[11px] cf-faint">—</div>
-                )}
+                {/* ✅ counts: nascoste su mobile, visibili da lg */}
+                <div className="mt-2 hidden lg:block text-[11px] cf-faint">
+                  {hasAny ? (
+                    <>
+                      {info?.scheduled ? <span>{info.scheduled} S</span> : null}
+                      {info?.completed ? (
+                        <span className="ml-2">{info.completed} C</span>
+                      ) : null}
+                      {info?.canceled ? (
+                        <span className="ml-2">{info.canceled} X</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+
+                {/* micro placeholder su mobile per dare “aria” */}
+                <div className="mt-2 lg:hidden text-[10px] cf-faint">
+                  {hasAny ? " " : "—"}
+                </div>
               </button>
             );
           })}
@@ -281,10 +295,10 @@ export default function DashboardCalendar({
       </div>
 
       {/* ===================== DETAILS (RIGHT) ===================== */}
-      <div className="cf-card p-4">
+      <div className="cf-card p-4 sm:p-5">
         {/* Top row */}
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <div className="text-sm font-semibold cf-text">
               {fmtDayLabel(selectedDate)}
             </div>
@@ -293,7 +307,7 @@ export default function DashboardCalendar({
                 ? `${selectedSessions.length} sessioni`
                 : "Nessuna sessione"}
               {selectedDay ? (
-                <span className="ml-2 opacity-70">
+                <span className="hidden sm:inline ml-2 opacity-70">
                   • {selectedDay.scheduled} sched • {selectedDay.completed} comp
                   • {selectedDay.canceled} canc
                 </span>
@@ -301,7 +315,7 @@ export default function DashboardCalendar({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <a
               href={`/app/booking?range=all`}
               className="text-xs cf-faint hover:underline"
@@ -312,7 +326,7 @@ export default function DashboardCalendar({
             <button
               type="button"
               onClick={() => setOpenCreate(true)}
-              className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:opacity-90"
+              className="w-full sm:w-auto rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:opacity-90"
             >
               + Aggiungi sessione
             </button>
@@ -322,7 +336,7 @@ export default function DashboardCalendar({
         {/* List */}
         <div className="mt-4">
           {selectedSessions.length === 0 ? (
-            <div className="rounded-3xl border cf-surface p-6 text-sm cf-muted">
+            <div className="rounded-3xl border cf-surface p-5 sm:p-6 text-sm cf-muted">
               Nessuna sessione in questa data.
             </div>
           ) : (
@@ -347,20 +361,20 @@ export default function DashboardCalendar({
 
                 return (
                   <li key={it.id} className="rounded-3xl border cf-surface p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="text-sm font-semibold cf-text">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-sm font-semibold cf-text break-words">
                         {fmtTime(s)}
                         {e ? `–${fmtTime(e)}` : ""} • {it.client.fullName}
                       </div>
 
                       <span
-                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${chip}`}
+                        className={`w-fit rounded-full border px-2.5 py-1 text-[11px] font-semibold ${chip}`}
                       >
                         {label}
                       </span>
                     </div>
 
-                    <div className="mt-2 flex items-center gap-3 text-xs cf-muted">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs cf-muted">
                       <a
                         href={`/app/clients/${it.client.slug}?tab=sessions`}
                         className="hover:underline"
@@ -386,11 +400,10 @@ export default function DashboardCalendar({
       {/* ===================== MODAL CREATE ===================== */}
       {openCreate ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4"
           role="dialog"
           aria-modal="true"
         >
-          {/* Backdrop */}
           <button
             type="button"
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
@@ -398,8 +411,7 @@ export default function DashboardCalendar({
             aria-label="Chiudi"
           />
 
-          {/* Modal */}
-          <div className="relative w-full max-w-xl rounded-3xl border cf-surface p-6 shadow-2xl">
+          <div className="relative w-full max-w-xl rounded-3xl border cf-surface p-4 sm:p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-lg font-semibold cf-text">

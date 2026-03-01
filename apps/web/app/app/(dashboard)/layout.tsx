@@ -104,9 +104,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200/60 dark:border-white/10">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold tracking-tight cf-text">
-                  Menu
+                  <Image
+                    alt="brand-logo"
+                    width={150}
+                    height={50}
+                    src={"/landing/brand-image-1.png"}
+                    priority
+                    className="h-auto w-full object-contain"
+                  />
                 </span>
-                <span className="cf-chip">Kinetiq</span>
+                {/* <span className="cf-chip">Kinetiq</span> */}
               </div>
 
               <button
@@ -121,7 +128,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {/* content */}
             <div className="p-4">
               {/* brand */}
-              <div className="mb-4 cf-soft cf-hairline p-3">
+              {/* <div className="mb-4 cf-soft cf-hairline p-3">
                 <Image
                   alt="brand-logo"
                   width={150}
@@ -130,7 +137,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   priority
                   className="h-auto w-full object-contain"
                 />
-              </div>
+              </div> */}
 
               {/* nav */}
               <div className="space-y-1">

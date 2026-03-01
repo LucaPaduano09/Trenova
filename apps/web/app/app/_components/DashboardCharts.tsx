@@ -64,17 +64,17 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
   ];
 
   return (
-    <div className="mt-6 grid gap-6">
+    <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6">
       {/* KPI */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="cf-card">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">Clienti attivi</div>
           <div className="mt-1 text-2xl font-semibold cf-text">
             {kpi.clientsActive}
           </div>
         </div>
 
-        <div className="cf-card">
+        <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">Sessioni oggi</div>
           <div className="mt-1 text-2xl font-semibold cf-text">
             {kpi.sessionsToday}
@@ -84,7 +84,7 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
           </div>
         </div>
 
-        <div className="cf-card">
+        <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">Revenue mese</div>
           <div className="mt-1 text-2xl font-semibold cf-text">
             {formatMoneyEUR(kpi.revenueMonthCents)}
@@ -92,7 +92,7 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
           <div className="mt-1 text-xs cf-muted">Da sessioni pagate</div>
         </div>
 
-        <div className="cf-card">
+        <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">Crediti rimanenti</div>
           <div className="mt-1 text-2xl font-semibold cf-text">
             {kpi.creditsRemaining}
@@ -100,25 +100,37 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
           <div className="mt-1 text-xs cf-muted">Somma bundle attivi</div>
         </div>
       </div>
-      <DashboardCalendar
-        days={data.operational.calendar}
-        clients={data.operational.clientsLite}
-        workoutTemplates={workoutTemplates}
-      />
-      <Heatmap days={data.charts.heatmap} />
+
+      {/* Calendar: spesso overflow su mobile */}
+      <div className="-mx-3 px-3 sm:mx-0 sm:px-0 overflow-x-auto">
+        <div className="min-w-[760px] sm:min-w-0">
+          <DashboardCalendar
+            days={data.operational.calendar}
+            clients={data.operational.clientsLite}
+            workoutTemplates={workoutTemplates}
+          />
+        </div>
+      </div>
+
+      {/* Heatmap: idem */}
+      <div className="-mx-3 px-3 sm:mx-0 sm:px-0 overflow-x-auto">
+        <div className="min-w-[760px] sm:min-w-0">
+          <Heatmap days={data.charts.heatmap} />
+        </div>
+      </div>
 
       {/* Charts row 1 */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Sessions line */}
-        <div className="cf-card">
-          <div className="flex items-baseline justify-between">
+        <div className="cf-card p-4 sm:p-6">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-semibold cf-text">
               Sessioni (ultimi 30 giorni)
             </h2>
             <div className="text-xs cf-muted">Totali + completate</div>
           </div>
 
-          <div className="mt-4 h-72">
+          <div className="mt-4 h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={charts.sessionsByDay}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -149,15 +161,15 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
         </div>
 
         {/* Revenue bar */}
-        <div className="cf-card">
-          <div className="flex items-baseline justify-between">
+        <div className="cf-card p-4 sm:p-6">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-semibold cf-text">
               Revenue (ultime 8 settimane)
             </h2>
             <div className="text-xs cf-muted">Somma pagamenti</div>
           </div>
 
-          <div className="mt-4 h-72">
+          <div className="mt-4 h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={charts.revenueByWeek}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -165,7 +177,6 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v: any) => formatMoneyEUR(Number(v))} />
                 <Legend />
-
                 <Bar
                   dataKey="revenueCents"
                   name="Revenue"
@@ -178,11 +189,11 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
       </div>
 
       {/* Charts row 2 */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Package mix pie */}
-        <div className="cf-card">
+        <div className="cf-card p-4 sm:p-6">
           <h2 className="text-sm font-semibold cf-text">Mix pacchetti (top)</h2>
-          <div className="mt-4 h-72">
+          <div className="mt-4 h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -210,11 +221,11 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
         </div>
 
         {/* Compliance pie */}
-        <div className="cf-card">
+        <div className="cf-card p-4 sm:p-6">
           <h2 className="text-sm font-semibold cf-text">
             Compliance (ultimi 30 giorni)
           </h2>
-          <div className="mt-4 h-72">
+          <div className="mt-4 h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -225,7 +236,7 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
                   outerRadius={110}
                   paddingAngle={2}
                   labelLine={false}
-                  label={false} // ✅ IMPORTANT: niente label esterne
+                  label={false}
                 >
                   {compliancePie.map((entry) => (
                     <Cell
@@ -235,7 +246,6 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
                   ))}
                 </Pie>
 
-                {/* ✅ testo centrale: percentuale completate */}
                 <text
                   x="50%"
                   y="50%"
@@ -267,18 +277,18 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
       </div>
 
       {/* Operational */}
-      <div className="cf-card">
+      <div className="cf-card p-4 sm:p-6">
         <h2 className="text-sm font-semibold cf-text">Prossime sessioni</h2>
         <ul className="mt-3 space-y-2 text-sm cf-muted">
           {data.operational.upcomingAppointments.map((a: any) => (
-            <li key={a.id}>
+            <li key={a.id} className="break-words">
               {new Date(a.startsAt).toLocaleString()} — {a.client.fullName}
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="cf-card">
+      <div className="cf-card p-4 sm:p-6">
         <h2 className="text-sm font-semibold cf-text">Clienti inattivi</h2>
         <div className="mt-2 text-sm cf-muted">
           {data.operational.clientsInactive.length} clienti senza sessioni negli
@@ -286,22 +296,22 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
         </div>
       </div>
 
-      <div className="cf-card">
+      <div className="cf-card p-4 sm:p-6">
         <div className="text-xs cf-muted">Volume settimanale</div>
         <div className="mt-1 text-2xl font-semibold cf-muted">
           {data.kpi.weeklyVolumeKg.toLocaleString()} kg
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="cf-card">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+        <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">Abbonamenti</div>
           <div className="mt-1 text-2xl font-semibold cf-muted">
             € {data.kpi.mrr.toLocaleString()}
           </div>
         </div>
 
-        <div className="cf-card">
+        <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">LTV medio cliente</div>
           <div className="mt-1 text-2xl font-semibold cf-muted">
             € {(data.kpi.ltvAverage / 100).toFixed(2)}
