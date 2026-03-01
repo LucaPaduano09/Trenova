@@ -51,7 +51,7 @@ export default function PricingPage() {
 
   const faqs = [
     {
-      q: "Posso provare Kinetiq prima di pagare?",
+      q: "Posso provare Trenova prima di pagare?",
       a: "Sì. Puoi partire con una prova gratuita (o con il piano Starter) e passare a Pro quando vuoi.",
     },
     {
@@ -60,7 +60,7 @@ export default function PricingPage() {
     },
     {
       q: "Ci sono limiti su clienti o sessioni?",
-      a: "No: i clienti sono illimitati. Kinetiq è pensato per scalare con te.",
+      a: "No: i clienti sono illimitati. Trenova è pensato per scalare con te.",
     },
     {
       q: "Offrite fatturazione annuale?",

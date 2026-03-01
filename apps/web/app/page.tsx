@@ -249,7 +249,7 @@ export default function LandingPage() {
           <div className="relative max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-semibold text-white">
-                Perché Kinetiq è{" "}
+                Perché Trenova è{" "}
                 <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
                   diverso
                 </span>
