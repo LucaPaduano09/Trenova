@@ -3,6 +3,7 @@ import Link from "next/link";
 import CinematicKinetiqLoop from "./components/CinematicKinetiqLoop";
 import { PerChiEKinetiq } from "./components/PerChi";
 import { FooterKinetiq } from "./components/FooterKinetiq";
+import CookieBanner from "./components/CookieBanner";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -357,6 +358,7 @@ export default function LandingPage() {
         </section>
         <FooterKinetiq />
       </main>
+      <CookieBanner />
     </div>
   );
 }
