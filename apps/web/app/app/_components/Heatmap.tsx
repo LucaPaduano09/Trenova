@@ -79,96 +79,70 @@ export default function Heatmap({ days }: { days: Day[] }) {
       </div>
 
       {/* Month labels */}
-      <div className="mt-4 overflow-x-auto">
-        <div className="min-w-[760px]">
-          <div className="mb-2 flex items-center gap-1 pl-10">
-            {columns.map((_, idx) => {
-              const tick = monthTicks.find((t) => t.col === idx);
-              return (
-                <div key={idx} className="w-3">
-                  {tick ? (
-                    <div className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                      {tick.label}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex gap-3">
-            {/* Y labels */}
-            <div className="w-8 pt-[2px]">
-              {["lun", "", "mer", "", "ven", "", ""].map((l, i) => (
-                <div
-                  key={i}
-                  className="h-3 mb-1 text-[10px] text-neutral-500 dark:text-neutral-400"
-                >
-                  {l}
-                </div>
-              ))}
+      {/* Month labels + grid */}
+      <div className="mt-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
+          <div className="min-w-max">
+            {/* labels mesi */}
+            <div className="mb-2 flex items-center gap-1 pl-10">
+              {columns.map((_, idx) => {
+                const tick = monthTicks.find((t) => t.col === idx);
+                return (
+                  <div key={idx} className="w-3">
+                    {tick ? (
+                      <div className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                        {tick.label}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Grid */}
-            <div className="flex gap-1">
-              {columns.map((col, colIdx) => (
-                <div key={colIdx} className="flex flex-col gap-1">
-                  {col.map((cell, rowIdx) => {
-                    if (!cell) {
-                      return (
-                        <div
-                          key={rowIdx}
-                          className="h-3 w-3 rounded-[4px] bg-transparent"
-                        />
-                      );
-                    }
-                    return (
-                      <button
-                        key={rowIdx}
-                        type="button"
-                        onMouseEnter={() => setHover(cell)}
-                        onMouseLeave={() => setHover(null)}
-                        className={[
-                          "h-3 w-3 rounded-[4px] border border-black/5 dark:border-white/10 transition",
-                          intensityClass(cell.count),
-                        ].join(" ")}
-                        aria-label={`${cell.date}: ${cell.count} completate`}
-                        title={`${cell.date}: ${cell.count} completate`}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Legend + hover */}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs cf-muted">
-              {hover ? (
-                <span>
-                  <span className="font-medium cf-text">{hover.count}</span>{" "}
-                  completate • <span className="cf-text">{hover.date}</span>
-                </span>
-              ) : (
-                <span>Passa col mouse per dettagli</span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 text-xs cf-muted">
-              <span>meno</span>
-              <div className="flex items-center gap-1">
-                {[0, 1, 2, 3, 4].map((n) => (
+            <div className="flex gap-3">
+              {/* Y labels */}
+              <div className="w-8 pt-[2px] shrink-0">
+                {["lun", "", "mer", "", "ven", "", ""].map((l, i) => (
                   <div
-                    key={n}
-                    className={[
-                      "h-3 w-3 rounded-[4px] border border-black/5 dark:border-white/10",
-                      intensityClass(n),
-                    ].join(" ")}
-                  />
+                    key={i}
+                    className="h-3 mb-1 text-[10px] text-neutral-500 dark:text-neutral-400"
+                  >
+                    {l}
+                  </div>
                 ))}
               </div>
-              <span>più</span>
+
+              {/* Grid */}
+              <div className="flex gap-1">
+                {columns.map((col, colIdx) => (
+                  <div key={colIdx} className="flex flex-col gap-1">
+                    {col.map((cell, rowIdx) => {
+                      if (!cell) {
+                        return (
+                          <div
+                            key={rowIdx}
+                            className="h-3 w-3 rounded-[4px] bg-transparent"
+                          />
+                        );
+                      }
+                      return (
+                        <button
+                          key={rowIdx}
+                          type="button"
+                          onMouseEnter={() => setHover(cell)}
+                          onMouseLeave={() => setHover(null)}
+                          className={[
+                            "h-3 w-3 rounded-[4px] border border-black/5 dark:border-white/10 transition",
+                            intensityClass(cell.count),
+                          ].join(" ")}
+                          aria-label={`${cell.date}: ${cell.count} completate`}
+                          title={`${cell.date}: ${cell.count} completate`}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

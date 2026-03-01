@@ -153,24 +153,24 @@ export default function DashboardCalendar({
   return (
     <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[360px_1fr]">
       {/* ===================== CALENDAR (LEFT) ===================== */}
-      <div className="cf-card p-4 sm:p-5">
+      {/* ===================== CALENDAR (LEFT) ===================== */}
+      <div className="cf-card p-4 sm:p-5 overflow-hidden min-w-0">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between min-w-0">
           <div className="min-w-0">
-            <div className="text-sm font-semibold cf-text capitalize">
+            <div className="text-sm font-semibold cf-text capitalize truncate">
               {monthLabel}
             </div>
-            <div className="text-xs cf-muted">
+            <div className="text-xs cf-muted truncate">
               Click su un giorno per vedere dettagli
             </div>
           </div>
 
-          {/* Controls: su mobile “Oggi” prende spazio */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               onClick={() => setCursor((c) => addMonths(c, -1))}
-              className="h-9 w-9 rounded-2xl border cf-surface cf-text hover:opacity-90"
+              className="h-9 w-9 shrink-0 rounded-2xl border cf-surface cf-text hover:opacity-90"
               aria-label="Mese precedente"
             >
               ‹
@@ -179,7 +179,7 @@ export default function DashboardCalendar({
             <button
               type="button"
               onClick={() => setCursor(startOfMonth(new Date()))}
-              className="flex-1 sm:flex-none rounded-2xl border cf-surface px-3 py-2 text-xs cf-text hover:opacity-90"
+              className="flex-1 sm:flex-none min-w-0 rounded-2xl border cf-surface px-3 py-2 text-xs cf-text hover:opacity-90 truncate"
             >
               Oggi
             </button>
@@ -187,7 +187,7 @@ export default function DashboardCalendar({
             <button
               type="button"
               onClick={() => setCursor((c) => addMonths(c, 1))}
-              className="h-9 w-9 rounded-2xl border cf-surface cf-text hover:opacity-90"
+              className="h-9 w-9 shrink-0 rounded-2xl border cf-surface cf-text hover:opacity-90"
               aria-label="Mese successivo"
             >
               ›
@@ -195,89 +195,100 @@ export default function DashboardCalendar({
           </div>
         </div>
 
-        {/* Week header */}
-        <div className="mt-4 grid grid-cols-7 gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] cf-faint">
-          {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((w) => (
-            <div key={w} className="px-1 truncate">
-              {w}
+        {/* ✅ QUI: niente min-w fissi, niente -mx, solo overflow controllato */}
+        <div className="mt-4 w-full max-w-full overflow-x-auto overscroll-x-contain">
+          <div className="w-full">
+            {/* Week header */}
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] cf-faint">
+              {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((w) => (
+                <div key={w} className="px-1 truncate">
+                  {w}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Grid */}
-        <div className="mt-2 grid grid-cols-7 gap-1.5 sm:gap-2">
-          {grid.map((d) => {
-            const iso = toISODate(d);
-            const inMonth = d.getMonth() === cursor.getMonth();
-            const isToday = sameDay(d, today);
-            const isSelected = iso === selectedISO;
+            {/* Grid */}
+            <div className="mt-2 grid grid-cols-7 gap-1.5 sm:gap-2">
+              {grid.map((d) => {
+                const iso = toISODate(d);
+                const inMonth = d.getMonth() === cursor.getMonth();
+                const isToday = sameDay(d, today);
+                const isSelected = iso === selectedISO;
 
-            const info = map.get(iso);
-            const total =
-              (info?.scheduled ?? 0) +
-              (info?.completed ?? 0) +
-              (info?.canceled ?? 0);
+                const info = map.get(iso);
+                const total =
+                  (info?.scheduled ?? 0) +
+                  (info?.completed ?? 0) +
+                  (info?.canceled ?? 0);
 
-            const hasAny = total > 0;
+                const hasAny = total > 0;
 
-            return (
-              <button
-                key={iso}
-                type="button"
-                onClick={() => setSelectedISO(iso)}
-                className={[
-                  "relative w-full rounded-2xl border text-left transition",
-                  "cf-surface",
-                  inMonth ? "opacity-100" : "opacity-50",
-                  isSelected ? "ring-2 ring-black/60 dark:ring-white/60" : "",
-                  isToday ? "border-black/40 dark:border-white/30" : "",
-                  "hover:opacity-90",
+                return (
+                  <button
+                    key={iso}
+                    type="button"
+                    onClick={() => setSelectedISO(iso)}
+                    className={[
+                      "relative w-full rounded-2xl border text-left transition",
+                      "cf-surface",
+                      inMonth ? "opacity-100" : "opacity-50",
+                      isSelected
+                        ? "ring-2 ring-black/60 dark:ring-white/60"
+                        : "",
+                      isToday ? "border-black/40 dark:border-white/30" : "",
+                      "hover:opacity-90",
 
-                  // ✅ Mobile: quadrato, Desktop: più “card-like” comoda
-                  "aspect-square p-2",
-                  "lg:aspect-auto lg:h-[72px] lg:p-2",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-1">
-                  <div className="text-[11px] sm:text-xs font-semibold cf-text">
-                    {d.getDate()}
-                  </div>
+                      // Mobile square, Desktop comfy
+                      "aspect-square p-2",
+                      "lg:aspect-auto lg:h-[72px] lg:p-2",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="text-[11px] sm:text-xs font-semibold cf-text">
+                        {d.getDate()}
+                      </div>
 
-                  {hasAny ? (
-                    <div className="flex items-center gap-1">
-                      {info?.scheduled ? <Dot className="bg-blue-500" /> : null}
-                      {info?.completed ? (
-                        <Dot className="bg-emerald-500" />
+                      {hasAny ? (
+                        <div className="flex items-center gap-1">
+                          {info?.scheduled ? (
+                            <Dot className="bg-blue-500" />
+                          ) : null}
+                          {info?.completed ? (
+                            <Dot className="bg-emerald-500" />
+                          ) : null}
+                          {info?.canceled ? (
+                            <Dot className="bg-rose-500" />
+                          ) : null}
+                        </div>
                       ) : null}
-                      {info?.canceled ? <Dot className="bg-rose-500" /> : null}
                     </div>
-                  ) : null}
-                </div>
 
-                {/* ✅ counts: nascoste su mobile, visibili da lg */}
-                <div className="mt-2 hidden lg:block text-[11px] cf-faint">
-                  {hasAny ? (
-                    <>
-                      {info?.scheduled ? <span>{info.scheduled} S</span> : null}
-                      {info?.completed ? (
-                        <span className="ml-2">{info.completed} C</span>
-                      ) : null}
-                      {info?.canceled ? (
-                        <span className="ml-2">{info.canceled} X</span>
-                      ) : null}
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </div>
+                    <div className="mt-2 hidden lg:block text-[11px] cf-faint">
+                      {hasAny ? (
+                        <>
+                          {info?.scheduled ? (
+                            <span>{info.scheduled} S</span>
+                          ) : null}
+                          {info?.completed ? (
+                            <span className="ml-2">{info.completed} C</span>
+                          ) : null}
+                          {info?.canceled ? (
+                            <span className="ml-2">{info.canceled} X</span>
+                          ) : null}
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </div>
 
-                {/* micro placeholder su mobile per dare “aria” */}
-                <div className="mt-2 lg:hidden text-[10px] cf-faint">
-                  {hasAny ? " " : "—"}
-                </div>
-              </button>
-            );
-          })}
+                    <div className="mt-2 lg:hidden text-[10px] cf-faint">
+                      {hasAny ? " " : "—"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Legend */}

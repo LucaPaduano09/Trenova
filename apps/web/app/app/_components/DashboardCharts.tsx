@@ -102,8 +102,8 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
       </div>
 
       {/* Calendar: spesso overflow su mobile */}
-      <div className="-mx-3 px-3 sm:mx-0 sm:px-0 overflow-x-auto">
-        <div className="min-w-[760px] sm:min-w-0">
+      <div className="mt-6 w-full max-w-full overflow-x-auto overscroll-x-contain sm:overflow-visible">
+        <div className="min-w-0 sm:min-w-0">
           <DashboardCalendar
             days={data.operational.calendar}
             clients={data.operational.clientsLite}
@@ -113,10 +113,8 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
       </div>
 
       {/* Heatmap: idem */}
-      <div className="-mx-3 px-3 sm:mx-0 sm:px-0 overflow-x-auto">
-        <div className="min-w-[760px] sm:min-w-0">
-          <Heatmap days={data.charts.heatmap} />
-        </div>
+      <div className="mt-6 w-full max-w-full">
+        <Heatmap days={data.charts.heatmap} />
       </div>
 
       {/* Charts row 1 */}
