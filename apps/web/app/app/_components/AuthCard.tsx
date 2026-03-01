@@ -126,7 +126,7 @@ export default function AuthCard({
         setEmailCheck({ status: "checking" });
 
         const res = await fetch(
-          `/api/auth/check-email?email=${encodeURIComponent(emailNorm)}`,
+          `/api/check-email?email=${encodeURIComponent(emailNorm)}`,
           { cache: "no-store" }
         );
 
