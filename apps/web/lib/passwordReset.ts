@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendResetPasswordEmail } from "@/lib/email";
-
+export const runtime = "nodejs";
 export async function createAndSendPasswordReset(args: {
   email: string;
   name?: string | null;

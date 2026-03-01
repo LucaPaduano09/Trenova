@@ -6,6 +6,9 @@ import { ThemeProvider } from "../components/theme-provider";
 export const metadata: Metadata = {
   title: "Trenova",
   description: "La miglior piattaforma per Personal Trainer",
+  icons: {
+    icon: "/icons/brand-nav-v2.svg",
+  },
 };
 
 export default function RootLayout({

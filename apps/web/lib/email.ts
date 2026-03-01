@@ -1,6 +1,7 @@
 // apps/web/lib/email.ts
+"use server";
+import "server-only";
 import { Resend } from "resend";
-
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function sendVerifyEmail(opts: {
