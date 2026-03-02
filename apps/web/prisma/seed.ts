@@ -706,7 +706,7 @@ async function main() {
   }
 
   console.log(
-    `✅ GlobalExercise seed completato: ${entries.length} (creati ${created}, aggiornati ${updated})`
+    ` ' GlobalExercise seed completato: ${entries.length} (creati ${created}, aggiornati ${updated})`
   );
   console.log(
     `ℹ️ Tag IT esempio: ${cap(TAG.petto)}, ${cap(TAG.dorso)}, ${cap(

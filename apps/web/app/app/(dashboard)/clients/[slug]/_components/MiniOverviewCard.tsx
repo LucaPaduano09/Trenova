@@ -56,7 +56,7 @@ export function MiniOverviewCard({
     ? `${fmtDateShort(kpi.nextAt)} • ${fmtTimeShort(kpi.nextAt)}`
     : "—";
 
-  // ✅ qui la fix: usa la tua recencyLabel
+  //  ' qui la fix: usa la tua recencyLabel
   const lastLabel = recencyLabel(now, kpi?.lastAt ?? null);
 
   return (

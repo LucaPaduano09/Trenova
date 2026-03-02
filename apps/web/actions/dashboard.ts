@@ -92,7 +92,7 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  // ✅ Calendar month (driven by monthStartISO param)
+  //  ' Calendar month (driven by monthStartISO param)
   const calMonthStart = parseMonthStartISO(monthStartISO);
   const calNextMonthStart = new Date(
     calMonthStart.getFullYear(),
@@ -236,7 +236,7 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     select: { startsAt: true },
   });
 
-  // ✅ Calendar appointments (for requested month)
+  //  ' Calendar appointments (for requested month)
   const calendarAppointmentsPromise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -403,7 +403,7 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     heatmap.push({ date: key, count: heatmapCountMap.get(key) ?? 0 });
   }
 
-  // ✅ Calendar by day (REQUESTED month)
+  //  ' Calendar by day (REQUESTED month)
   const calendarByDay = new Map<
     string,
     {
@@ -444,7 +444,7 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   const calendar = Array.from(calendarByDay.values());
 
   return {
-    monthStartISO: calMonthStartISOSafe, // ✅ utile da passare al client
+    monthStartISO: calMonthStartISOSafe, //  ' utile da passare al client
     kpi: {
       clientsActive,
       sessionsToday,

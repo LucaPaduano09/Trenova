@@ -212,7 +212,7 @@ export default function AuthCard({
           return;
         }
 
-        // ✅ qui NON facciamo signIn: mostriamo messaggio email inviata
+        //  ' qui NON facciamo signIn: mostriamo messaggio email inviata
         if (r.needsVerify) {
           setSent(true);
           return;
@@ -432,7 +432,7 @@ export default function AuthCard({
                   </span>
                 ) : emailCheck.status === "available" ? (
                   <span className="text-emerald-600 dark:text-emerald-300">
-                    Email disponibile ✅
+                    Email disponibile '
                   </span>
                 ) : emailCheck.status === "taken" ? (
                   <span className="text-red-600 dark:text-red-300">

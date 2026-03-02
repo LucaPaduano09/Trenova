@@ -51,7 +51,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Linked user to tenant:", { email, tenantSlug: slug });
+  console.log(" ' Linked user to tenant:", { email, tenantSlug: slug });
 }
 
 main()

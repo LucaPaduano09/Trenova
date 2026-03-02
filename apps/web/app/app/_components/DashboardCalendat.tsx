@@ -73,7 +73,7 @@ export default function DashboardCalendar({
   clients,
   workoutTemplates,
 }: {
-  monthStartISO: string; // ✅ REQUIRED: YYYY-MM-01
+  monthStartISO: string; //  ' REQUIRED: YYYY-MM-01
   days: CalDay[];
   clients: { id: string; fullName: string }[];
   workoutTemplates: { id: string; title: string }[];
@@ -471,7 +471,7 @@ function QuickCreateSession({
     ) as HTMLFormElement | null;
     form?.reset();
 
-    router.refresh(); // ✅ ricarica anche il mese corrente (server)
+    router.refresh(); //  ' ricarica anche il mese corrente (server)
     onCreated?.();
   }, [state, onCreated, router]);
 

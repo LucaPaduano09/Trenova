@@ -527,7 +527,7 @@ export default function CinematicKinetiqLoop({
           }
         }
 
-        /* ✅ Mobile optimizations */
+        /*  ' Mobile optimizations */
         @media (max-width: 640px) {
           /* kill the heaviest overlay */
           .kinetiq-scanlinesOpt {
@@ -559,7 +559,7 @@ export default function CinematicKinetiqLoop({
           }
         }
 
-        /* ✅ Reduced motion */
+        /*  ' Reduced motion */
         @media (prefers-reduced-motion: reduce) {
           .kinetiq-sweep,
           .kinetiq-particles,

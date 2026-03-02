@@ -80,7 +80,7 @@ export default async function BookingPage({
 }) {
   const { tenant } = await requireTenantFromSession();
 
-  // ✅ IMPORTANT: searchParams is a Promise in recent Next
+  //  ' IMPORTANT: searchParams is a Promise in recent Next
   const sp = await searchParams;
   const range: RangeKey = sp.range ?? "week";
   const status: AppointmentStatus | undefined = sp.status;

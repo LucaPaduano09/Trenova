@@ -62,7 +62,7 @@ export async function registerWithPassword(input: {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  // ✅ bootstrapping tenant solo per PT/OWNER
+  //  ' bootstrapping tenant solo per PT/OWNER
   const shouldCreateTenant = variant === "pt";
 
   const created = await prisma.$transaction(async (tx) => {
@@ -96,7 +96,7 @@ export async function registerWithPassword(input: {
         fullName: fullName?.trim() || null,
         role: variant === "client" ? "CLIENT" : "OWNER",
         emailVerified: null,
-        tenantId: tenantId, // ✅ collega se creato
+        tenantId: tenantId, //  ' collega se creato
       },
       select: { id: true, tenantId: true },
     });

@@ -15,7 +15,7 @@ function useInViewOnce<T extends HTMLElement>(
       ([entry]) => {
         if (entry.isIntersecting) {
           setInView(true);
-          obs.disconnect(); // ✅ only once
+          obs.disconnect(); //  ' only once
         }
       },
       { threshold: 0.25, rootMargin: "0px 0px -10% 0px", ...(options || {}) }

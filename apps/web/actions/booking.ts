@@ -123,7 +123,7 @@ const updateSessionSchema = z.object({
   durationMin: z.coerce.number().int().min(15).max(240),
   locationType: z.nativeEnum(LocationType),
 
-  // ✅ REQUIRED: vogliamo sempre poterlo cambiare in edit
+  //  ' REQUIRED: vogliamo sempre poterlo cambiare in edit
   status: z.nativeEnum(AppointmentStatus),
 
   price: z.string().optional().or(z.literal("")),
@@ -190,7 +190,7 @@ export async function updateSession(
   const priceCents = parseEuroToCents(parsed.data.price);
   const paid = parsed.data.isPaid === "on";
 
-  // ✅ paidAt smart:
+  //  ' paidAt smart:
   // - se CANCELED => mai pagata
   // - se paid ON  => mantieni paidAt se già esiste, altrimenti now
   // - se paid OFF => null
@@ -206,7 +206,7 @@ export async function updateSession(
       location: parsed.data.location?.trim() || null,
       notes: parsed.data.notes?.trim() || null,
 
-      status, // ✅ sempre aggiornato
+      status, //  ' sempre aggiornato
 
       priceCents,
       currency: priceCents != null ? "EUR" : null,
@@ -340,7 +340,7 @@ export async function createSessionFromDashboard(
     return { ok: false as const, error: parsed.error.flatten().fieldErrors };
   }
 
-  // ✅ sicurezza tenant: client deve appartenere al tenant
+  //  ' sicurezza tenant: client deve appartenere al tenant
   const client = await prisma.client.findFirst({
     where: { id: parsed.data.clientId, tenantId: tenant.id },
     select: { id: true },
@@ -414,7 +414,7 @@ export async function createSessionFromDashboard(
     },
   });
 
-  // ✅ refresh dashboard + booking + client list
+  //  ' refresh dashboard + booking + client list
   revalidatePath("/app/dashboard");
   revalidatePath("/app/booking");
 
