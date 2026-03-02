@@ -4,15 +4,6 @@ import { prisma } from "@/lib/db";
 import { requireTenantFromSession } from "@/lib/tenant";
 import { unstable_cache, revalidateTag } from "next/cache";
 
-type DayPoint = {
-  date: string;
-  sessions: number;
-  completed: number;
-  canceled: number;
-};
-type WeekPoint = { weekStart: string; revenueCents: number };
-type PackageMixPoint = { name: string; count: number };
-
 /** ---------------- date helpers ---------------- */
 
 function startOfDay(d: Date) {
@@ -24,7 +15,6 @@ function addDays(d: Date, n: number) {
   return x;
 }
 function toISODate(d: Date) {
-  // YYYY-MM-DD in local time
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const da = String(d.getDate()).padStart(2, "0");
@@ -33,40 +23,63 @@ function toISODate(d: Date) {
 function startOfWeekMonday(d: Date) {
   const x = startOfDay(d);
   const day = x.getDay(); // 0=Sun..6=Sat
-  const diff = (day === 0 ? -6 : 1) - day; // move to Monday
+  const diff = (day === 0 ? -6 : 1) - day;
   x.setDate(x.getDate() + diff);
   return x;
+}
+function parseMonthStartISO(input?: string | null) {
+  // expects YYYY-MM-DD (we will use YYYY-MM-01); fallback to current month
+  const now = new Date();
+  const fallback = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  if (!input) return fallback;
+
+  // Safe parse to local midnight
+  const d = new Date(input + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return fallback;
+
+  return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
 /** ---------------- caching ---------------- */
 
-// tag per invalidare cache dashboard per tenant
-function dashboardTag(tenantId: string) {
+function dashboardTagTenant(tenantId: string) {
   return `dashboard:${tenantId}`;
 }
+function dashboardTagTenantMonth(tenantId: string, monthStartISO: string) {
+  return `dashboard:${tenantId}:${monthStartISO}`;
+}
 
-// cache builder per-tenant (così tags può includere tenantId)
-function getCachedDashboardFn(tenantId: string) {
+function getCachedDashboardFn(tenantId: string, monthStartISO: string) {
   return unstable_cache(
-    async () => buildDashboardStats(tenantId),
-    // cache key
-    [`dashboard-stats:${tenantId}`],
-    // cache policy
-    { revalidate: 30, tags: [dashboardTag(tenantId)] }
+    async () => buildDashboardStats(tenantId, monthStartISO),
+    [`dashboard-stats:${tenantId}:${monthStartISO}`],
+    {
+      revalidate: 30,
+      tags: [
+        dashboardTagTenant(tenantId),
+        dashboardTagTenantMonth(tenantId, monthStartISO),
+      ],
+    }
   );
 }
 
 /**
- * Chiamala dalle actions che modificano appointments / payments / workouts
- * es: createSession/updateSession/duplicateSession ecc.
+ * Se non passi monthStartISO invalida “tutti i mesi” del tenant (tag generale).
+ * Se passi monthStartISO invalida anche quel mese specifico.
  */
-export async function invalidateDashboardStatsCache(tenantId: string) {
-  revalidateTag(dashboardTag(tenantId), "max");
+export async function invalidateDashboardStatsCache(
+  tenantId: string,
+  monthStartISO?: string
+) {
+  revalidateTag(dashboardTagTenant(tenantId), "max");
+  if (monthStartISO)
+    revalidateTag(dashboardTagTenantMonth(tenantId, monthStartISO), "max");
 }
 
-/** ---------------- core builder (NO auth inside) ---------------- */
+/** ---------------- core builder ---------------- */
 
-async function buildDashboardStats(tenantId: string) {
+async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   const now = new Date();
   const today = startOfDay(now);
   const tomorrow = addDays(today, 1);
@@ -75,8 +88,18 @@ async function buildDashboardStats(tenantId: string) {
   const weekStart = startOfWeekMonday(now);
   const nextWeekStart = addDays(weekStart, 7);
 
+  // KPI month (current month for KPI)
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  // ✅ Calendar month (driven by monthStartISO param)
+  const calMonthStart = parseMonthStartISO(monthStartISO);
+  const calNextMonthStart = new Date(
+    calMonthStart.getFullYear(),
+    calMonthStart.getMonth() + 1,
+    1
+  );
+  const calMonthStartISOSafe = toISODate(calMonthStart); // normalize
 
   // ============ KPI (parallel) ============
   const clientsActivePromise = prisma.client.count({
@@ -126,7 +149,7 @@ async function buildDashboardStats(tenantId: string) {
     select: { remainingSessions: true },
   });
 
-  // ============ CHARTS BASE (parallel) ============
+  // ============ CHARTS BASE ============
   const appointments30Promise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -152,7 +175,7 @@ async function buildDashboardStats(tenantId: string) {
     select: { package: { select: { name: true } } },
   });
 
-  // ============ OPERATIONAL (parallel) ============
+  // ============ OPERATIONAL ============
   const upcomingAppointmentsPromise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -160,9 +183,7 @@ async function buildDashboardStats(tenantId: string) {
       startsAt: { gte: now },
       status: "SCHEDULED",
     },
-    include: {
-      client: { select: { fullName: true } },
-    },
+    include: { client: { select: { fullName: true } } },
     orderBy: { startsAt: "asc" },
     take: 5,
   });
@@ -183,24 +204,13 @@ async function buildDashboardStats(tenantId: string) {
   });
 
   const workoutLogsWeekPromise = prisma.workoutSetLog.findMany({
-    where: {
-      session: {
-        tenantId,
-        updatedAt: { gte: weekStart },
-      },
-    },
+    where: { session: { tenantId, updatedAt: { gte: weekStart } } },
     select: { weight: true, reps: true },
   });
 
   const monthlyActivePromise = prisma.packagePurchase.findMany({
-    where: {
-      tenantId,
-      active: true,
-      package: { type: "MONTHLY" },
-    },
-    include: {
-      package: { select: { monthlyPrice: true } },
-    },
+    where: { tenantId, active: true, package: { type: "MONTHLY" } },
+    include: { package: { select: { monthlyPrice: true } } },
   });
 
   const paidAppointmentsAllPromise = prisma.appointment.findMany({
@@ -213,6 +223,7 @@ async function buildDashboardStats(tenantId: string) {
     select: { clientId: true, priceCents: true },
   });
 
+  // Heatmap 90 days
   const heatmapDays = 90;
   const heatmapStart = addDays(today, -(heatmapDays - 1));
   const completedForHeatmapPromise = prisma.appointment.findMany({
@@ -225,10 +236,7 @@ async function buildDashboardStats(tenantId: string) {
     select: { startsAt: true },
   });
 
-  // calendar mese corrente
-  const calMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const calNextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
+  // ✅ Calendar appointments (for requested month)
   const calendarAppointmentsPromise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -290,6 +298,7 @@ async function buildDashboardStats(tenantId: string) {
   ]);
 
   // ============ compute ============
+
   const revenueMonthCents = paidAppointmentsMonth.reduce(
     (sum, a) => sum + (a.priceCents ?? 0),
     0
@@ -301,13 +310,15 @@ async function buildDashboardStats(tenantId: string) {
   );
 
   // Sessions by day (last 30)
-  const dayMap = new Map<string, DayPoint>();
+  const dayMap = new Map<
+    string,
+    { date: string; sessions: number; completed: number; canceled: number }
+  >();
   for (let i = 0; i < 30; i++) {
     const d = addDays(last30Start, i);
     const key = toISODate(d);
     dayMap.set(key, { date: key, sessions: 0, completed: 0, canceled: 0 });
   }
-
   for (const a of appointments30) {
     const key = toISODate(a.startsAt);
     const row = dayMap.get(key);
@@ -316,7 +327,6 @@ async function buildDashboardStats(tenantId: string) {
     if (a.status === "COMPLETED") row.completed += 1;
     if (a.status === "CANCELED") row.canceled += 1;
   }
-
   const sessionsByDay = Array.from(dayMap.values());
 
   // Compliance donut (last 30)
@@ -327,16 +337,14 @@ async function buildDashboardStats(tenantId: string) {
   };
 
   // Revenue by week (last 8 weeks)
-  const weekBuckets: WeekPoint[] = [];
-  const start = startOfWeekMonday(addDays(today, -7 * 7)); // current + previous 7 weeks
+  const weekBuckets: { weekStart: string; revenueCents: number }[] = [];
+  const start = startOfWeekMonday(addDays(today, -7 * 7));
   for (let i = 0; i < 8; i++) {
     const ws = addDays(start, i * 7);
     weekBuckets.push({ weekStart: toISODate(ws), revenueCents: 0 });
   }
-
   const weekIndexMap = new Map<string, number>();
   weekBuckets.forEach((b, idx) => weekIndexMap.set(b.weekStart, idx));
-
   for (const a of paidAppointments8w) {
     if (!a.paidAt) continue;
     const ws = startOfWeekMonday(a.paidAt);
@@ -352,8 +360,7 @@ async function buildDashboardStats(tenantId: string) {
     const name = p.package?.name ?? "Package";
     mixMap.set(name, (mixMap.get(name) ?? 0) + 1);
   }
-
-  const packageMixTop: PackageMixPoint[] = Array.from(mixMap.entries())
+  const packageMixTop = Array.from(mixMap.entries())
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
@@ -364,9 +371,10 @@ async function buildDashboardStats(tenantId: string) {
   }, 0);
 
   // MRR
-  const mrr = monthlyActive.reduce((sum, p) => {
-    return sum + (p.package.monthlyPrice ?? 0);
-  }, 0);
+  const mrr = monthlyActive.reduce(
+    (sum, p) => sum + (p.package.monthlyPrice ?? 0),
+    0
+  );
 
   // LTV avg
   const revenueByClient = new Map<string, number>();
@@ -388,7 +396,6 @@ async function buildDashboardStats(tenantId: string) {
     const key = toISODate(a.startsAt);
     heatmapCountMap.set(key, (heatmapCountMap.get(key) ?? 0) + 1);
   }
-
   const heatmap: { date: string; count: number }[] = [];
   for (let i = 0; i < heatmapDays; i++) {
     const d = addDays(heatmapStart, i);
@@ -396,7 +403,7 @@ async function buildDashboardStats(tenantId: string) {
     heatmap.push({ date: key, count: heatmapCountMap.get(key) ?? 0 });
   }
 
-  // Calendar by day (current month)
+  // ✅ Calendar by day (REQUESTED month)
   const calendarByDay = new Map<
     string,
     {
@@ -437,6 +444,7 @@ async function buildDashboardStats(tenantId: string) {
   const calendar = Array.from(calendarByDay.values());
 
   return {
+    monthStartISO: calMonthStartISOSafe, // ✅ utile da passare al client
     kpi: {
       clientsActive,
       sessionsToday,
@@ -466,9 +474,14 @@ async function buildDashboardStats(tenantId: string) {
 
 /** ---------------- public API (auth + cached) ---------------- */
 
-export async function getDashboardStats() {
+export async function getDashboardStats(monthStartISO?: string) {
   const { tenant } = await requireTenantFromSession();
-  const cached = getCachedDashboardFn(tenant.id);
+
+  // normalize monthStartISO to YYYY-MM-01
+  const ms = parseMonthStartISO(monthStartISO);
+  const iso = toISODate(ms);
+
+  const cached = getCachedDashboardFn(tenant.id, iso);
   return cached();
 }
 

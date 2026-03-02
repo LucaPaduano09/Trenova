@@ -36,7 +36,6 @@ const createEntrySchema = z.object({
   clientId: z.string().min(1),
   measuredAt: z.string().optional().or(z.literal("")),
 
-  // antropometria
   weightKg: z.string().optional().or(z.literal("")),
   waistCm: z.string().optional().or(z.literal("")),
   hipsCm: z.string().optional().or(z.literal("")),
@@ -50,7 +49,6 @@ const createEntrySchema = z.object({
   calfRmm: z.string().optional().or(z.literal("")),
   bodyFatPct: z.string().optional().or(z.literal("")),
 
-  // BIA
   tbwPct: z.string().optional().or(z.literal("")),
   icwPct: z.string().optional().or(z.literal("")),
   ecwPct: z.string().optional().or(z.literal("")),
@@ -65,7 +63,14 @@ const createEntrySchema = z.object({
   notes: z.string().optional().or(z.literal("")),
 });
 
-export async function createMetricsEntry(formData: FormData) {
+export type CreateMetricsEntryState =
+  | { ok: true; entryId: string }
+  | { ok: false; error: Record<string, string[]> };
+
+export async function createMetricsEntry(
+  _prevState: CreateMetricsEntryState,
+  formData: FormData
+): Promise<CreateMetricsEntryState> {
   await requireOwner();
   const { tenant } = await requireTenantFromSession();
 
@@ -78,8 +83,11 @@ export async function createMetricsEntry(formData: FormData) {
     hipsCm: formData.get("hipsCm"),
     armRmm: formData.get("armRmm"),
     armLmm: formData.get("armLmm"),
-    forearmRmm: formData.get("foreArmRmm"),
-    forearmLmm: formData.get("foreArmLmm"),
+
+    // ✅ FIX: usa le chiavi giuste (probabilmente nel form sono forearmRmm/forearmLmm)
+    forearmRmm: formData.get("forearmRmm"),
+    forearmLmm: formData.get("forearmLmm"),
+
     thighRmm: formData.get("thighRmm"),
     thighLmm: formData.get("thighLmm"),
     calfRmm: formData.get("calfRmm"),
@@ -101,54 +109,55 @@ export async function createMetricsEntry(formData: FormData) {
   });
 
   if (!parsed.success) {
-    // return { ok: false as const, error: parsed.error.flatten().fieldErrors };
-    window.alert("error unsuccessful");
-  } else {
-    const measuredAt = parsed.data.measuredAt?.trim()
-      ? new Date(parsed.data.measuredAt)
-      : new Date();
-
-    const entry = await prisma.bodyMetricsEntry.create({
-      data: {
-        tenantId: tenant.id,
-        clientId: parsed.data.clientId,
-        measuredAt,
-
-        weightG: kgToG(parsed.data.weightKg),
-        waistMm: cmToMm(parsed.data.waistCm),
-        hipsMm: cmToMm(parsed.data.hipsCm),
-        armRmm: cmToMm(parsed.data.armRmm),
-        armLmm: cmToMm(parsed.data.armLmm),
-        forearmRmm: cmToMm(parsed.data.forearmRmm),
-        forearmLmm: cmToMm(parsed.data.forearmLmm),
-        thighRmm: cmToMm(parsed.data.thighRmm),
-        thighLmm: cmToMm(parsed.data.thighLmm),
-        calfRmm: cmToMm(parsed.data.calfRmm),
-        calfLmm: cmToMm(parsed.data.calfLmm),
-        bodyFatBp: pctToBp(parsed.data.bodyFatPct),
-
-        tbwBp: pctToBp(parsed.data.tbwPct),
-        icwBp: pctToBp(parsed.data.icwPct),
-        ecwBp: pctToBp(parsed.data.ecwPct),
-
-        muscleMassG: kgToG(parsed.data.muscleKg),
-        fatMassG: kgToG(parsed.data.fatKg),
-        ffmG: kgToG(parsed.data.ffmKg),
-
-        bmrKcal: intOrNull(parsed.data.bmrKcal),
-        visceralFat: intOrNull(parsed.data.visceralFat),
-        metabolicAge: intOrNull(parsed.data.metabolicAge),
-        phaseAngleBp: pctToBp(parsed.data.phaseAngle),
-
-        notes: parsed.data.notes?.trim() || null,
-      },
-      select: { id: true },
-    });
-
-    revalidatePath("/app/clients");
+    return { ok: false, error: parsed.error.flatten().fieldErrors };
   }
 
-  // return { ok: true as const, entry };
+  const measuredAt = parsed.data.measuredAt?.trim()
+    ? new Date(parsed.data.measuredAt)
+    : new Date();
+
+  const entry = await prisma.bodyMetricsEntry.create({
+    data: {
+      tenantId: tenant.id,
+      clientId: parsed.data.clientId,
+      measuredAt,
+
+      weightG: kgToG(parsed.data.weightKg),
+      waistMm: cmToMm(parsed.data.waistCm),
+      hipsMm: cmToMm(parsed.data.hipsCm),
+      armRmm: cmToMm(parsed.data.armRmm),
+      armLmm: cmToMm(parsed.data.armLmm),
+      forearmRmm: cmToMm(parsed.data.forearmRmm),
+      forearmLmm: cmToMm(parsed.data.forearmLmm),
+      thighRmm: cmToMm(parsed.data.thighRmm),
+      thighLmm: cmToMm(parsed.data.thighLmm),
+      calfRmm: cmToMm(parsed.data.calfRmm),
+      calfLmm: cmToMm(parsed.data.calfLmm),
+      bodyFatBp: pctToBp(parsed.data.bodyFatPct),
+
+      tbwBp: pctToBp(parsed.data.tbwPct),
+      icwBp: pctToBp(parsed.data.icwPct),
+      ecwBp: pctToBp(parsed.data.ecwPct),
+
+      muscleMassG: kgToG(parsed.data.muscleKg),
+      fatMassG: kgToG(parsed.data.fatKg),
+      ffmG: kgToG(parsed.data.ffmKg),
+
+      bmrKcal: intOrNull(parsed.data.bmrKcal),
+      visceralFat: intOrNull(parsed.data.visceralFat),
+      metabolicAge: intOrNull(parsed.data.metabolicAge),
+      phaseAngleBp: pctToBp(parsed.data.phaseAngle),
+
+      notes: parsed.data.notes?.trim() || null,
+    },
+    select: { id: true },
+  });
+
+  // ✅ Revalidate della pagina cliente (meglio specifica)
+  revalidatePath(`/app/clients/${parsed.data.clientId}`);
+  revalidatePath("/app/clients");
+
+  return { ok: true, entryId: entry.id };
 }
 
 export async function listMetricsEntries(clientId: string) {

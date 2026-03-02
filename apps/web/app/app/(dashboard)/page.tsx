@@ -3,9 +3,15 @@ import { prisma } from "@/lib/db";
 import { getDashboardStats } from "@/actions/dashboard";
 import DashboardCharts from "../_components/DashboardCharts";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month } = await searchParams;
+
+  const data = await getDashboardStats(month);
   const { tenant, session } = await requireTenantFromSession();
-  const data = await getDashboardStats();
   const workoutTemplates = await prisma.workoutTemplate.findMany({
     where: { tenantId: tenant.id, isArchived: false },
     orderBy: { updatedAt: "desc" },

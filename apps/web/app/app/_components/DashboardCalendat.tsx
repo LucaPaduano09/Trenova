@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSessionFromDashboard } from "../../../actions/booking";
 
 type Status = "SCHEDULED" | "COMPLETED" | "CANCELED";
@@ -14,7 +15,7 @@ type CalItem = {
   client: { fullName: string; slug: string };
 };
 
-type CalDay = {
+export type CalDay = {
   date: string; // YYYY-MM-DD
   scheduled: number;
   completed: number;
@@ -72,19 +73,34 @@ export default function DashboardCalendar({
   clients,
   workoutTemplates,
 }: {
-  monthStartISO?: string;
+  monthStartISO: string; // ✅ REQUIRED: YYYY-MM-01
   days: CalDay[];
   clients: { id: string; fullName: string }[];
   workoutTemplates: { id: string; title: string }[];
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // “today” only once
   const today = useMemo(() => new Date(), []);
+
+  function pushMonth(d: Date) {
+    const ms = startOfMonth(d);
+    const iso = toISODate(ms); // YYYY-MM-01
+    const sp = new URLSearchParams(searchParams?.toString());
+    sp.set("month", iso);
+    router.push(`?${sp.toString()}`);
+  }
 
   const [openCreate, setOpenCreate] = useState(false);
 
-  const [cursor, setCursor] = useState(() => {
-    if (monthStartISO) return new Date(monthStartISO + "T00:00:00");
-    return startOfMonth(new Date());
-  });
+  // Cursor follows monthStartISO (server-driven)
+  const [cursor, setCursor] = useState(
+    () => new Date(monthStartISO + "T00:00:00")
+  );
+  useEffect(() => {
+    setCursor(new Date(monthStartISO + "T00:00:00"));
+  }, [monthStartISO]);
 
   const map = useMemo(() => {
     const m = new Map<string, CalDay>();
@@ -117,9 +133,16 @@ export default function DashboardCalendar({
     return inThisMonth ? toISODate(now) : toISODate(startOfMonth(cursor));
   });
 
+  // When cursor changes, pick today if same month else 1st
   useEffect(() => {
-    // quando cambi mese seleziono il 1° del mese
-    setSelectedISO(toISODate(startOfMonth(cursor)));
+    const now = new Date();
+    const inThisMonth =
+      now.getFullYear() === cursor.getFullYear() &&
+      now.getMonth() === cursor.getMonth();
+
+    setSelectedISO(
+      inThisMonth ? toISODate(now) : toISODate(startOfMonth(cursor))
+    );
   }, [cursor]);
 
   const selectedDay = map.get(selectedISO) ?? null;
@@ -127,7 +150,6 @@ export default function DashboardCalendar({
     () => new Date(`${selectedISO}T00:00:00`),
     [selectedISO]
   );
-
   const selectedSessions = selectedDay?.items ?? [];
 
   const selectedLabel = useMemo(
@@ -142,7 +164,6 @@ export default function DashboardCalendar({
 
   useEffect(() => {
     if (!openCreate) return;
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpenCreate(false);
     };
@@ -152,10 +173,8 @@ export default function DashboardCalendar({
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[360px_1fr]">
-      {/* ===================== CALENDAR (LEFT) ===================== */}
-      {/* ===================== CALENDAR (LEFT) ===================== */}
+      {/* LEFT */}
       <div className="cf-card p-4 sm:p-5 overflow-hidden min-w-0">
-        {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between min-w-0">
           <div className="min-w-0">
             <div className="text-sm font-semibold cf-text capitalize truncate">
@@ -169,7 +188,7 @@ export default function DashboardCalendar({
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
-              onClick={() => setCursor((c) => addMonths(c, -1))}
+              onClick={() => pushMonth(addMonths(cursor, -1))}
               className="h-9 w-9 shrink-0 rounded-2xl border cf-surface cf-text hover:opacity-90"
               aria-label="Mese precedente"
             >
@@ -178,7 +197,7 @@ export default function DashboardCalendar({
 
             <button
               type="button"
-              onClick={() => setCursor(startOfMonth(new Date()))}
+              onClick={() => pushMonth(new Date())}
               className="flex-1 sm:flex-none min-w-0 rounded-2xl border cf-surface px-3 py-2 text-xs cf-text hover:opacity-90 truncate"
             >
               Oggi
@@ -186,7 +205,7 @@ export default function DashboardCalendar({
 
             <button
               type="button"
-              onClick={() => setCursor((c) => addMonths(c, 1))}
+              onClick={() => pushMonth(addMonths(cursor, 1))}
               className="h-9 w-9 shrink-0 rounded-2xl border cf-surface cf-text hover:opacity-90"
               aria-label="Mese successivo"
             >
@@ -195,10 +214,8 @@ export default function DashboardCalendar({
           </div>
         </div>
 
-        {/* ✅ QUI: niente min-w fissi, niente -mx, solo overflow controllato */}
-        <div className="mt-4 w-full max-w-full overflow-x-auto overscroll-x-contain">
+        <div className="mt-4 w-full max-w-full">
           <div className="w-full">
-            {/* Week header */}
             <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] cf-faint">
               {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((w) => (
                 <div key={w} className="px-1 truncate">
@@ -207,7 +224,6 @@ export default function DashboardCalendar({
               ))}
             </div>
 
-            {/* Grid */}
             <div className="mt-2 grid grid-cols-7 gap-1.5 sm:gap-2">
               {grid.map((d) => {
                 const iso = toISODate(d);
@@ -237,52 +253,28 @@ export default function DashboardCalendar({
                         : "",
                       isToday ? "border-black/40 dark:border-white/30" : "",
                       "hover:opacity-90",
-
-                      // Mobile square, Desktop comfy
                       "aspect-square p-2",
                       "lg:aspect-auto lg:h-[72px] lg:p-2",
                     ].join(" ")}
                   >
-                    <div className="flex items-start justify-between gap-1">
-                      <div className="text-[11px] sm:text-xs font-semibold cf-text">
-                        {d.getDate()}
+                    <div className="flex h-full flex-col">
+                      {/* top: day number */}
+                      <div className="flex items-start justify-between">
+                        <div className="text-[11px] sm:text-xs font-semibold cf-text leading-none">
+                          {d.getDate()}
+                        </div>
                       </div>
 
-                      {hasAny ? (
-                        <div className="flex items-center gap-1">
-                          {info?.scheduled ? (
-                            <Dot className="bg-blue-500" />
-                          ) : null}
-                          {info?.completed ? (
-                            <Dot className="bg-emerald-500" />
-                          ) : null}
-                          {info?.canceled ? (
-                            <Dot className="bg-rose-500" />
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-2 hidden lg:block text-[11px] cf-faint">
-                      {hasAny ? (
-                        <>
-                          {info?.scheduled ? (
-                            <span>{info.scheduled} S</span>
-                          ) : null}
-                          {info?.completed ? (
-                            <span className="ml-2">{info.completed} C</span>
-                          ) : null}
-                          {info?.canceled ? (
-                            <span className="ml-2">{info.canceled} X</span>
-                          ) : null}
-                        </>
-                      ) : (
-                        "—"
-                      )}
-                    </div>
-
-                    <div className="mt-2 lg:hidden text-[10px] cf-faint">
-                      {hasAny ? " " : "—"}
+                      {/* bottom: total pill OR dash */}
+                      <div className="mt-auto flex items-center justify-start">
+                        {hasAny ? (
+                          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold cf-text">
+                            {total}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] cf-faint">—</span>
+                        )}
+                      </div>
                     </div>
                   </button>
                 );
@@ -291,7 +283,6 @@ export default function DashboardCalendar({
           </div>
         </div>
 
-        {/* Legend */}
         <div className="mt-4 flex flex-wrap items-center gap-3 text-xs cf-muted">
           <div className="flex items-center gap-2">
             <Dot className="bg-blue-500" /> Pianificate
@@ -305,9 +296,8 @@ export default function DashboardCalendar({
         </div>
       </div>
 
-      {/* ===================== DETAILS (RIGHT) ===================== */}
+      {/* RIGHT */}
       <div className="cf-card p-4 sm:p-5">
-        {/* Top row */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold cf-text">
@@ -344,7 +334,6 @@ export default function DashboardCalendar({
           </div>
         </div>
 
-        {/* List */}
         <div className="mt-4">
           {selectedSessions.length === 0 ? (
             <div className="rounded-3xl border cf-surface p-5 sm:p-6 text-sm cf-muted">
@@ -408,7 +397,7 @@ export default function DashboardCalendar({
         </div>
       </div>
 
-      {/* ===================== MODAL CREATE ===================== */}
+      {/* MODAL */}
       {openCreate ? (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4"
@@ -456,8 +445,6 @@ export default function DashboardCalendar({
   );
 }
 
-/* ===================== QUICK CREATE FORM ===================== */
-
 function QuickCreateSession({
   dateISO,
   clients,
@@ -469,6 +456,8 @@ function QuickCreateSession({
   workoutTemplates: { id: string; title: string }[];
   onCreated?: () => void;
 }) {
+  const router = useRouter();
+
   const [state, formAction] = useActionState(createSessionFromDashboard, {
     ok: false,
     error: {},
@@ -476,12 +465,15 @@ function QuickCreateSession({
 
   useEffect(() => {
     if (!state?.ok) return;
+
     const form = document.getElementById(
       "quick-session-form"
     ) as HTMLFormElement | null;
     form?.reset();
+
+    router.refresh(); // ✅ ricarica anche il mese corrente (server)
     onCreated?.();
-  }, [state, onCreated]);
+  }, [state, onCreated, router]);
 
   return (
     <form

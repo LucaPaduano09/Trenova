@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -15,12 +16,17 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import Heatmap from "./Heatmap";
 import type { DashboardStats } from "../../../actions/dashboard";
 import DashboardCalendar from "./DashboardCalendat";
+
 type Props = {
   data: DashboardStats;
   workoutTemplates: { id: string; title: string }[];
+  /** opzionale: se la page server già lo passa */
+  monthStartISO?: string; // YYYY-MM-01
 };
 
 function formatMoneyEUR(cents: number) {
@@ -28,12 +34,22 @@ function formatMoneyEUR(cents: number) {
   return eur.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
 }
 
-// Palette Kinetiq (modifica se vuoi)
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+function toISODate(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+// Palette
 const COLORS = {
-  completed: "#10B981", // emerald
-  scheduled: "#3B82F6", // blue
-  canceled: "#F43F5E", // rose
-  neutral: "#94A3B8", // slate
+  completed: "#10B981",
+  scheduled: "#3B82F6",
+  canceled: "#F43F5E",
+  neutral: "#94A3B8",
   revenue: "#10B981",
 };
 
@@ -54,14 +70,35 @@ const MIX_COLORS = [
   "#64748B",
 ];
 
-export default function DashboardCharts({ data, workoutTemplates }: Props) {
+export default function DashboardCharts({
+  data,
+  workoutTemplates,
+  monthStartISO,
+}: Props) {
   const { kpi, charts } = data;
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Month ISO “source of truth”: URL > prop > oggi
+  const monthISO =
+    searchParams?.get("month") ??
+    monthStartISO ??
+    toISODate(startOfMonth(new Date()));
 
   const compliancePie = [
     { name: "Completate", value: charts.compliance.completed },
     { name: "Schedulate", value: charts.compliance.scheduled },
     { name: "Cancellate", value: charts.compliance.canceled },
   ];
+
+  function onMonthChangeISO(nextMonthISO: string) {
+    // nextMonthISO = YYYY-MM-01
+    const sp = new URLSearchParams(searchParams?.toString());
+    sp.set("month", nextMonthISO);
+    router.push(`?${sp.toString()}`);
+    // niente fetch qui: la page server rigenera `data` per quel month
+  }
 
   return (
     <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6">
@@ -101,10 +138,12 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
         </div>
       </div>
 
-      {/* Calendar: spesso overflow su mobile */}
+      {/* Calendar */}
       <div className="mt-6 w-full max-w-full overflow-x-auto overscroll-x-contain sm:overflow-visible">
         <div className="min-w-0 sm:min-w-0">
           <DashboardCalendar
+            monthStartISO={monthISO}
+            onMonthChangeISO={onMonthChangeISO}
             days={data.operational.calendar}
             clients={data.operational.clientsLite}
             workoutTemplates={workoutTemplates}
@@ -112,14 +151,13 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
         </div>
       </div>
 
-      {/* Heatmap: idem */}
+      {/* Heatmap */}
       <div className="mt-6 w-full max-w-full">
         <Heatmap days={data.charts.heatmap} />
       </div>
 
       {/* Charts row 1 */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Sessions line */}
         <div className="cf-card p-4 sm:p-6">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-semibold cf-text">
@@ -136,7 +174,6 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-
                 <Line
                   type="monotone"
                   dataKey="sessions"
@@ -158,7 +195,6 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
           </div>
         </div>
 
-        {/* Revenue bar */}
         <div className="cf-card p-4 sm:p-6">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-semibold cf-text">
@@ -188,7 +224,6 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
 
       {/* Charts row 2 */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Package mix pie */}
         <div className="cf-card p-4 sm:p-6">
           <h2 className="text-sm font-semibold cf-text">Mix pacchetti (top)</h2>
           <div className="mt-4 h-56 sm:h-72">
@@ -218,7 +253,6 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
           </div>
         </div>
 
-        {/* Compliance pie */}
         <div className="cf-card p-4 sm:p-6">
           <h2 className="text-sm font-semibold cf-text">
             Compliance (ultimi 30 giorni)
@@ -280,7 +314,8 @@ export default function DashboardCharts({ data, workoutTemplates }: Props) {
         <ul className="mt-3 space-y-2 text-sm cf-muted">
           {data.operational.upcomingAppointments.map((a: any) => (
             <li key={a.id} className="break-words">
-              {new Date(a.startsAt).toLocaleString()} — {a.client.fullName}
+              {new Date(a.startsAt).toLocaleString("it-IT")} —{" "}
+              {a.client.fullName}
             </li>
           ))}
         </ul>

@@ -17,8 +17,7 @@ import OverviewStatsCards from "./_components/OverviewStatsCards";
 import { getClientOverviewStats } from "@/actions/clientOverview";
 import { MiniOverviewCard } from "./_components/MiniOverviewCard";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 100;
 
 function initials(name: string) {
   return name

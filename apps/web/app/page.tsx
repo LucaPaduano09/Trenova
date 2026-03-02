@@ -33,9 +33,9 @@ export default function LandingPage() {
             <div className="text-sm font-semibold mt-10">
               <Image
                 alt="brand"
-                width={235}
+                width={500}
                 height={101}
-                src={"/landing/brand-image-1.png"}
+                src={"/landing/brand-image-2.png"}
               />
             </div>
             {/* <div className="text-xs text-white/60">Minimal • Fast • Clean</div> */}
