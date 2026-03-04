@@ -550,7 +550,7 @@ function QuickCreateSession({
     ) as HTMLFormElement | null;
     form?.reset();
 
-    router.refresh();
+    router.refresh(); //  ' ricarica anche il mese corrente (server)
     onCreated?.();
   }, [state, onCreated, router]);
 
@@ -561,7 +561,139 @@ function QuickCreateSession({
       className="mt-5 grid gap-4"
     >
       <input type="hidden" name="date" value={dateISO} />
-      {/* ...il resto del form invariato... */}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Cliente */}
+        <div>
+          <label className="text-xs cf-muted">Cliente</label>
+          <select
+            name="clientId"
+            required
+            className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+          >
+            <option value="">Seleziona…</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.fullName}
+              </option>
+            ))}
+          </select>
+          {state?.error?.clientId?.[0] ? (
+            <div className="mt-1 text-xs text-rose-500">
+              {state.error.clientId[0]}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Ora */}
+        <div>
+          <label className="text-xs cf-muted">Ora</label>
+          <input
+            type="time"
+            name="time"
+            required
+            className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+          />
+          {state?.error?.time?.[0] ? (
+            <div className="mt-1 text-xs text-rose-500">
+              {state.error.time[0]}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Durata */}
+        <div>
+          <label className="text-xs cf-muted">Durata (min)</label>
+          <input
+            type="number"
+            name="durationMin"
+            defaultValue={60}
+            min={15}
+            step={15}
+            required
+            className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+          />
+        </div>
+
+        {/* Location */}
+        <div>
+          <label className="text-xs cf-muted">Luogo</label>
+          <select
+            name="locationType"
+            defaultValue="GYM"
+            className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+          >
+            <option value="GYM">Palestra</option>
+            <option value="HOME">Casa</option>
+            <option value="OUTDOOR">Outdoor</option>
+            <option value="ONLINE">Online</option>
+            <option value="OTHER">Altro</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="text-xs cf-muted">Prezzo (€)</label>
+          <input
+            type="text"
+            name="price"
+            placeholder="es. 45"
+            className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+          />
+        </div>
+
+        <div className="flex items-end gap-2">
+          <input type="checkbox" name="isPaid" id="paid" className="h-4 w-4" />
+          <label htmlFor="paid" className="text-sm cf-text">
+            Pagata
+          </label>
+        </div>
+
+        <div>
+          <label className="text-xs cf-muted">Metodo</label>
+          <select
+            name="paymentMethod"
+            defaultValue=""
+            className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+          >
+            <option value="">—</option>
+            <option value="Contanti">Contanti</option>
+            <option value="Carta">Carta</option>
+            <option value="Bonifico">Bonifico</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label className="text-xs cf-muted">Workout (opzionale)</label>
+        <select
+          name="workoutTemplateId"
+          defaultValue=""
+          className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+        >
+          <option value="">— Nessuno</option>
+          {workoutTemplates.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.title}
+            </option>
+          ))}
+        </select>
+
+        {state?.error?.workoutTemplateId && (
+          <div className="text-xs text-rose-500 mt-1">
+            {state.error.workoutTemplateId[0]}
+          </div>
+        )}
+      </div>
+      <div>
+        <label className="text-xs cf-muted">Note</label>
+        <textarea
+          name="notes"
+          rows={2}
+          className="mt-1 w-full rounded-2xl border cf-surface px-3 py-2 text-sm cf-text"
+        />
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="text-xs">
           {state?.ok ? (
