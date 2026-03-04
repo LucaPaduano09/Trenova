@@ -30,12 +30,14 @@ export default function LandingPage() {
             </span> */}
           {/* </div> */}
           <div className="leading-tight">
-            <div className="text-sm font-semibold mt-10">
+            <div className="text-sm font-semibold">
               <Image
                 alt="brand"
                 width={500}
                 height={101}
-                src={"/landing/brand-image-2.png"}
+                priority
+                className="block object-contain object-left"
+                src={"/landing/Frame-1.svg"}
               />
             </div>
             {/* <div className="text-xs text-white/60">Minimal • Fast • Clean</div> */}

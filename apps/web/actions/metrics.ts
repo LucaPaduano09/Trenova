@@ -4,9 +4,12 @@ import { prisma } from "@/lib/db";
 import { requireOwner } from "@/lib/permissions";
 import { requireTenantFromSession } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import {
+  createEntrySchema,
+  type CreateMetricsEntryState,
+} from "./metrics.schema";
 
-/** helpers */
+/** helpers (NON exportare nulla in file use server) */
 function kgToG(v?: string | null) {
   if (!v) return null;
   const n = Number(String(v).replace(",", "."));
@@ -32,43 +35,8 @@ function intOrNull(v?: string | null) {
   return Math.round(n);
 }
 
-const createEntrySchema = z.object({
-  clientId: z.string().min(1),
-  measuredAt: z.string().optional().or(z.literal("")),
-
-  weightKg: z.string().optional().or(z.literal("")),
-  waistCm: z.string().optional().or(z.literal("")),
-  hipsCm: z.string().optional().or(z.literal("")),
-  armRmm: z.string().optional().or(z.literal("")),
-  armLmm: z.string().optional().or(z.literal("")),
-  forearmRmm: z.string().optional().or(z.literal("")),
-  forearmLmm: z.string().optional().or(z.literal("")),
-  thighRmm: z.string().optional().or(z.literal("")),
-  thighLmm: z.string().optional().or(z.literal("")),
-  calfLmm: z.string().optional().or(z.literal("")),
-  calfRmm: z.string().optional().or(z.literal("")),
-  bodyFatPct: z.string().optional().or(z.literal("")),
-
-  tbwPct: z.string().optional().or(z.literal("")),
-  icwPct: z.string().optional().or(z.literal("")),
-  ecwPct: z.string().optional().or(z.literal("")),
-  muscleKg: z.string().optional().or(z.literal("")),
-  fatKg: z.string().optional().or(z.literal("")),
-  ffmKg: z.string().optional().or(z.literal("")),
-  bmrKcal: z.string().optional().or(z.literal("")),
-  visceralFat: z.string().optional().or(z.literal("")),
-  metabolicAge: z.string().optional().or(z.literal("")),
-  phaseAngle: z.string().optional().or(z.literal("")),
-
-  notes: z.string().optional().or(z.literal("")),
-});
-
-export type CreateMetricsEntryState =
-  | { ok: true; entryId: string }
-  | { ok: false; error: Record<string, string[]> };
-
 export async function createMetricsEntry(
-  _prevState: CreateMetricsEntryState,
+  _prev: CreateMetricsEntryState,
   formData: FormData
 ): Promise<CreateMetricsEntryState> {
   await requireOwner();
@@ -84,7 +52,7 @@ export async function createMetricsEntry(
     armRmm: formData.get("armRmm"),
     armLmm: formData.get("armLmm"),
 
-    //  ' FIX: usa le chiavi giuste (probabilmente nel form sono forearmRmm/forearmLmm)
+    // ✅ match form names
     forearmRmm: formData.get("forearmRmm"),
     forearmLmm: formData.get("forearmLmm"),
 
@@ -153,9 +121,11 @@ export async function createMetricsEntry(
     select: { id: true },
   });
 
-  //  ' Revalidate della pagina cliente (meglio specifica)
-  revalidatePath(`/app/clients/${parsed.data.clientId}`);
+  // refresh UI (tab progress + lista)
   revalidatePath("/app/clients");
+  revalidatePath(`/app/clients/${tenant.id}`); // opzionale se hai route per tenant
+  // se vuoi essere super preciso (slug): meglio revalidatePath(`/app/clients/${slug}`)
+  // ma qui non lo abbiamo. Va bene refresh lato client.
 
   return { ok: true, entryId: entry.id };
 }
@@ -183,7 +153,6 @@ export async function listMetricsEntries(clientId: string) {
       calfRmm: true,
       calfLmm: true,
       bodyFatBp: true,
-
       tbwBp: true,
       icwBp: true,
       ecwBp: true,
@@ -194,7 +163,6 @@ export async function listMetricsEntries(clientId: string) {
       visceralFat: true,
       metabolicAge: true,
       phaseAngleBp: true,
-
       notes: true,
     },
   });

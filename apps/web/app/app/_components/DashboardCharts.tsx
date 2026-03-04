@@ -143,7 +143,6 @@ export default function DashboardCharts({
         <div className="min-w-0 sm:min-w-0">
           <DashboardCalendar
             monthStartISO={monthISO}
-            onMonthChangeISO={onMonthChangeISO}
             days={data.operational.calendar}
             clients={data.operational.clientsLite}
             workoutTemplates={workoutTemplates}
