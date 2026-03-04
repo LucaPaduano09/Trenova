@@ -14,10 +14,19 @@ function SidebarContent() {
       <div className="mb-4">
         <Image
           alt="brand-logo"
-          width={150}
+          width={200}
           height={50}
-          src={"/landing/brand-image-1.png"}
+          src={"/landing/Frame-1.svg"}
           priority
+          className="hidden dark:block"
+        />
+        <Image
+          alt="brand-logo"
+          width={200}
+          height={50}
+          src={"/landing/Frame-2.svg"}
+          priority
+          className="block dark:hidden"
         />
       </div>
 
@@ -108,7 +117,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     alt="brand-logo"
                     width={150}
                     height={50}
-                    src={"/landing/brand-image-1.png"}
+                    src={"/landing/Frame-1.svg"}
                     priority
                     className="h-auto w-full object-contain"
                   />
@@ -133,7 +142,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   alt="brand-logo"
                   width={150}
                   height={50}
-                  src={"/landing/brand-image-1.png"}
+                  src={"/landing/Frame-1.svg"}
                   priority
                   className="h-auto w-full object-contain"
                 />
