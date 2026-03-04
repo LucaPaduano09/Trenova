@@ -22,7 +22,6 @@ export default function MetricsForm({ clientId }: { clientId: string }) {
   useEffect(() => {
     if (!state.ok) return;
 
-    // reset form + refresh pagina (per vedere la entry appena creata)
     const form = document.getElementById("metrics-form") as HTMLFormElement | null;
     form?.reset();
     router.refresh();
