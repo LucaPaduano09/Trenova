@@ -4,35 +4,34 @@
 @layer components {
   /* Glass surfaces (light + dark) */
   .cf-surface {
-    @apply rounded-3xl border backdrop-blur-xl shadow-sm;
-    @apply bg-white/70 border-neutral-200/70;
-    @apply dark:bg-neutral-950/35 dark:border-white/10;
-  }
+  @apply rounded-3xl border backdrop-blur-xl shadow-sm;
+  @apply bg-white/70 border-neutral-200/70;
+  @apply dark:bg-[#111a2e]/60 dark:border-white/10;
+}
 
-  .cf-card {
-    @apply rounded-3xl border backdrop-blur-xl shadow-sm p-6;
-    @apply bg-white/70 border-neutral-200/70;
-    @apply dark:bg-neutral-950/35 dark:border-white/10;
-  }
+.cf-card {
+  @apply rounded-3xl border backdrop-blur-xl shadow-sm p-6;
+  @apply bg-white/70 border-neutral-200/70;
+  @apply dark:bg-[#111a2e]/60 dark:border-white/10;
+}
 
-  .cf-soft {
-    @apply rounded-3xl border backdrop-blur-xl;
-    @apply bg-white/55 border-neutral-200/60;
-    @apply dark:bg-neutral-950/25 dark:border-white/10;
-  }
+.cf-soft {
+  @apply rounded-3xl border backdrop-blur-xl;
+  @apply bg-white/55 border-neutral-200/60;
+  @apply dark:bg-[#111a2e]/40 dark:border-white/10;
+}
 
-  /* Hairline + subtle inner highlight (Apple-ish) */
-  .cf-hairline {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-      0 0 0 1px rgba(0, 0, 0, 0.08);
-  }
+ .cf-hairline {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.05) inset,
+    0 0 0 1px rgba(0,0,0,0.25);
+}
 
-  /* Chips / pills */
   .cf-chip {
-    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs;
-    @apply bg-white/70 border-neutral-200/70 text-neutral-700;
-    @apply dark:bg-white/5 dark:border-white/10 dark:text-neutral-200;
-  }
+  @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs;
+  @apply bg-white/70 border-neutral-200/70 text-neutral-700;
+  @apply dark:bg-[#18233b] dark:border-white/10 dark:text-neutral-200;
+}
 
   /* Muted text helpers */
   .cf-muted {
@@ -43,9 +42,11 @@
   }
 }
 @layer components {
-  .cf-input {
-    @apply w-full rounded-2xl border rounded-3xl border backdrop-blur-xl bg-white/70 border-neutral-200/70 dark:bg-neutral-950/35 dark:border-white/10 shadow-sm  px-4 py-2.5 text-sm outline-none text-neutral-900 dark:text-neutral-50;
-  }
+ .cf-input {
+  @apply w-full rounded-3xl border backdrop-blur-xl shadow-sm px-4 py-2.5 text-sm outline-none;
+  @apply bg-white/70 border-neutral-200/70 text-neutral-900;
+  @apply dark:bg-[#111a2e]/70 dark:border-white/10 dark:text-neutral-50;
+}
 }
 @layer components {
   .cf-hairline {
@@ -78,8 +79,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b1324; /* deep navy */
+    --foreground: #e6edf7;
   }
 }
 
@@ -88,7 +89,18 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
+body::before {
+  content: "";
+  position: fixed;
+  inset: -200px;
+  background: radial-gradient(
+    circle at 20% 10%,
+    rgba(80,120,255,0.12),
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
 @keyframes navsheen {
   0% {
     transform: translateX(-10%);

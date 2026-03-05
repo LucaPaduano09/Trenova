@@ -1,46 +1,63 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import NavItem from "../_components/Navitem";
 import ThemeToggle from "../../../components/ThemeToggle";
 import Image from "next/image";
 import NotificationsBell from "../_components/NotificationsBell";
 
-function SidebarContent() {
+function BrandLogo({ className }: { className?: string }) {
   return (
-    <div className="rounded-3xl border bg-white/70 p-4 shadow-sm backdrop-blur-xl dark:bg-white/5 border-neutral-200/70 dark:border-white/10">
-      <div className="mb-4">
-        <Image
-          alt="brand-logo"
-          width={200}
-          height={50}
-          src={"/landing/Frame-1.svg"}
-          priority
-          className="hidden dark:block"
-        />
-        <Image
-          alt="brand-logo"
-          width={200}
-          height={50}
-          src={"/landing/Frame-2.svg"}
-          priority
-          className="block dark:hidden"
-        />
+    <div className={["relative", className].join(" ")}>
+      <Image
+        alt="brand-logo"
+        width={200}
+        height={50}
+        src="/landing/Frame-2.svg"
+        priority
+        className="block dark:hidden h-auto w-full object-contain"
+      />
+      <Image
+        alt="brand-logo"
+        width={200}
+        height={50}
+        src="/landing/Frame-1.svg"
+        priority
+        className="hidden dark:block h-auto w-full object-contain"
+      />
+    </div>
+  );
+}
+
+function SidebarNav() {
+  return (
+    <nav className="space-y-1 text-sm">
+      <NavItem href="/app">Panoramica</NavItem>
+      <NavItem href="/app/clients">Clienti</NavItem>
+      <NavItem href="/app/booking">Booking</NavItem>
+      <NavItem href="/app/exercises">Esercizi</NavItem>
+      <NavItem href="/app/workouts">Workouts</NavItem>
+      <NavItem href="/app/packages">Pacchetti</NavItem>
+
+      <div className="mt-4 border-t border-black/5 pt-4 dark:border-white/10">
+        <NavItem href="/api/auth/signout">Sign out</NavItem>
       </div>
 
-      <nav className="space-y-1 text-sm cf-text">
-        <NavItem href="/app">Panoramica</NavItem>
-        <NavItem href="/app/clients">Clienti</NavItem>
-        <NavItem href="/app/booking">Booking</NavItem>
-        <NavItem href="/app/exercises">Esercizi</NavItem>
-        <NavItem href="/app/workouts">Workouts</NavItem>
-        <NavItem href="/app/packages">Pacchetti</NavItem>
-        <div className="mt-4 border-t border-neutral-200/70 pt-4 dark:border-white/10">
-          <NavItem href="/api/auth/signout">Sign out</NavItem>
-        </div>
-      </nav>
+      <div className="mt-4 text-xs cf-faint">v1.0 • Dashboard</div>
+    </nav>
+  );
+}
+
+function SidebarContent() {
+  return (
+    <div className="cf-card cf-hairline">
+      <div className="mb-4">
+        <BrandLogo className="w-[180px]" />
+      </div>
+
+      <SidebarNav />
     </div>
   );
 }
@@ -49,12 +66,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  // close drawer on route change (clicking a NavItem)
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  // lock body scroll when drawer open
   useEffect(() => {
     if (!mobileOpen) return;
     const prev = document.body.style.overflow;
@@ -64,7 +79,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     };
   }, [mobileOpen]);
 
-  // optional: close on ESC
   useEffect(() => {
     if (!mobileOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -74,24 +88,31 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
 
+  const shellBg = useMemo(
+    () => "bg-neutral-50 dark:bg-[var(--background)]",
+    []
+  );
+
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      {/* soft background */}
+    <div className={["min-h-screen", shellBg].join(" ")}>
+      {/* background glow */}
       <div className="pointer-events-none fixed inset-0 opacity-60 dark:opacity-35">
         <div className="absolute -top-24 left-10 h-72 w-72 rounded-full bg-neutral-200 blur-3xl dark:bg-white/10" />
         <div className="absolute top-40 right-10 h-72 w-72 rounded-full bg-neutral-200 blur-3xl dark:bg-white/10" />
       </div>
 
       {/* Mobile drawer */}
-      {/* Mobile drawer */}
       <div
-        className={`fixed inset-0 z-50 md:hidden ${
-          mobileOpen ? "pointer-events-auto" : "pointer-events-none"
-        }`}
+        className={[
+          "fixed inset-0 z-50 md:hidden",
+          mobileOpen ? "pointer-events-auto" : "pointer-events-none",
+        ].join(" ")}
         aria-hidden={!mobileOpen}
       >
         {/* overlay */}
-        <div
+        <button
+          type="button"
+          aria-label="Chiudi menu"
           className={[
             "absolute inset-0 transition-opacity duration-200",
             mobileOpen ? "opacity-100" : "opacity-0",
@@ -110,25 +131,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         >
           <div className="h-full cf-surface cf-hairline overflow-hidden shadow-2xl">
             {/* header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200/60 dark:border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold tracking-tight cf-text">
-                  <Image
-                    alt="brand-logo"
-                    width={150}
-                    height={50}
-                    src={"/landing/Frame-1.svg"}
-                    priority
-                    className="h-auto w-full object-contain"
-                  />
-                </span>
-                {/* <span className="cf-chip">Kinetiq</span> */}
-              </div>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/10">
+              <BrandLogo className="w-[150px]" />
 
               <button
                 onClick={() => setMobileOpen(false)}
                 className="h-9 w-9 grid place-items-center rounded-full cf-soft cf-hairline transition hover:scale-[1.02] active:scale-[0.98]"
                 aria-label="Chiudi menu"
+                type="button"
               >
                 <span className="cf-text text-sm">✕</span>
               </button>
@@ -136,43 +146,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             {/* content */}
             <div className="p-4">
-              {/* brand */}
-              {/* <div className="mb-4 cf-soft cf-hairline p-3">
-                <Image
-                  alt="brand-logo"
-                  width={150}
-                  height={50}
-                  src={"/landing/Frame-1.svg"}
-                  priority
-                  className="h-auto w-full object-contain"
-                />
-              </div> */}
-
-              {/* nav */}
-              <div className="space-y-1">
-                <NavItem href="/app">Panoramica</NavItem>
-                <NavItem href="/app/clients">Clienti</NavItem>
-                <NavItem href="/app/booking">Booking</NavItem>
-                <NavItem href="/app/exercises">Esercizi</NavItem>
-                <NavItem href="/app/workouts">Workouts</NavItem>
-
-                <div className="mt-4 pt-4 border-t border-neutral-200/60 dark:border-white/10">
-                  <NavItem href="/api/auth/signout">Sign out</NavItem>
-                </div>
-
-                <div className="mt-4 cf-faint text-xs">v1.0 • Dashboard</div>
-              </div>
+              <SidebarNav />
             </div>
 
-            {/* bottom safe-area */}
             <div className="h-4" />
           </div>
         </div>
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-6xl gap-6 p-4 sm:p-6">
+      {/* Shell */}
+      <div className="relative mx-auto flex min-h-screen max-w-7xl gap-6 p-4 sm:p-6">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-56 shrink-0 md:block">
+        <aside className="hidden w-60 shrink-0 md:block">
           <div className="sticky top-6">
             <SidebarContent />
           </div>
@@ -181,21 +166,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         {/* Main */}
         <main className="flex-1 min-w-0">
           {/* Topbar */}
-          <div className="sticky top-4 sm:top-6 z-10 mb-4 sm:mb-6 rounded-3xl border bg-white/70 dark:bg-white/5 px-4 py-3 backdrop-blur-xl shadow-sm border-neutral-200/70 dark:border-white/10">
+          <div className="sticky top-4 sm:top-6 z-10 mb-4 sm:mb-6 cf-surface cf-hairline px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                {/* Mobile hamburger */}
                 <button
                   onClick={() => setMobileOpen(true)}
-                  className="md:hidden rounded-2xl border px-3 py-2 text-sm bg-white/70 dark:bg-white/5 backdrop-blur-xl border-neutral-200/70 dark:border-white/10"
+                  className="md:hidden rounded-2xl cf-soft cf-hairline px-3 py-2 text-sm"
                   aria-label="Apri menu"
+                  type="button"
                 >
                   ☰
                 </button>
 
-                <div className="text-sm font-medium cf-text dark:text-neutral-200">
-                  Dashboard
-                </div>
+                <div className="text-sm font-semibold cf-text">Dashboard</div>
               </div>
 
               <div className="flex items-center gap-2">

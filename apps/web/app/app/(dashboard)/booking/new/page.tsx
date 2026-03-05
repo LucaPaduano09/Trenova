@@ -28,7 +28,7 @@ export default async function NewBookingPage({
     <div className="space-y-6">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight cf-text">
             Nuova sessione
           </h1>
           <p className="mt-1 text-sm cf-muted">
@@ -39,13 +39,13 @@ export default async function NewBookingPage({
 
         <Link
           href={`/app/clients/${client.slug}`}
-          className="rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50"
+          className="cf-text rounded-2xl border cf-surface px-4 py-2 text-sm"
         >
           Annulla
         </Link>
       </header>
 
-      <div className="rounded-3xl border bg-white/70 p-6 shadow-sm backdrop-blur-xl">
+      <div className="">
         <NewSessionForm clientSlug={client.slug} />
       </div>
     </div>

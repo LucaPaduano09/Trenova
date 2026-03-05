@@ -31,7 +31,7 @@ export default function MetricsForm({ clientId }: { clientId: string }) {
     <form id="metrics-form" action={formAction} className="mt-5 space-y-4">
       <input type="hidden" name="clientId" value={clientId} />
 
-      {/* ✅ feedback globale */}
+      {/*  feedback globale */}
       <div className="text-xs">
         {state.ok ? (
           <span className="text-emerald-500">Salvato ✔</span>

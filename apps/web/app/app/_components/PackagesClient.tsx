@@ -201,7 +201,7 @@ const openEdit = (p: any) => {
                     Modifica
                   </button>
 
-                  {/* ✅ non è delete, è ARCHIVE */}
+                  {/*  non è delete, è ARCHIVE */}
                   <button
                     type="button"
                     onClick={() => setConfirmId(p.id)}

@@ -119,12 +119,12 @@ export async function deleteSession(formData: FormData) {
   }
 
   const existing = await prisma.appointment.findFirst({
-    where: { id: parsed.data.sessionId, tenantId: tenant.id, deletedAt: null },
+    where: { id: parsed.data.sessionId, tenantId: tenant.id, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],},
     select: { id: true, client: { select: { slug: true } } },
   });
 
   if (!existing) {
-    throw new Error("Sessione non trovata");
+    throw new Error("Sessione non trovata: " + parsed.data.sessionId);
   }
 
   await prisma.appointment.update({

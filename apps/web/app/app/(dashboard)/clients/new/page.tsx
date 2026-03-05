@@ -6,7 +6,7 @@ import NewClientForm from "../_components/ClientNewForm";
 
 export default async function NewClientPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 cf-surface cf-text">
       <header className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold cf-text tracking-tight">
