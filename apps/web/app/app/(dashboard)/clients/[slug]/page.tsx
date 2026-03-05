@@ -17,6 +17,7 @@ import OverviewStatsCards from "./_components/OverviewStatsCards";
 import { getClientOverviewStats } from "@/actions/clientOverview";
 import { MiniOverviewCard } from "./_components/MiniOverviewCard";
 import MetricsForm from "./_components/MetricsForm";
+import { assignPackageToClient, deactivatePackagePurchase, reactivatePackagePurchase } from "../../../../../actions/packagePurchase";
 
 export const revalidate = 100;
 
@@ -216,7 +217,38 @@ export default async function ClientDetailPage({
     select: { id: true, title: true },
   });
   const workoutTitleById = new Map(templates.map((t) => [t.id, t.title]));
+  const packages =
+    activeTab === "packages"
+      ? await prisma.package.findMany({
+          where: { tenantId: tenant.id },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            sessionCount: true,
+            bundlePrice: true,         
+            monthlyPrice: true,
+            monthlySessionCount: true, 
+          },
+        })
+      : [];
 
+  const purchases =
+    activeTab === "packages"
+      ? await prisma.packagePurchase.findMany({
+          where: { tenantId: tenant.id, clientId: client.id },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            active: true,
+            remainingSessions: true,
+            startedAt: true,
+            expiresAt: true,
+            package: { select: { name: true, type: true, sessionCount: true, bundlePrice: true, monthlyPrice: true, monthlySessionCount: true } },
+          },
+        })
+      : [];
   return (
     <div className="space-y-6 cf-text">
       {/* Top hero */}
@@ -258,9 +290,9 @@ export default async function ClientDetailPage({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-black/5 dark:bg-white/10" />
+        {/* <div className="h-px bg-black/5 dark:bg-white/10" /> */}
 
-        {/* QUICK ACTIONS */}
+        {/* QUICK ACTIONS
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <ActionCard
             title="Nuova sessione"
@@ -277,7 +309,7 @@ export default async function ClientDetailPage({
             subtitle="Peso, foto, note"
             href={`/app/progress/new?client=${client.slug}`}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Tabs (URL-driven) */}
@@ -311,7 +343,160 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Content */}
-      {activeTab === "sessions" ? (
+      
+      {activeTab === "packages" ? (
+        <div className="cf-surface cf-hairline overflow-hidden">
+          <div className="p-6 flex items-start justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold cf-text">Pacchetti</div>
+              <div className="mt-1 text-sm cf-muted">
+                Assegna bundle o abbonamento mensile.
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 pb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Assign package */}
+            <div className="cf-card">
+              <div className="text-sm font-semibold cf-text">Assegna pacchetto</div>
+              <div className="mt-1 text-xs cf-muted">
+                Seleziona un pacchetto creato in /app/packages.
+              </div>
+
+              {packages.length === 0 ? (
+                <div className="mt-4 text-sm cf-muted">
+                  Nessun pacchetto disponibile. Creane uno in{" "}
+                  <Link className="underline" href="/app/packages">
+                    Pacchetti
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <form action={assignPackageToClient} className="mt-4 grid gap-3">
+                  <input type="hidden" name="clientId" value={client.id} />
+                  <input type="hidden" name="clientSlug" value={client.slug} />
+
+                  <label className="grid gap-1">
+                    <span className="text-xs cf-muted">Pacchetto</span>
+                    <select
+                      name="packageId"
+                      className="h-10 rounded-2xl border cf-surface px-3 text-xs outline-none"
+                      defaultValue={packages[0]?.id}
+                    >
+                      {packages.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}{" "}
+                          {p.type === "SESSION_BUNDLE"
+                            ? `• ${p.sessionCount ?? 0} sessioni${p.bundlePrice != null ? ` • € ${p.bundlePrice}` : ""}`
+                            : `• ${p.monthlySessionCount ?? 0} crediti${p.monthlyPrice != null ? ` • € ${p.monthlyPrice}/mese` : ""}`}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-1">
+                    <span className="text-xs cf-muted">
+                      Scadenza (opzionale) — consigliata per mensile
+                    </span>
+                    <input
+                      name="expiresAt"
+                      type="date"
+                      className="h-10 rounded-2xl border cf-surface px-3 text-xs outline-none"
+                    />
+                  </label>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="rounded-2xl bg-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      Assegna
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Purchases list */}
+            <div className="cf-card">
+              <div className="text-sm font-semibold cf-text">Pacchetti assegnati</div>
+              <div className="mt-1 text-xs cf-muted">
+                Bundle mostra crediti residui. Mensile mostra stato/periodo.
+              </div>
+
+              {purchases.length === 0 ? (
+                <div className="mt-4 text-sm cf-muted">Nessun pacchetto assegnato.</div>
+              ) : (
+                <ul className="mt-4 divide-y divide-black/5 dark:divide-white/10">
+                  {purchases.map((p) => (
+                    <li key={p.id} className="py-3 flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold cf-text truncate">
+                          {p.package.name}
+                        </div>
+
+                        <div className="mt-1 text-xs cf-muted">
+                          {p.package.type === "SESSION_BUNDLE" ? (
+                              <>
+                                Residue: <span className="font-medium cf-text">{p.remainingSessions ?? 0}</span> /{" "}
+                                {p.package.sessionCount ?? 0}
+                                {p.package.bundlePrice != null ? ` • € ${p.package.bundlePrice}` : ""}
+                              </>
+                            ) : (
+                              <>
+                                Mensile • Residui: <span className="font-medium cf-text">{p.remainingSessions ?? 0}</span> /{" "}
+                                {p.package.monthlySessionCount ?? 0}
+                                {p.package.monthlyPrice != null ? ` • € ${p.package.monthlyPrice}/mese` : ""}
+                              </>
+                            )
+                          }
+                          {p.expiresAt ? (
+                            <>
+                              {" "}
+                              • Scade:{" "}
+                              {new Date(p.expiresAt).toLocaleDateString("it-IT")}
+                            </>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-1 text-[11px] cf-muted">
+                          {p.active ? "Attivo" : "Disattivato"} • Avviato:{" "}
+                          {new Date(p.startedAt).toLocaleDateString("it-IT")}
+                        </div>
+                      </div>
+                        {p.active ? (
+                          <form action={deactivatePackagePurchase} className="shrink-0">
+                            <input type="hidden" name="purchaseId" value={p.id} />
+                            <input type="hidden" name="clientSlug" value={client.slug} />
+                            <button
+                              type="submit"
+                              className="rounded-2xl border cf-surface px-3 py-2 text-xs hover:border-black dark:hover:border-white"
+                              title="Disattiva questo pacchetto per il cliente"
+                            >
+                              Disattiva
+                            </button>
+                          </form>
+                        ) : (
+                          <form action={reactivatePackagePurchase} className="shrink-0">
+                            <input type="hidden" name="purchaseId" value={p.id} />
+                            <input type="hidden" name="clientSlug" value={client.slug} />
+                            <button
+                              type="submit"
+                              className="rounded-2xl border cf-surface px-3 py-2 text-xs hover:border-black dark:hover:border-white"
+                              title="Riattiva questo pacchetto per il cliente"
+                            >
+                              Riattiva
+                            </button>
+                          </form>
+                        )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : activeTab === "sessions" ? (
         <div className="cf-surface cf-hairline overflow-hidden">
           <div className="p-6 flex items-start justify-between gap-4">
             <div>
@@ -748,6 +933,7 @@ function TabLink({
   return (
     <Link
       href={href}
+      prefetch={false}
       className={[
         "rounded-2xl px-4 py-2 text-sm transition cf-surface cf-text hover:border-black hover:dark:border-white",
         active ? "border-1 border-black dark:border-white" : "",

@@ -78,7 +78,7 @@ export default async function OverviewStatsCards({
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 flex items-center justify-center gap-3">
           <MiniStat
             label="Totali"
             value={String(performance.compliance.total28)}

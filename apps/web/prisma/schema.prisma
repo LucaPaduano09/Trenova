@@ -65,20 +65,20 @@ model Tenant {
   sessionCreditLedgers SessionCreditLedger[]
   workoutSessions      WorkoutSession[]
   progressEntries      ProgressEntry[]
-  notifications Notification[]
+  notifications        Notification[]
 }
 
 model User {
-  id            String        @id @default(cuid()) @map("_id")
+  id            String         @id @default(cuid()) @map("_id")
   tenantId      String?
-  role          UserRole      @default(OWNER)
-  email         String        @unique
+  role          UserRole       @default(OWNER)
+  email         String         @unique
   emailVerified DateTime?
   fullName      String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   passwordHash  String?
-  tenant        Tenant?       @relation(fields: [tenantId], references: [id])
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id])
   clients       Client[]
   accounts      Account[]
   sessions      Session[]
@@ -93,21 +93,21 @@ model User {
 //////////////////////
 
 model Client {
-  id         String       @id @default(cuid()) @map("_id")
+  id         String            @id @default(cuid()) @map("_id")
   tenantId   String
   userId     String?
   slug       String
   fullName   String
   email      String?
   phone      String?
-  status     ClientStatus @default(ACTIVE)
+  status     ClientStatus      @default(ACTIVE)
   notes      String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
   archivedAt DateTime?
   bodyIssues ClientBodyIssue[]
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User?  @relation(fields: [userId], references: [id])
+  tenant     Tenant            @relation(fields: [tenantId], references: [id])
+  user       User?             @relation(fields: [userId], references: [id])
 
   appointments     Appointment[]
   packagePurchases PackagePurchase[]
@@ -287,17 +287,24 @@ model AppointmentWorkoutItemLog {
 //////////////////////
 
 model Package {
-  id           String      @id @default(cuid()) @map("_id")
-  tenantId     String
-  name         String
-  type         PackageType
-  sessionCount Int? // per bundle
-  monthlyPrice Float?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id       String      @id @default(cuid()) @map("_id")
+  tenantId String
+  name     String
+  type     PackageType
 
-  tenant    Tenant            @relation(fields: [tenantId], references: [id])
-  purchases PackagePurchase[]
+  // bundle
+  sessionCount Int?
+  bundlePrice  Float?
+
+  // monthly
+  monthlyPrice        Float?
+  monthlySessionCount Int?
+
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  archivedAt DateTime?
+  tenant     Tenant            @relation(fields: [tenantId], references: [id])
+  purchases  PackagePurchase[]
 
   @@index([tenantId])
 }
@@ -751,20 +758,20 @@ enum IssueType {
 }
 
 model ClientBodyIssue {
-  id        String   @id @default(cuid()) @map("_id")
-  tenantId  String
-  clientId  String
+  id       String @id @default(cuid()) @map("_id")
+  tenantId String
+  clientId String
 
-  zoneKey   String   // es: "shoulder", "lumbar", "knee"
-  side      BodySide @default(MIDLINE)
+  zoneKey String // es: "shoulder", "lumbar", "knee"
+  side    BodySide @default(MIDLINE)
 
-  type      IssueType @default(PAIN)
-  severity  Int?      // 0-10
-  notes     String?
-  active    Boolean   @default(true)
+  type     IssueType @default(PAIN)
+  severity Int? // 0-10
+  notes    String?
+  active   Boolean   @default(true)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   client Client @relation(fields: [clientId], references: [id])
 
@@ -780,11 +787,12 @@ enum NotificationType {
   PAYMENT_MARKED
   GENERIC
 }
+
 model Notification {
-  id        String           @id @default(cuid()) @map("_id")
-  tenantId  String
-  userId    String
-  type      NotificationType @default(GENERIC)
+  id       String           @id @default(cuid()) @map("_id")
+  tenantId String
+  userId   String
+  type     NotificationType @default(GENERIC)
 
   title String
   body  String?
@@ -797,7 +805,7 @@ model Notification {
   clientId      String?
 
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
@@ -809,7 +817,7 @@ model Notification {
 
 model PasswordResetToken {
   id         String   @id @default(cuid()) @map("_id")
-  identifier String   // email
+  identifier String // email
   token      String   @unique
   expires    DateTime
   createdAt  DateTime @default(now())

@@ -36,7 +36,7 @@ function SidebarContent() {
         <NavItem href="/app/booking">Booking</NavItem>
         <NavItem href="/app/exercises">Esercizi</NavItem>
         <NavItem href="/app/workouts">Workouts</NavItem>
-
+        <NavItem href="/app/packages">Pacchetti</NavItem>
         <div className="mt-4 border-t border-neutral-200/70 pt-4 dark:border-white/10">
           <NavItem href="/api/auth/signout">Sign out</NavItem>
         </div>
