@@ -37,7 +37,7 @@ export async function upsertClientProfile(formData: FormData) {
   }
 
   const heightMm = cmToMm(parsed.data.heightCm);
-  const sex = parsed.data.sex ? String(parsed.data.sex) : null;
+  const sex = parsed.data.sex === "" ? null : parsed.data.sex;
   const birthDate = parsed.data.birthDate?.trim()
     ? new Date(parsed.data.birthDate)
     : null;
