@@ -2,6 +2,7 @@ import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import AuthCard from "@/app/app/_components/AuthCard";
 import Link from "next/link";
+import {prisma} from "@/lib/db"
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,8 +10,18 @@ export const revalidate = 0;
 export default async function SignInClientPage() {
   const session = await auth();
 
-  if (session?.user?.role === "CLIENT") {
-    redirect("/c");
+  if (session?.user?.id && session.user.role === "CLIENT") {
+    const linkedClient = await prisma.client.findFirst({
+      where: {
+        userId: session.user.id,
+        archivedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (linkedClient) {
+      redirect("/c");
+    }
   }
 
   if (session?.user?.role === "OWNER") {

@@ -39,5 +39,6 @@ export async function getCurrentClient() {
     session,
     user: session.user,
     client,
+    hasTenant: !!client.tenantId,
   };
 }

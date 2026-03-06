@@ -1,4 +1,5 @@
 "use server";
+
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -12,21 +13,28 @@ const schema = z.object({
   variant: z.enum(["pt", "client"]).optional(),
 });
 
-async function ensureUniqueTenantSlug(base: string) {
+async function ensureUniqueTenantSlugTx(
+  tx: typeof prisma,
+  base: string
+): Promise<string> {
   const clean = slugify(base) || "tenant";
 
-  // prova clean, poi clean-2, clean-3...
   for (let i = 0; i < 20; i++) {
     const candidate = i === 0 ? clean : `${clean}-${i + 1}`;
-    const exists = await prisma.tenant.findUnique({
+    const exists = await tx.tenant.findUnique({
       where: { slug: candidate },
       select: { id: true },
     });
+
     if (!exists) return candidate;
   }
 
-  // fallback super safe
   return `${clean}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function makeClientSlug(email: string) {
+  const base = baseSlugFromEmail(email) || "client";
+  return `${base}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export async function registerWithPassword(input: {
@@ -36,6 +44,7 @@ export async function registerWithPassword(input: {
   variant?: "pt" | "client";
 }) {
   const parsed = schema.safeParse(input);
+
   if (!parsed.success) {
     console.log(parsed.error.flatten());
     return { ok: false as const, error: "Dati non validi." };
@@ -43,6 +52,7 @@ export async function registerWithPassword(input: {
 
   const { email, password, fullName, variant = "pt" } = parsed.data;
   const emailNorm = email.trim().toLowerCase();
+  const safeFullName = fullName?.trim() || null;
 
   const exists = await prisma.user.findUnique({
     where: { email: emailNorm },
@@ -53,65 +63,119 @@ export async function registerWithPassword(input: {
     if (!exists.emailVerified) {
       await createAndSendEmailVerification({
         email: emailNorm,
-        name: fullName ?? null,
+        name: safeFullName,
       });
+
       return { ok: true as const, needsVerify: true as const };
     }
+
     return { ok: false as const, error: "Email già registrata." };
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  //  ' bootstrapping tenant solo per PT/OWNER
-  const shouldCreateTenant = variant === "pt";
+  try {
+    const created = await prisma.$transaction(async (tx) => {
+      // =========================
+      // CLIENT REGISTER
+      // =========================
+      if (variant === "client") {
+        const user = await tx.user.create({
+          data: {
+            email: emailNorm,
+            passwordHash,
+            fullName: safeFullName,
+            role: "CLIENT",
+            emailVerified: null,
+            tenantId: null,
+          },
+          select: {
+            id: true,
+            tenantId: true,
+            email: true,
+            fullName: true,
+            role: true,
+          },
+        });
 
-  const created = await prisma.$transaction(async (tx) => {
-    let tenantId: string | null = null;
+        const client = await tx.client.create({
+          data: {
+            userId: user.id,
+            tenantId: null,
+            slug: makeClientSlug(emailNorm),
+            fullName: safeFullName || emailNorm.split("@")[0] || "Cliente",
+            email: emailNorm,
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            tenantId: true,
+          },
+        });
 
-    if (shouldCreateTenant) {
-      const base = fullName?.trim()
-        ? `${fullName.trim().split(" ")[0]}-studio`
+        return {
+          userId: user.id,
+          tenantId: client.tenantId ?? null,
+          role: user.role,
+        };
+      }
+
+      // =========================
+      // PT REGISTER
+      // =========================
+      const base = safeFullName
+        ? `${safeFullName.split(" ")[0]}-studio`
         : baseSlugFromEmail(emailNorm);
 
-      const slug = await ensureUniqueTenantSlug(base);
+      const slug = await ensureUniqueTenantSlugTx(tx as typeof prisma, base);
 
       const tenant = await tx.tenant.create({
         data: {
-          name: fullName?.trim()
-            ? `${fullName.trim()} Studio`
-            : "Trenova Workspace",
+          name: safeFullName ? `${safeFullName} Studio` : "Trenova Workspace",
           slug,
           email: emailNorm,
         },
         select: { id: true },
       });
 
-      tenantId = tenant.id;
-    }
+      const user = await tx.user.create({
+        data: {
+          email: emailNorm,
+          passwordHash,
+          fullName: safeFullName,
+          role: "OWNER",
+          emailVerified: null,
+          tenantId: tenant.id,
+        },
+        select: {
+          id: true,
+          tenantId: true,
+          role: true,
+        },
+      });
 
-    const user = await tx.user.create({
-      data: {
-        email: emailNorm,
-        passwordHash,
-        fullName: fullName?.trim() || null,
-        role: variant === "client" ? "CLIENT" : "OWNER",
-        emailVerified: null,
-        tenantId: tenantId, //  ' collega se creato
-      },
-      select: { id: true, tenantId: true },
+      return {
+        userId: user.id,
+        tenantId: user.tenantId ?? null,
+        role: user.role,
+      };
     });
 
-    return user;
-  });
+    await createAndSendEmailVerification({
+      email: emailNorm,
+      name: safeFullName,
+    });
 
-  await createAndSendEmailVerification({
-    email: emailNorm,
-    name: fullName ?? null,
-  });
-
-  return {
-    ok: true as const,
-    needsVerify: true as const,
-    tenantId: created.tenantId ?? null,
-  };
+    return {
+      ok: true as const,
+      needsVerify: true as const,
+      tenantId: created.tenantId ?? null,
+    };
+  } catch (error) {
+    console.error("registerWithPassword error:", error);
+    return {
+      ok: false as const,
+      error: "Errore durante la registrazione.",
+    };
+  }
 }

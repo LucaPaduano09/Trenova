@@ -69,15 +69,16 @@ model Tenant {
 }
 
 model User {
-  id            String         @id @default(cuid()) @map("_id")
+  id            String    @id @default(cuid()) @map("_id")
   tenantId      String?
-  role          UserRole       @default(OWNER)
-  email         String         @unique
+  role          UserRole  @default(OWNER)
+  email         String    @unique
   emailVerified DateTime?
   fullName      String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   passwordHash  String?
+
   tenant        Tenant?        @relation(fields: [tenantId], references: [id])
   clients       Client[]
   accounts      Account[]
@@ -93,21 +94,23 @@ model User {
 //////////////////////
 
 model Client {
-  id         String            @id @default(cuid()) @map("_id")
-  tenantId   String
+  id         String       @id @default(cuid()) @map("_id")
+  tenantId   String?
   userId     String?
   slug       String
   fullName   String
   email      String?
   phone      String?
-  status     ClientStatus      @default(ACTIVE)
+  status     ClientStatus @default(ACTIVE)
   notes      String?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
   archivedAt DateTime?
+
   bodyIssues ClientBodyIssue[]
-  tenant     Tenant            @relation(fields: [tenantId], references: [id])
-  user       User?             @relation(fields: [userId], references: [id])
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
 
   appointments     Appointment[]
   packagePurchases PackagePurchase[]
