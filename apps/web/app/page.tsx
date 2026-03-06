@@ -46,14 +46,14 @@ export default function LandingPage() {
 
         <nav className="hidden items-center gap-2 lg:flex">
           <Link
-            href="/app/sign-in?type=pt&mode=login"
+            href="/app/sign-in?type=pt"
             className="rounded-2xl bg-white/5 px-4 py-2 text-sm ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
           >
             {/* test 2*/}
             Area PT
           </Link>
           <Link
-            href="/c/sign-in?type=client&mode=login"
+            href="/c/sign-in?type=client"
             className="rounded-2xl bg-white/5 px-4 py-2 text-sm ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
           >
             Area Cliente

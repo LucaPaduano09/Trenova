@@ -10,7 +10,7 @@ import { registerWithPassword } from "@/actions/registerWithPassword";
 type Props = {
   variant: "pt" | "client";
   brand?: string;
-  defaultCallbackUrl: string; // es: "/app" o "/c"
+  defaultCallbackUrl: string;
 };
 
 type EmailCheckState =
@@ -26,7 +26,6 @@ function isValidEmail(v: string) {
 }
 
 function passwordStrength(pw: string) {
-  // score 0..4 + label
   const p = pw ?? "";
   let score = 0;
 
@@ -36,8 +35,7 @@ function passwordStrength(pw: string) {
   if (/\d/.test(p)) score++;
   if (/[^A-Za-z0-9]/.test(p)) score++;
 
-  // comprimi in 0..4
-  const clamped = Math.min(4, Math.max(0, score - 1)); // così 8 chars = 0/1 “weak”
+  const clamped = Math.min(4, Math.max(0, score - 1));
   const labels = ["Debole", "Ok", "Buona", "Forte", "Molto forte"] as const;
   const label = labels[Math.min(4, clamped)];
 
@@ -63,30 +61,28 @@ export default function AuthCard({
 
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-
-  // "sent" lo useremo sia per magic che per register (messaggio email inviata)
   const [sent, setSent] = useState(false);
 
-  // Live email availability
   const [emailCheck, setEmailCheck] = useState<EmailCheckState>({
     status: "idle",
   });
   const lastEmailCheckedRef = useRef<string>("");
 
   const title = useMemo(() => {
-    if (variant === "pt")
+    if (variant === "pt") {
       return mode === "login" ? "Accedi come PT" : "Crea account PT";
+    }
     return mode === "login" ? "Accedi come Cliente" : "Crea account Cliente";
   }, [variant, mode]);
 
   const subtitle = useMemo(() => {
     if (variant === "pt") {
       return mode === "login"
-        ? "Gestisci clienti, sessioni e pagamenti in modo semplice."
-        : "Inizia in 60 secondi. Il setup viene creato automaticamente.";
+        ? "Gestisci clienti, sessioni e pagamenti in un’unica area."
+        : "Inizia in pochi secondi. Il setup viene creato automaticamente.";
     }
     return mode === "login"
-      ? "Vedi le tue sessioni, pagamenti e progressi."
+      ? "Consulta sessioni, progressi e dettagli del tuo percorso."
       : "Crea il tuo accesso per seguire il percorso con il tuo PT.";
   }, [variant, mode]);
 
@@ -97,9 +93,7 @@ export default function AuthCard({
   const pwOkRegister = useMemo(() => pw.length >= 8, [pw]);
   const strength = useMemo(() => passwordStrength(pw), [pw]);
 
-  // Debounced email check (solo in register, e solo se email valida)
   useEffect(() => {
-    // reset
     setSent(false);
     setError(null);
 
@@ -118,7 +112,6 @@ export default function AuthCard({
       return;
     }
 
-    // evita doppie chiamate per stesso valore
     if (lastEmailCheckedRef.current === emailNorm) return;
 
     const t = setTimeout(async () => {
@@ -131,16 +124,18 @@ export default function AuthCard({
         );
 
         if (!res.ok) throw new Error("check failed");
+
         const json: { ok: boolean; exists: boolean; verified: boolean } =
           await res.json();
 
         lastEmailCheckedRef.current = emailNorm;
 
-        if (json.exists)
+        if (json.exists) {
           setEmailCheck({ status: "taken", verified: json.verified });
-        else setEmailCheck({ status: "available" });
+        } else {
+          setEmailCheck({ status: "available" });
+        }
       } catch {
-        // se fallisce, non blocchiamo l'utente (ma non diamo ok)
         setEmailCheck({ status: "idle" });
       }
     }, 450);
@@ -158,12 +153,11 @@ export default function AuthCard({
 
     if (mode === "login") return pw.length > 0;
 
-    // register
     if (!pwOkRegister) return false;
     if (emailCheck.status === "checking") return false;
-    if (emailCheck.status === "taken") return false; // già registrata
+    if (emailCheck.status === "taken") return false;
     if (emailCheck.status === "invalid") return false;
-    // idle/available: ok (idle può succedere se fetch fallisce: lasciamo passare e server farà da guardia)
+
     return true;
   }, [pending, mode, emailOk, pw.length, pwOkRegister, emailCheck.status]);
 
@@ -191,13 +185,13 @@ export default function AuthCard({
 
     start(async () => {
       if (mode === "register") {
-        // guardia UX (anche se server valida comunque)
         if (emailCheck.status === "taken") {
           setError(
             emailCheck.verified
               ? "Email già registrata. Prova ad accedere."
               : "Email già registrata ma non verificata. Ti reinviamo la mail di conferma."
           );
+          return;
         }
 
         const r = await registerWithPassword({
@@ -212,7 +206,6 @@ export default function AuthCard({
           return;
         }
 
-        //  ' qui NON facciamo signIn: mostriamo messaggio email inviata
         if (r.needsVerify) {
           setSent(true);
           return;
@@ -222,7 +215,6 @@ export default function AuthCard({
         return;
       }
 
-      // LOGIN
       const res = await signIn("credentials", {
         email: emailNorm,
         password,
@@ -235,30 +227,30 @@ export default function AuthCard({
     });
   }
 
+  const forgotHref =
+    variant === "pt" ? "/app/forgot-password" : "/c/forgot-password";
+
   return (
-    <div className="relative w-full max-w-[520px] lg:max-w-[820px] lg:w-[820px] overflow-hidden rounded-3xl border cf-surface p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-0 cf-surface" />
+    <div className="relative w-full overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-6 lg:max-w-[720px]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_28%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.10),transparent_30%)]" />
+      <div className="pointer-events-none absolute inset-[1px] rounded-[31px] border border-white/5" />
 
       <div className="relative">
-        {/* Header: su mobile va in colonna, su sm+ torna row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <Image
-              alt="logo"
-              src={"/landing/Frame-2.svg"}
-              width={120}
+              alt={brand}
+              src="/landing/Frame-1.svg"
+              width={150}
               height={50}
-              className="mb-2 ml-[-7px] h-auto w-[108px] sm:w-[120px]"
+              className="mb-2 ml-[-7px] h-auto w-[108px] opacity-95 sm:w-[120px]"
               priority
             />
-            <div className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-              {title}
-            </div>
+            <div className="text-sm font-medium text-white/88">{title}</div>
           </div>
 
-          {/* Switch login/register: full width su mobile */}
           <div className="w-full sm:w-auto">
-            <div className="grid grid-cols-2 rounded-2xl border cf-surface p-1 text-sm">
+            <div className="grid grid-cols-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1 text-sm backdrop-blur">
               <button
                 onClick={() => {
                   setMode("login");
@@ -266,14 +258,15 @@ export default function AuthCard({
                   setSent(false);
                 }}
                 className={[
-                  "rounded-xl px-3 py-2 sm:py-1.5 transition",
+                  "rounded-xl px-3 py-2 transition",
                   mode === "login"
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "text-neutral-700 hover:bg-white/70 dark:text-neutral-200 dark:hover:bg-white/10",
+                    ? "bg-white text-black shadow-sm"
+                    : "text-white/70 hover:bg-white/6 hover:text-white",
                 ].join(" ")}
               >
                 Accedi
               </button>
+
               <button
                 onClick={() => {
                   setMode("register");
@@ -282,10 +275,10 @@ export default function AuthCard({
                   lastEmailCheckedRef.current = "";
                 }}
                 className={[
-                  "rounded-xl px-3 py-2 sm:py-1.5 transition",
+                  "rounded-xl px-3 py-2 transition",
                   mode === "register"
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "text-neutral-700 hover:bg-white/70 dark:text-neutral-200 dark:hover:bg-white/10",
+                    ? "bg-white text-black shadow-sm"
+                    : "text-white/70 hover:bg-white/6 hover:text-white",
                 ].join(" ")}
               >
                 Registrati
@@ -294,11 +287,10 @@ export default function AuthCard({
           </div>
         </div>
 
-        <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+        <p className="mt-3 max-w-xl text-sm leading-6 text-white/58">
           {subtitle}
         </p>
 
-        {/* Method switch: su mobile 2 colonne, su sm torna inline */}
         <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <button
             onClick={() => {
@@ -309,12 +301,13 @@ export default function AuthCard({
             className={[
               "rounded-2xl border px-3 py-2 text-sm transition",
               method === "magic"
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "bg-white/60 text-neutral-800 hover:bg-white/80 dark:bg-white/5 dark:text-neutral-200 dark:hover:bg-white/10",
+                ? "border-white/15 bg-white text-black"
+                : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] hover:text-white",
             ].join(" ")}
           >
             Magic link
           </button>
+
           <button
             onClick={() => {
               setMethod("password");
@@ -324,8 +317,8 @@ export default function AuthCard({
             className={[
               "rounded-2xl border px-3 py-2 text-sm transition",
               method === "password"
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "bg-white/60 text-neutral-800 hover:bg-white/80 dark:bg-white/5 dark:text-neutral-200 dark:hover:bg-white/10",
+                ? "border-white/15 bg-white text-black"
+                : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] hover:text-white",
             ].join(" ")}
           >
             Email + password
@@ -333,67 +326,69 @@ export default function AuthCard({
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+          <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
           </div>
         ) : null}
 
         {sent ? (
-          <div className="mt-4 rounded-2xl border bg-white/60 px-4 py-3 text-sm text-neutral-700 dark:bg-white/5 dark:text-neutral-200">
+          <div className="mt-4 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
             Ti abbiamo inviato una mail. Controlla posta e spam/promozioni.
           </div>
         ) : null}
 
         {method === "magic" ? (
-          <form onSubmit={onMagicSubmit} className="mt-5 space-y-3">
-            <label className="block text-sm cf-text p-1">Email</label>
+          <form onSubmit={onMagicSubmit} className="mt-6 space-y-3">
+            <label className="block px-1 text-sm text-white/82">Email</label>
+
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
               type="email"
               className={[
-                "w-full rounded-2xl border cf-card px-4 py-3 text-sm outline-none cf-text",
-                email.length > 0 && !emailOk ? "border-red-300" : "",
+                "w-full rounded-2xl border bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25",
+                "border-white/10 focus:border-white/20 focus:bg-white/[0.06]",
+                email.length > 0 && !emailOk
+                  ? "border-red-400/40 focus:border-red-400/50"
+                  : "",
               ].join(" ")}
               required
             />
 
             {email.length > 0 && !emailOk ? (
-              <p className="text-xs text-red-600 dark:text-red-300">
-                Inserisci un’email valida.
-              </p>
+              <p className="text-xs text-red-300">Inserisci un’email valida.</p>
             ) : null}
 
-            <div className="rounded-2xl bg-gradient-to-r from-emerald-400 to-blue-500 opacity-60 hover:opacity-100 flex items-center justify-center">
+            <div className="rounded-2xl bg-gradient-to-r from-emerald-400/90 to-blue-500/90 p-[1px] shadow-[0_0_30px_rgba(16,185,129,0.12)]">
               <button
                 disabled={!canSubmitMagic}
                 type="submit"
-                className="w-full m-1 bg-white rounded-2xl px-4 py-3 text-sm cf-text font-medium hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl bg-black/80 px-4 py-3 text-sm font-medium text-white transition hover:bg-black/70 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {pending ? "Invio..." : "Invia magic link"}
               </button>
             </div>
 
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="text-xs leading-5 text-white/45">
               Ti inviamo un link di accesso. Nessuna password necessaria.
             </p>
           </form>
         ) : (
-          <form onSubmit={onPasswordSubmit} className="mt-5 space-y-3">
+          <form onSubmit={onPasswordSubmit} className="mt-6 space-y-3">
             {mode === "register" ? (
               <>
-                <label className="block text-sm cf-text">Nome</label>
+                <label className="block px-1 text-sm text-white/82">Nome</label>
                 <input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Nome e cognome"
-                  className="w-full rounded-2xl border cf-card px-4 py-3 text-sm outline-none cf-text"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/20 focus:bg-white/[0.06]"
                 />
               </>
             ) : null}
 
-            <label className="block text-sm cf-text">Email</label>
+            <label className="block px-1 text-sm text-white/82">Email</label>
             <input
               value={email}
               onChange={(e) => {
@@ -402,40 +397,35 @@ export default function AuthCard({
                 lastEmailCheckedRef.current = "";
               }}
               type="email"
+              placeholder="you@email.com"
               className={[
-                "w-full rounded-2xl border cf-card px-4 py-3 text-sm outline-none cf-text",
-                email.length > 0 && !emailOk ? "border-red-300" : "",
-                mode === "register" && emailCheck.status === "taken"
-                  ? "border-red-300"
-                  : "",
-                mode === "register" && emailCheck.status === "available"
-                  ? "border-emerald-300"
-                  : "",
+                "w-full rounded-2xl border bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25",
+                "focus:bg-white/[0.06]",
+                email.length > 0 && !emailOk
+                  ? "border-red-400/40 focus:border-red-400/50"
+                  : mode === "register" && emailCheck.status === "taken"
+                  ? "border-red-400/40 focus:border-red-400/50"
+                  : mode === "register" && emailCheck.status === "available"
+                  ? "border-emerald-400/35 focus:border-emerald-400/45"
+                  : "border-white/10 focus:border-white/20",
               ].join(" ")}
               required
             />
 
-            {/* Email availability hint */}
             {mode === "register" ? (
               <div className="text-xs">
                 {emailNorm.length === 0 ? (
-                  <span className="text-neutral-500 dark:text-neutral-400">
+                  <span className="text-white/42">
                     Inserisci un’email per verificare la disponibilità.
                   </span>
                 ) : !emailOk ? (
-                  <span className="text-red-600 dark:text-red-300">
-                    Email non valida.
-                  </span>
+                  <span className="text-red-300">Email non valida.</span>
                 ) : emailCheck.status === "checking" ? (
-                  <span className="text-neutral-500 dark:text-neutral-400">
-                    Controllo disponibilità…
-                  </span>
+                  <span className="text-white/42">Controllo disponibilità…</span>
                 ) : emailCheck.status === "available" ? (
-                  <span className="text-emerald-600 dark:text-emerald-300">
-                    Email disponibile '
-                  </span>
+                  <span className="text-emerald-300">Email disponibile.</span>
                 ) : emailCheck.status === "taken" ? (
-                  <span className="text-red-600 dark:text-red-300">
+                  <span className="text-red-300">
                     Email già registrata{" "}
                     {emailCheck.verified ? "(verificata)" : "(non verificata)"}.
                   </span>
@@ -443,61 +433,57 @@ export default function AuthCard({
               </div>
             ) : null}
 
-            <label className="block text-sm cf-text">Password</label>
+            <label className="block px-1 text-sm text-white/82">Password</label>
             <input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               className={[
-                "w-full rounded-2xl border cf-card px-4 py-3 text-sm outline-none cf-text",
+                "w-full rounded-2xl border bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25",
+                "border-white/10 focus:border-white/20 focus:bg-white/[0.06]",
                 mode === "register" && password.length > 0 && !pwOkRegister
-                  ? "border-red-300"
+                  ? "border-red-400/40 focus:border-red-400/50"
                   : "",
               ].join(" ")}
               required
             />
 
-            {/* Strength meter */}
             {mode === "register" ? (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-neutral-500 dark:text-neutral-400">
-                    Strength
-                  </span>
+                  <span className="text-white/42">Strength</span>
                   <span
                     className={[
                       "font-medium",
                       strength.score <= 1
-                        ? "text-red-600 dark:text-red-300"
+                        ? "text-red-300"
                         : strength.score === 2
-                        ? "text-neutral-700 dark:text-neutral-200"
-                        : "text-emerald-700 dark:text-emerald-300",
+                        ? "text-white/70"
+                        : "text-emerald-300",
                     ].join(" ")}
                   >
                     {strength.label}
                   </span>
                 </div>
 
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   {[0, 1, 2, 3].map((i) => (
                     <div
                       key={i}
                       className={[
-                        "h-1.5 flex-1 rounded-full border",
+                        "h-1.5 flex-1 rounded-full",
                         strength.score >= i + 1
-                          ? "bg-black dark:bg-white"
-                          : "bg-transparent",
+                          ? "bg-white"
+                          : "bg-white/10",
                       ].join(" ")}
                     />
                   ))}
                 </div>
 
                 {password.length > 0 && !pwOkRegister ? (
-                  <p className="text-xs text-red-600 dark:text-red-300">
-                    Minimo 8 caratteri.
-                  </p>
+                  <p className="text-xs text-red-300">Minimo 8 caratteri.</p>
                 ) : (
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  <p className="text-xs leading-5 text-white/42">
                     Consiglio: 12+ caratteri, maiuscole/minuscole, numeri e un
                     simbolo.
                   </p>
@@ -505,22 +491,19 @@ export default function AuthCard({
               </div>
             ) : null}
 
-            <div className="flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-400 to-blue-500 opacity-60 hover:opacity-100 hover:cursor-pointer">
+            <div className="rounded-2xl bg-gradient-to-r from-emerald-400/90 to-blue-500/90 p-[1px] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
               <button
                 disabled={!canSubmitPassword}
                 type="submit"
-                className="w-full m-1 bg-white rounded-2xl px-4 py-3 text-sm font-medium cf-text hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl bg-black/80 px-4 py-3 text-sm font-medium text-white transition hover:bg-black/70 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {pending ? "..." : mode === "login" ? "Accedi" : "Crea account"}
               </button>
             </div>
 
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="text-xs text-white/42">
               {mode === "login" ? (
-                <Link
-                  href="/app/forgot-password"
-                  className="text-xs text-neutral-500 hover:underline dark:text-neutral-400"
-                >
+                <Link href={forgotHref} className="hover:text-white/70 hover:underline">
                   Hai dimenticato la password?
                 </Link>
               ) : (
@@ -530,13 +513,12 @@ export default function AuthCard({
           </form>
         )}
 
-        <div className="mt-6 flex items-center justify-between text-xs cf-text">
-          <Link href="/" className="hover:underline">
+        <div className="mt-6 flex items-center justify-between text-xs text-white/50">
+          <Link href="/" className="transition hover:text-white/80 hover:underline">
             ← Torna alla home
           </Link>
-          <span className="opacity-80">
-            {variant === "pt" ? "Area PT" : "Area Cliente"}
-          </span>
+
+          <span>{variant === "pt" ? "Area PT" : "Area Cliente"}</span>
         </div>
       </div>
     </div>

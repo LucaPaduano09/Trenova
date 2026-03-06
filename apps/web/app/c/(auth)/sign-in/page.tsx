@@ -1,47 +1,46 @@
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import AuthCard from "@/app/app/_components/AuthCard";
 import Link from "next/link";
-import AuthCard from "../../_components/AuthCard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function SignInPtPage() {
+export default async function SignInClientPage() {
   const session = await auth();
 
-  if (session?.user?.role === "OWNER") {
-    redirect("/app");
+  if (session?.user?.role === "CLIENT") {
+    redirect("/c");
   }
 
-  if (session?.user?.role === "CLIENT") {
+  if (session?.user?.role === "OWNER") {
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center px-6">
         <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-          <h1 className="text-xl font-semibold">Sei già autenticato come cliente</h1>
+          <h1 className="text-xl font-semibold">Sei già autenticato come PT</h1>
           <p className="mt-2 text-sm text-white/70">
-            Per accedere come PT devi prima uscire dall’account cliente attuale.
+            Per accedere come cliente nello stesso browser devi prima uscire dall’account PT.
           </p>
 
           <div className="mt-5 flex flex-col gap-3">
             <Link
-              href="/c"
-              className="rounded-2xl bg-white text-black px-4 py-3 text-sm font-medium text-center"
+              href="/app"
+              className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-medium text-black"
             >
-              Vai all’area cliente
+              Vai alla dashboard PT
             </Link>
 
             <form
               action={async () => {
                 "use server";
-                const { signOut } = await import("@/lib/auth");
-                await signOut({ redirectTo: "/app/sign-in?mode=login" });
+                await signOut({ redirectTo: "/c/sign-in?mode=login" });
               }}
             >
               <button
                 type="submit"
                 className="w-full rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium"
               >
-                Esci e accedi come PT
+                Esci e accedi come cliente
               </button>
             </form>
           </div>
@@ -50,5 +49,5 @@ export default async function SignInPtPage() {
     );
   }
 
-  return <AuthCard variant="pt" defaultCallbackUrl="/app" />;
+  return <AuthCard variant="client" defaultCallbackUrl="/c" />;
 }
