@@ -14,7 +14,7 @@
   },
   "packageManager": "pnpm@9.15.5",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
