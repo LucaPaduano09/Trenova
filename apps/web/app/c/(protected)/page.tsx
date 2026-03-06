@@ -33,39 +33,63 @@ function DashboardCard({
 export default async function ClientDashboardPage() {
   const { client, hasTenant } = await getCurrentClient();
 
-  const [nextAppointment, activePlan, latestProgress] = await Promise.all([
-    prisma.appointment.findFirst({
-      where: {
-        clientId: client.id,
-        status: "SCHEDULED",
-        startsAt: { gte: new Date() },
-      },
-      orderBy: { startsAt: "asc" },
-    }),
-    prisma.workoutPlan.findFirst({
-      where: {
-        clientId: client.id,
-        status: "active",
-      },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.progressEntry.findFirst({
-      where: {
-        clientId: client.id,
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        weight: true,
-        createdAt: true,
-      },
-    }),
-  ]);
+  const [nextAppointment, activePlan, latestProgress, trainerWorkspace] =
+    await Promise.all([
+      prisma.appointment.findFirst({
+        where: {
+          clientId: client.id,
+          status: "SCHEDULED",
+          startsAt: { gte: new Date() },
+        },
+        orderBy: { startsAt: "asc" },
+      }),
+      prisma.workoutPlan.findFirst({
+        where: {
+          clientId: client.id,
+          status: "active",
+        },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.progressEntry.findFirst({
+        where: {
+          clientId: client.id,
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          weight: true,
+          createdAt: true,
+        },
+      }),
+      hasTenant && client.tenantId
+        ? prisma.tenant.findUnique({
+            where: { id: client.tenantId },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              email: true,
+              users: {
+                where: { role: "OWNER" },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  createdAt: true,
+                },
+                take: 1,
+              },
+            },
+          })
+        : Promise.resolve(null),
+    ]);
+
+  const trainer = trainerWorkspace?.users?.[0] ?? null;
 
   return (
     <div className="space-y-8 pb-24 md:pb-8">
@@ -81,14 +105,16 @@ export default async function ClientDashboardPage() {
 
           <p className="mt-3 max-w-2xl text-sm leading-7 text-white/58">
             {hasTenant
-              ? "Bentornato nella tua area personale. Qui puoi seguire sessioni, scheda attiva e progressi del tuo percorso."
+              ? `Bentornato nella tua area personale. Sei collegato a ${
+                  trainer?.fullName || trainerWorkspace?.name || "un trainer"
+                } e qui puoi seguire sessioni, scheda attiva e progressi del tuo percorso.`
               : "Hai già il tuo accesso personale. Completa il tuo profilo e preparati a collegarti a un personal trainer."}
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/c/profile"
-              className="rounded-2xl border border-white/10 bg-white text-black px-4 py-2.5 text-sm font-medium transition hover:opacity-90"
+              className="rounded-2xl border border-white/10 bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:opacity-90"
             >
               Vai al profilo
             </Link>
@@ -127,17 +153,76 @@ export default async function ClientDashboardPage() {
                 Collegamento PT
               </div>
               <div className="mt-2 text-sm font-medium text-white">
-                {hasTenant ? "Connesso a un trainer" : "Nessun trainer collegato"}
+                {hasTenant
+                  ? trainer?.fullName || trainerWorkspace?.name || "Trainer collegato"
+                  : "Nessun trainer collegato"}
               </div>
               <p className="mt-2 text-sm text-white/45">
                 {hasTenant
-                  ? "Il tuo account è già associato a un workspace Trenova."
+                  ? `Il tuo account è associato a ${trainerWorkspace?.name || "un workspace Trenova"}${
+                      trainer?.email ? ` · ${trainer.email}` : ""
+                    }.`
                   : "Più avanti potrai collegarti a un trainer tramite invito o scelta autonoma."}
               </p>
             </div>
           </div>
         </div>
       </section>
+
+      {hasTenant && trainerWorkspace ? (
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl">
+          <div className="max-w-3xl">
+            <div className="text-sm text-white/55">Il tuo coach</div>
+
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
+              {trainer?.fullName || trainerWorkspace.name}
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-white/55">
+              Sei attualmente seguito da{" "}
+              <span className="font-medium text-white">
+                {trainer?.fullName || trainerWorkspace.name}
+              </span>
+              {trainerWorkspace.name &&
+              trainer?.fullName &&
+              trainerWorkspace.name !== trainer.fullName
+                ? ` all'interno di ${trainerWorkspace.name}`
+                : ""}
+              . Da qui puoi consultare schede, sessioni e progressi del tuo
+              percorso.
+            </p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-xs uppercase tracking-[0.14em] text-white/40">
+                  Coach
+                </div>
+                <div className="mt-2 text-sm font-medium text-white">
+                  {trainer?.fullName || "Non disponibile"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-xs uppercase tracking-[0.14em] text-white/40">
+                  Email
+                </div>
+                <div className="mt-2 text-sm font-medium text-white break-all">
+                  {trainer?.email || trainerWorkspace.email || "Non disponibile"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-xs uppercase tracking-[0.14em] text-white/40">
+                  Workspace
+                </div>
+                <div className="mt-2 text-sm font-medium text-white">
+                  {trainerWorkspace.name}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {!hasTenant ? (
         <section className="rounded-[32px] border border-dashed border-white/12 bg-white/[0.03] p-6 backdrop-blur-xl">
@@ -155,13 +240,13 @@ export default async function ClientDashboardPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/c/profile"
-                className="rounded-2xl border border-white/10 bg-white text-black px-4 py-2.5 text-sm font-medium transition hover:opacity-90"
+                className="rounded-2xl border border-white/10 bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:opacity-90"
               >
                 Completa il profilo
               </Link>
               <button
                 disabled
-                className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white/35 cursor-not-allowed"
+                className="cursor-not-allowed rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white/35"
               >
                 Scopri i trainer
               </button>
