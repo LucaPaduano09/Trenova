@@ -1,10 +1,13 @@
 // lib/auth.ts
 import NextAuth from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import Nodemailer from "next-auth/providers/nodemailer";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/db";
 import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
+
+import { prisma } from "@/lib/db";
+
 /**
  * Utils
  */
@@ -36,7 +39,7 @@ async function makeUniqueTenantSlug(base: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
 
   providers: [
@@ -79,7 +82,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!ok) return null;
 
         if (!user.emailVerified) {
-          //   // poi in UI intercetti res.error === "EMAIL_NOT_VERIFIED"
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
@@ -89,25 +91,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.fullName ?? undefined,
           tenantId: user.tenantId ?? null,
           role: user.role,
-        } as any;
+        };
       },
     }),
   ],
 
   /**
-   * Primo onboarding: crea tenant e collega l'utente.
-   * NB: con magic link non hai "variant" → quindi per ora:
-   * - se non ha tenantId, lo trattiamo come OWNER e creiamo tenant
+   * Attenzione:
+   * questa logica bootstrap crea automaticamente un tenant OWNER
+   * per ogni utente creato senza tenantId.
+   *
+   * Va bene per i PT.
+   * Per i CLIENT bisogna assicurarsi che vengano già creati/collegati
+   * con tenantId e role corretti prima che questo evento li intercetti.
    */
   events: {
     async createUser({ user }) {
+      if (!user.id) return;
+
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { id: true, email: true, fullName: true, tenantId: true },
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          tenantId: true,
+          role: true,
+        },
       });
 
       if (!dbUser) return;
+
+      // Se già collegato a un tenant, non fare nulla
       if (dbUser.tenantId) return;
+
+      // Se per qualche motivo è già CLIENT, non bootstrapparlo come OWNER
+      if (dbUser.role === "CLIENT") return;
 
       const email = dbUser.email ?? "";
       const baseName = (email.split("@")[0] || "coach").slice(0, 40);
@@ -135,27 +154,58 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      if (user?.id) token.sub = user.id;
+      // Primo login: il provider restituisce user
+      if (user) {
+        token.sub = user.id;
+        token.email = user.email ?? token.email;
+        token.name = user.name ?? token.name;
+
+        token.role =
+          (user as { role?: "OWNER" | "CLIENT" }).role ??
+          (token.role as "OWNER" | "CLIENT" | undefined);
+
+        token.tenantId =
+          (user as { tenantId?: string | null }).tenantId ??
+          (token.tenantId as string | null | undefined) ??
+          null;
+      }
+
+      // Fallback: se il token non ha ancora role/tenantId, leggi dal DB
+      if (token.sub && (!token.role || token.tenantId === undefined)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            tenantId: true,
+            role: true,
+          },
+        });
+
+        if (dbUser) {
+          token.email = dbUser.email;
+          token.name = dbUser.fullName ?? token.name;
+          token.role = dbUser.role;
+          token.tenantId = dbUser.tenantId ?? null;
+        }
+      }
+
       return token;
     },
 
     async session({ session, token }) {
-      const userId = token.sub as string | undefined;
-      if (!userId) return session;
-
-      const dbUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, tenantId: true, role: true, email: true },
-      });
+      if (!token.sub) return session;
 
       return {
         ...session,
         user: {
           ...session.user,
-          id: userId,
-          email: dbUser?.email ?? session.user?.email ?? "",
-          tenantId: dbUser?.tenantId ?? "",
-          role: (dbUser?.role as "OWNER" | "CLIENT") ?? "OWNER",
+          id: token.sub,
+          email: (token.email as string | undefined) ?? session.user?.email ?? "",
+          name: (token.name as string | undefined) ?? session.user?.name ?? "",
+          tenantId: (token.tenantId as string | null | undefined) ?? null,
+          role: (token.role as "OWNER" | "CLIENT" | undefined) ?? "OWNER",
         },
       };
     },
