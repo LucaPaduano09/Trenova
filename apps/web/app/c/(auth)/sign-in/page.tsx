@@ -9,17 +9,22 @@ export const revalidate = 0;
 
 export default async function SignInClientPage() {
   const session = await auth();
+  console.log("CLIENT SIGN-IN SESSION", session?.user);
 
   if (session?.user?.id && session.user.role === "CLIENT") {
     const linkedClient = await prisma.client.findFirst({
       where: {
         userId: session.user.id,
-        archivedAt: null,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        archivedAt: true,
+        tenantId: true,
+        userId: true,
+      },
     });
 
-    if (linkedClient) {
+    if (linkedClient && !linkedClient.archivedAt) {
       redirect("/c");
     }
   }

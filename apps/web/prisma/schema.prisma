@@ -127,13 +127,12 @@ model Client {
 }
 
 model ClientProfile {
-  id       String @id @default(cuid()) @map("_id")
-  tenantId String
-  clientId String @unique
+  id       String  @id @default(cuid()) @map("_id")
+  tenantId String?
+  clientId String  @unique
 
-  // esempio campi profilo
   heightMm  Int?
-  sex       String? // o enum se vuoi
+  sex       Sex?
   birthDate DateTime?
 
   createdAt DateTime @default(now())
@@ -143,7 +142,20 @@ model ClientProfile {
 
   @@index([tenantId])
 }
+model ClientInvite {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId    String
+  token       String   @unique
+  email       String?
+  createdById String
+  usedByUserId String?
+  usedAt      DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 model BodyMetricsEntry {
   id       String @id @default(cuid()) @map("_id")
   tenantId String

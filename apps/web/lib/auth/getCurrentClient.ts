@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 
 export async function getCurrentClient() {
   const session = await auth();
+  console.log("GET CURRENT CLIENT SESSION", session?.user);
 
   if (!session?.user?.id) {
     redirect("/c/sign-in");
@@ -16,10 +17,10 @@ export async function getCurrentClient() {
   const client = await prisma.client.findFirst({
     where: {
       userId: session.user.id,
-      archivedAt: null,
     },
     include: {
       profile: true,
+      bodyIssues: true,
       tenant: {
         select: {
           id: true,
@@ -31,7 +32,7 @@ export async function getCurrentClient() {
     },
   });
 
-  if (!client) {
+  if (!client || client.archivedAt) {
     redirect("/c/sign-in");
   }
 
