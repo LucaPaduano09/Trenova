@@ -46,29 +46,58 @@ export default async function ClientsPage({
   const clients = await listClients({ q, state, created, sort, email, phone });
 
   const initial = { q, state, created, sort, email, phone };
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold cf-text tracking-tight">Clienti</h1>
           <p className="mt-1 text-sm cf-muted">
-            Gestisci i clienti e crea nuovi profili in pochi secondi.
+            Gestisci i clienti e invita nuove persone a collegarsi al tuo profilo.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="hidden sm:inline-flex rounded-full border cf-surface px-3 py-1 text-xs cf-muted backdrop-blur">
             {clients.length} risultati
           </span>
 
           <Link
+            href="/app/clients/invite"
+            className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm cf-surface cf-text transition hover:-translate-y-[1px]"
+          >
+            Invita cliente
+          </Link>
+
+          <Link
             href="/app/clients/new"
-            className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm cf-surface cf-text"
+            className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm bg-neutral-900 text-white transition hover:opacity-90 dark:bg-white dark:text-neutral-900"
           >
             Nuovo cliente
           </Link>
         </div>
       </header>
+
+      <div className="rounded-3xl border cf-surface p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold cf-text">
+              Invita un cliente con un link
+            </div>
+            <p className="mt-1 text-sm cf-muted">
+              Genera un invito condivisibile: il cliente potrà registrarsi o accedere
+              e verrà associato direttamente al tuo account.
+            </p>
+          </div>
+
+          <Link
+            href="/app/clients/invite"
+            className="inline-flex shrink-0 items-center justify-center rounded-2xl border px-4 py-2 text-sm font-medium cf-surface cf-text transition hover:-translate-y-[1px]"
+          >
+            Vai agli inviti
+          </Link>
+        </div>
+      </div>
 
       <ClientsFiltersBar initial={initial} resultsCount={clients.length} />
 
@@ -77,14 +106,24 @@ export default async function ClientsPage({
           <div className="p-10">
             <div className="text-sm font-medium cf-text">Nessun risultato</div>
             <p className="mt-1 text-sm cf-muted">
-              Prova a cambiare ricerca o filtri.
+              Prova a cambiare ricerca o filtri, oppure inizia invitando il tuo primo cliente.
             </p>
-            <Link
-              href="/app/clients/new"
-              className="mt-6 inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm cf-surface cf-text"
-            >
-              Crea nuovo cliente
-            </Link>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/app/clients/invite"
+                className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm cf-surface cf-text"
+              >
+                Invita cliente
+              </Link>
+
+              <Link
+                href="/app/clients/new"
+                className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm cf-surface cf-text"
+              >
+                Crea nuovo cliente
+              </Link>
+            </div>
           </div>
         ) : (
           <ul className="divide-y divide-black/5 dark:divide-white/10">
