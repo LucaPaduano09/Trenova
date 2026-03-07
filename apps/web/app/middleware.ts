@@ -11,6 +11,7 @@ export default auth((req) => {
 
   const isAppAuth =
     nextUrl.pathname === "/app/sign-in" ||
+    nextUrl.pathname.startsWith("/app/sign-up") ||
     nextUrl.pathname.startsWith("/app/verify") ||
     nextUrl.pathname.startsWith("/app/forgot-password");
 
