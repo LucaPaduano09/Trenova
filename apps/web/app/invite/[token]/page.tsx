@@ -160,7 +160,7 @@ export default async function InvitePage({ params, searchParams }: PageProps) {
                 </Link>
 
                 <Link
-                  href={`/app/sign-up?inviteToken=${encodeURIComponent(token)}`}
+                  href={`/sign-up?inviteToken=${encodeURIComponent(token)}`}
                   className="inline-flex items-center rounded-2xl border border-neutral-300 px-4 py-2.5 text-sm font-medium transition hover:bg-neutral-100 dark:border-white/10 dark:hover:bg-white/5"
                 >
                   Registrati
