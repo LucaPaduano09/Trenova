@@ -21,8 +21,9 @@ import {
   reactivatePackagePurchase,
 } from "../../../../../../actions/packagePurchase";
 import DeleteSessionButton from "@/app/app/_components/DeleteSessionButton";
+import ClientWorkoutsTab from "./ClientWorkoutsTab";
 
-type TabKey = "overview" | "packages" | "sessions" | "progress";
+type TabKey = "overview" | "packages" | "sessions" | "progress" | "workouts";
 
 function formatMoneyEUR(priceCents?: number | null) {
   if (priceCents == null) return "—";
@@ -314,6 +315,16 @@ export default async function ClientTabSection({
       </div>
     );
   }
+
+  // WORKOUT TAB
+if (activeTab === "workouts") {
+  return (
+    <ClientWorkoutsTab
+      tenantId={tenantId}
+      client={client}
+    />
+  );
+}
 
   // -------------------------
   // SESSIONS TAB

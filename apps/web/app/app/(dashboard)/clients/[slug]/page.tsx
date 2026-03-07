@@ -13,7 +13,7 @@ import ClientTabSkeleton from "./_components/ClientTabSkeleton";
 
 export const revalidate = 100;
 
-type TabKey = "overview" | "packages" | "sessions" | "progress";
+type TabKey = "overview" | "packages" | "sessions" | "progress" | "workouts";
 
 function initials(name: string) {
   return name
@@ -40,10 +40,12 @@ export default async function ClientDetailPage({
   const sid = sp?.sid;
 
   const activeTab: TabKey =
-    (sp?.tab as TabKey) &&
-    ["overview", "packages", "sessions", "progress"].includes(sp?.tab as string)
-      ? (sp?.tab as TabKey)
-      : "overview";
+  (sp?.tab as TabKey) &&
+  ["overview", "packages", "sessions", "progress", "workouts"].includes(
+    sp?.tab as string
+  )
+    ? (sp?.tab as TabKey)
+    : "overview";
 
   const { tenant } = await requireTenantFromSession();
 
@@ -178,6 +180,12 @@ export default async function ClientDetailPage({
             Pacchetti
           </TabLink>
           <TabLink
+            href={`/app/clients/${client.slug}?tab=workouts`}
+            active={activeTab === "workouts"}
+          >
+            Workout
+          </TabLink>
+          <TabLink
             href={`/app/clients/${client.slug}?tab=sessions`}
             active={activeTab === "sessions"}
           >
@@ -202,7 +210,7 @@ export default async function ClientDetailPage({
             id: client.id,
             slug: client.slug,
             createdAt: client.createdAt,
-            notes: client.notes,
+            notes: client.notes ?? null,
           }}
           activeTab={activeTab}
           flash={flash}

@@ -684,33 +684,35 @@ model WorkoutPlanVersionItem {
 
   order Int
 
-  // relazione esercizio (stessa logica che hai in WorkoutItem)
+  // NEW: raggruppamento workout/day
+  workoutKey          String?
+  workoutNameSnapshot String?
+  workoutOrder        Int?    @default(0)
+
   globalExerciseId String?         @db.ObjectId
   globalExercise   GlobalExercise? @relation(fields: [globalExerciseId], references: [id])
 
   tenantExerciseId String?         @db.ObjectId
   tenantExercise   TenantExercise? @relation(fields: [tenantExerciseId], references: [id])
 
-  // snapshot
   nameSnapshot     String
   tipsSnapshot     String?
   imageUrlSnapshot String?
   tagsSnapshot     String[]
 
-  // parametri programmati
   sets    Int?
   reps    String?
   restSec Int?
   tempo   String?
   rpe     Int?
 
-  // per-set (come stai facendo ora)
-  loadsKg      Float[] // kg programmati per set
-  restSecBySet Int[] // recupero programmato per set
+  loadsKg      Float[]
+  restSecBySet Int[]
 
   itemNotes String?
 
   @@index([tenantId, planVersionId])
+  @@index([tenantId, planVersionId, workoutOrder, order])
 }
 
 //////
