@@ -17,7 +17,7 @@ export default async function NewProgressPage({
         </p>
       </div>
 
-      <div className="rounded-3xl border bg-white/70 p-6 shadow-sm backdrop-blur-xl">
+      <div className="cf-card cf-hairline">
         <div className="text-sm font-medium">Coming next</div>
         <p className="mt-2 text-sm cf-muted">
           Qui logghiamo peso, misure, foto e note con timestamp.

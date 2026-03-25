@@ -391,7 +391,7 @@ if (activeTab === "workouts") {
               </p>
               <Link
                 href={`/app/booking/new?client=${client.slug}`}
-                className="mt-6 inline-flex items-center justify-center rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50"
+                className="mt-6 inline-flex items-center justify-center rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
               >
                 Crea prima sessione
               </Link>
@@ -718,7 +718,7 @@ if (activeTab === "workouts") {
             <button className="rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90">
               Modifica note
             </button>
-            <button className="rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50">
+            <button className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:border-black dark:hover:border-white">
               Archivia
             </button>
           </div>

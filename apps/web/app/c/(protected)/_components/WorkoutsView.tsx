@@ -42,126 +42,40 @@ export default function WorkoutsView({
   versionNumber,
   workouts,
 }: WorkoutsViewProps) {
+  const [openKey, setOpenKey] = React.useState<string | null>(
+    workouts[0]?.key ?? null
+  );
+
+  const sectionRefs = React.useRef<Record<string, HTMLElement | null>>({});
+  const pillRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
+
   const sortedWorkouts = React.useMemo(
     () => [...workouts].sort((a, b) => a.order - b.order),
     [workouts]
   );
 
-  const [openKey, setOpenKey] = React.useState<string | null>(
-    sortedWorkouts[0]?.key ?? null
-  );
-
-  const sectionRefs = React.useRef<Record<string, HTMLElement | null>>({});
-  const pillRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
-  const isProgrammaticScrollRef = React.useRef(false);
-
-  function openWorkoutAndScroll(key: string) {
+  function scrollToWorkout(key: string) {
     setOpenKey(key);
-    isProgrammaticScrollRef.current = true;
 
-    requestAnimationFrame(() => {
-      const el = sectionRefs.current[key];
-      const pill = pillRefs.current[key];
+    const el = sectionRefs.current[key];
+    const pill = pillRefs.current[key];
 
-      if (pill) {
-        pill.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-          block: "nearest",
-        });
-      }
-
-      if (el) {
-        const y = el.getBoundingClientRect().top + window.scrollY - 140;
-
-        window.scrollTo({
-          top: y,
-          behavior: "smooth",
-        });
-      }
-
-      window.setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 500);
-    });
-  }
-
-  function toggleWorkoutFromChevron(key: string) {
-    const isOpen = openKey === key;
-
-    if (isOpen) {
-      setOpenKey(null);
-      return;
-    }
-
-    openWorkoutAndScroll(key);
-  }
-
-  React.useEffect(() => {
-    if (sortedWorkouts.length === 0) return;
-
-    function onScroll() {
-      if (isProgrammaticScrollRef.current) return;
-
-      const sections = sortedWorkouts
-        .map((workout) => {
-          const el = sectionRefs.current[workout.key];
-          if (!el) return null;
-
-          const rect = el.getBoundingClientRect();
-
-          return {
-            key: workout.key,
-            top: rect.top,
-            distanceFromAnchor: Math.abs(rect.top - 160),
-          };
-        })
-        .filter(Boolean) as {
-        key: string;
-        top: number;
-        distanceFromAnchor: number;
-      }[];
-
-      if (sections.length === 0) return;
-
-      const visible = sections
-        .filter((section) => section.top <= 220)
-        .sort((a, b) => b.top - a.top)[0];
-
-      const closest =
-        visible ||
-        sections.sort(
-          (a, b) => a.distanceFromAnchor - b.distanceFromAnchor
-        )[0];
-
-      if (!closest) return;
-
-      setOpenKey((prev) => {
-        if (prev === closest.key) return prev;
-
-        const pill = pillRefs.current[closest.key];
-        if (pill) {
-          pill.scrollIntoView({
-            behavior: "smooth",
-            inline: "center",
-            block: "nearest",
-          });
-        }
-
-        return closest.key;
+    if (pill) {
+      pill.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
       });
     }
 
-    onScroll();
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [sortedWorkouts]);
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY - 150;
+      window.scrollTo({
+        top: y,
+        behavior: "smooth",
+      });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -207,9 +121,9 @@ export default function WorkoutsView({
                       pillRefs.current[workout.key] = el;
                     }}
                     type="button"
-                    onClick={() => openWorkoutAndScroll(workout.key)}
+                    onClick={() => scrollToWorkout(workout.key)}
                     className={[
-                      "group relative inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all duration-300",
+                      "group inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all duration-300",
                       isActive
                         ? "bg-white text-black shadow-sm"
                         : "border border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white",
@@ -227,13 +141,6 @@ export default function WorkoutsView({
                     >
                       {workout.items.length}
                     </span>
-
-                    <span
-                      className={[
-                        "absolute inset-x-3 -bottom-1 h-[2px] rounded-full transition-all duration-300",
-                        isActive ? "bg-black/70 dark:bg-black/70" : "bg-transparent",
-                      ].join(" ")}
-                    />
                   </button>
                 );
               })}
@@ -252,11 +159,10 @@ export default function WorkoutsView({
               workout={workout}
               workoutIndex={workoutIndex}
               isOpen={isOpen}
-              onCardOpen={() => {
+              onToggle={() => {
                 if (isOpen) return;
-                openWorkoutAndScroll(workout.key);
+                scrollToWorkout(workout.key);
               }}
-              onChevronToggle={() => toggleWorkoutFromChevron(workout.key)}
               sectionRef={(el) => {
                 sectionRefs.current[workout.key] = el;
               }}
@@ -272,15 +178,13 @@ function WorkoutAccordionCard({
   workout,
   workoutIndex,
   isOpen,
-  onCardOpen,
-  onChevronToggle,
+  onToggle,
   sectionRef,
 }: {
   workout: WorkoutGroupView;
   workoutIndex: number;
   isOpen: boolean;
-  onCardOpen: () => void;
-  onChevronToggle: () => void;
+  onToggle: () => void;
   sectionRef: (el: HTMLElement | null) => void;
 }) {
   const contentRef = React.useRef<HTMLDivElement | null>(null);
@@ -311,27 +215,27 @@ function WorkoutAccordionCard({
           : "border-white/10 bg-white/[0.04]",
       ].join(" ")}
     >
-      <div className="flex items-center justify-between gap-4 p-5">
-        <button
-          type="button"
-          onClick={onCardOpen}
-          className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 text-left"
-        >
-          <div>
-            <div className="text-xs uppercase tracking-[0.16em] text-white/40">
-              Workout {workoutIndex + 1}
-            </div>
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              {workout.name}
-            </h2>
-            <p className="mt-1 text-sm text-white/55">
-              {workout.items.length} esercizi
-            </p>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 p-5 text-left"
+      >
+        <div>
+          <div className="text-xs uppercase tracking-[0.16em] text-white/40">
+            Workout {workoutIndex + 1}
           </div>
+          <h2 className="mt-2 text-xl font-semibold text-white">
+            {workout.name}
+          </h2>
+          <p className="mt-1 text-sm text-white/55">
+            {workout.items.length} esercizi
+          </p>
+        </div>
 
+        <div className="flex items-center gap-3">
           <div
             className={[
-              "hidden rounded-full border px-3 py-1 text-xs transition sm:block",
+              "rounded-full border px-3 py-1 text-xs transition",
               isOpen
                 ? "border-white/20 bg-white/[0.08] text-white"
                 : "border-white/10 bg-white/[0.03] text-white/60",
@@ -339,50 +243,35 @@ function WorkoutAccordionCard({
           >
             {isOpen ? "Aperto" : "Apri"}
           </div>
-        </button>
 
-        <button
-          type="button"
-          onClick={onChevronToggle}
-          aria-label={isOpen ? "Chiudi workout" : "Apri workout"}
-          className={[
-            "grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-all duration-300",
-            isOpen
-              ? "border-white/20 bg-white/[0.08]"
-              : "border-white/10 bg-white/[0.03]",
-          ].join(" ")}
-        >
-          <ChevronDown
+          <div
             className={[
-              "h-4 w-4 text-white/70 transition-transform duration-300",
-              isOpen ? "rotate-180" : "",
+              "grid h-10 w-10 place-items-center rounded-full border transition-all duration-300",
+              isOpen
+                ? "border-white/20 bg-white/[0.08]"
+                : "border-white/10 bg-white/[0.03]",
             ].join(" ")}
-          />
-        </button>
-      </div>
+          >
+            <ChevronDown
+              className={[
+                "h-4 w-4 text-white/70 transition-transform duration-300",
+                isOpen ? "rotate-180" : "",
+              ].join(" ")}
+            />
+          </div>
+        </div>
+      </button>
 
       <div
         style={{ maxHeight: `${height}px` }}
         className="overflow-hidden transition-[max-height] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
       >
-        <div
-          ref={contentRef}
-          className="border-t border-white/10 px-5 pb-5 pt-4"
-        >
+        <div ref={contentRef} className="border-t border-white/10 px-5 pb-5 pt-4">
           <div className="space-y-4">
-            {workout.items.map((item, index) => (
+            {workout.items.map((item) => (
               <div
                 key={item.id}
-                className={[
-                  "rounded-2xl border border-white/10 bg-white/[0.03] p-4",
-                  "transition-all duration-500 ease-out",
-                  isOpen
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-2 opacity-0",
-                ].join(" ")}
-                style={{
-                  transitionDelay: isOpen ? `${index * 45}ms` : "0ms",
-                }}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">

@@ -54,18 +54,19 @@ model Tenant {
   updatedAt  DateTime  @updatedAt
   archivedAt DateTime?
 
-  users            User[]
-  clients          Client[]
-  packages         Package[]
-  appointments     Appointment[]
-  workoutTemplates WorkoutTemplate[]
-  workoutPlans     WorkoutPlan[]
-
-  packagePurchases     PackagePurchase[]
-  sessionCreditLedgers SessionCreditLedger[]
-  workoutSessions      WorkoutSession[]
-  progressEntries      ProgressEntry[]
-  notifications        Notification[]
+  users                   User[]
+  clients                 Client[]
+  packages                Package[]
+  appointments            Appointment[]
+  workoutTemplates        WorkoutTemplate[]
+  workoutPlans            WorkoutPlan[]
+  availabilityRules       TenantAvailabilityRule[]
+  packagePurchases        PackagePurchase[]
+  sessionCreditLedgers    SessionCreditLedger[]
+  workoutSessions         WorkoutSession[]
+  progressEntries         ProgressEntry[]
+  notifications           Notification[]
+  tenantAvailabilitySlots TenantAvailabilitySlot[]
 }
 
 model User {
@@ -209,6 +210,7 @@ model BodyMetricsEntry {
 //////////////////////
 
 enum AppointmentStatus {
+  PENDING
   SCHEDULED
   COMPLETED
   CANCELED
@@ -764,6 +766,42 @@ model TenantExercise {
   updatedAt               DateTime                 @updatedAt
   workoutItems            WorkoutItem[]
   workoutPlanVersionItems WorkoutPlanVersionItem[]
+}
+
+model TenantAvailabilityRule {
+  id       String @id @default(cuid()) @map("_id")
+  tenantId String
+
+  weekday  Int // 0 = Sunday, 1 = Monday ... 6 = Saturday
+  startMin Int // minuti da mezzanotte, es. 540 = 09:00
+  endMin   Int // es. 1140 = 19:00
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, weekday, isActive])
+}
+
+model TenantAvailabilitySlot {
+  id       String @id @default(cuid()) @map("_id")
+  tenantId String
+
+  date    DateTime // giorno specifico, normalizzato a mezzanotte o usato con startsAt
+  startAt DateTime
+  endAt   DateTime
+
+  isAvailable Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, date])
+  @@index([tenantId, startAt, endAt])
 }
 
 enum BodySide {

@@ -6,7 +6,7 @@ export default async function SetupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-2xl border bg-white p-6 shadow-sm">
+      <div className="cf-card w-full max-w-md">
         <h1 className="text-xl font-semibold">Setup required</h1>
         <p className="mt-2 text-sm cf-muted">
           Il tuo account non è ancora collegato a un tenant (workspace).

@@ -81,7 +81,7 @@ export default async function EditSessionPage({
                 type="datetime-local"
                 name="startsAt"
                 defaultValue={toInputDateTimeLocal(session.startsAt)}
-                className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-2.5 text-sm outline-none"
+                className="cf-input mt-2"
               />
             </div>
 
@@ -92,7 +92,7 @@ export default async function EditSessionPage({
               <input
                 name="durationMin"
                 defaultValue={durationMin}
-                className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-2.5 text-sm outline-none"
+                className="cf-input mt-2"
               />
             </div>
 
@@ -101,7 +101,7 @@ export default async function EditSessionPage({
               <select
                 name="locationType"
                 defaultValue={String(session.locationType)}
-                className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-2.5 text-sm outline-none"
+                className="cf-input mt-2"
               >
                 <option value="GYM">Palestra</option>
                 <option value="HOME">A domicilio</option>
@@ -119,7 +119,7 @@ export default async function EditSessionPage({
                 name="location"
                 defaultValue={session.location ?? ""}
                 placeholder="Es. Palestra Caravaggio"
-                className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-2.5 text-sm outline-none"
+                className="cf-input mt-2"
               />
             </div>
 
@@ -128,7 +128,7 @@ export default async function EditSessionPage({
               <select
                 name="paymentMethod"
                 defaultValue={session.paymentMethod ?? ""}
-                className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-2.5 text-sm outline-none"
+                className="cf-input mt-2"
               >
                 <option value="">—</option>
                 <option value="Contanti">Contanti</option>
@@ -147,7 +147,7 @@ export default async function EditSessionPage({
                 inputMode="decimal"
                 defaultValue={centsToEuroString(session.priceCents)}
                 placeholder="Es. 50 oppure 50,00"
-                className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-2.5 text-sm outline-none"
+                className="cf-input mt-2"
               />
             </div>
 
@@ -155,7 +155,7 @@ export default async function EditSessionPage({
               <label className="text-xs font-medium cf-text">
                 Stato pagamento
               </label>
-              <div className="mt-2 flex h-[42px] items-center gap-3 rounded-2xl border bg-white/80 px-4">
+              <div className="cf-input mt-2 flex h-[42px] items-center gap-3 px-4">
                 <input
                   id="isPaid"
                   name="isPaid"
@@ -175,7 +175,7 @@ export default async function EditSessionPage({
               name="notes"
               defaultValue={session.notes ?? ""}
               rows={4}
-              className="mt-2 w-full rounded-2xl border bg-white/80 px-4 py-3 text-sm outline-none"
+              className="cf-input mt-2 px-4 py-3"
             />
           </div>
 
@@ -186,7 +186,7 @@ export default async function EditSessionPage({
 
             <Link
               href={`/app/clients/${session.client.slug}?tab=sessions`}
-              className="rounded-2xl border bg-white px-4 py-2 text-sm hover:bg-neutral-50"
+              className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
             >
               Annulla
             </Link>

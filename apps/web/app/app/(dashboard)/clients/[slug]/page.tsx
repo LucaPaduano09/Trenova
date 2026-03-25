@@ -131,8 +131,8 @@ export default async function ClientDetailPage({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* LEFT */}
           <div className="flex items-start gap-4">
-            <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border bg-white/70 text-sm font-semibold cf-text shadow-sm">
-              <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_55%)]" />
+            <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border bg-white/70 text-sm font-semibold cf-text shadow-sm dark:bg-[#111a2e]/70 dark:border-white/10">
+              <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_55%)] dark:bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent_55%)]" />
               <span className="relative text-base">{avatar}</span>
             </div>
 
