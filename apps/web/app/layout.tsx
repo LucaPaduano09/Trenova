@@ -7,7 +7,9 @@ export const metadata: Metadata = {
   title: "Trenova",
   description: "La miglior piattaforma per Personal Trainer",
   icons: {
-    icon: "/icons/logo-gemini.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
