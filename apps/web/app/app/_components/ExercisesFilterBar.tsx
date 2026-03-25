@@ -36,7 +36,6 @@ export default function ExercisesFiltersBar({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // anchor positioning
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number }>({
     top: 0,
@@ -44,7 +43,6 @@ export default function ExercisesFiltersBar({
     width: 320,
   });
 
-  // keep in sync with URL updates
   useEffect(() => setQ(initialQ), [initialQ]);
   useEffect(() => setState(initialState), [initialState]);
   useEffect(() => setSort(initialSort), [initialSort]);
@@ -89,23 +87,18 @@ export default function ExercisesFiltersBar({
 
     const p = new URLSearchParams(sp.toString());
 
-    // q
     if (nq) p.set("q", nq);
     else p.delete("q");
 
-    // state
     if (ns !== "active") p.set("state", ns);
     else p.delete("state");
 
-    // sort
     if (nso !== "updated") p.set("sort", nso);
     else p.delete("sort");
 
-    // image
     if (ni !== "any") p.set("image", ni);
     else p.delete("image");
 
-    // tag
     if (nt) p.set("tag", nt);
     else p.delete("tag");
 
@@ -130,7 +123,6 @@ export default function ExercisesFiltersBar({
     router.replace(pathname, { scroll: false });
   }
 
-  // compute popover position under button
   function recomputePos() {
     const el = btnRef.current;
     if (!el) return;
@@ -156,7 +148,6 @@ export default function ExercisesFiltersBar({
     };
   }, [open]);
 
-  // ESC close
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -168,7 +159,7 @@ export default function ExercisesFiltersBar({
   return (
     <div className="rounded-3xl border cf-surface p-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        {/* Search */}
+
         <div className="flex-1">
           <div className="flex items-center gap-2 rounded-2xl border cf-surface px-3 py-2.5">
             <span className="text-xs cf-faint">⌕</span>
@@ -198,7 +189,6 @@ export default function ExercisesFiltersBar({
           </div>
         </div>
 
-        {/* Right */}
         <div className="flex items-center gap-2">
           <button
             ref={btnRef}
@@ -237,17 +227,15 @@ export default function ExercisesFiltersBar({
         </div>
       </div>
 
-      {/* Portal dropdown */}
       {mounted && open
         ? createPortal(
             <div className="fixed inset-0 z-[9999]">
-              {/* overlay */}
+
               <div
                 className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"
                 onClick={() => setOpen(false)}
               />
 
-              {/* anchored panel */}
               <div
                 className="absolute"
                 style={{ top: pos.top, left: pos.left, width: pos.width }}

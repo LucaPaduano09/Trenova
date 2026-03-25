@@ -97,7 +97,6 @@ export default function CinematicKinetiqLoop({
               </clipPath>
             </defs>
 
-            {/* dots (desktop). on mobile we hide via CSS */}
             <g opacity="0.22" className="kinetiq-dots">
               {Array.from({ length: 18 }).map((_, r) =>
                 Array.from({ length: 28 }).map((__, c) => (
@@ -168,7 +167,6 @@ export default function CinematicKinetiqLoop({
               </g>
             </g>
 
-            {/* points fade in */}
             <g className="kinetiq-points">
               {[
                 [60, 340],
@@ -185,7 +183,6 @@ export default function CinematicKinetiqLoop({
               ))}
             </g>
 
-            {/* live dot (we keep it, but can disable on mobile via CSS) */}
             <g className="kinetiq-live">
               <circle
                 r="26"
@@ -240,7 +237,6 @@ export default function CinematicKinetiqLoop({
             />
           </svg>
 
-          {/* caption */}
           <div className="pointer-events-none absolute left-4 sm:left-6 top-4 sm:top-5 flex items-center gap-3">
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.8)]" />
             <div className="text-xs sm:text-sm text-white/80">
@@ -248,7 +244,6 @@ export default function CinematicKinetiqLoop({
             </div>
           </div>
 
-          {/* KPI badge (hide on very small screens) */}
           <div className="pointer-events-none absolute right-4 sm:right-6 top-4 sm:top-5 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl px-4 py-3 kinetiq-kpi hidden sm:block">
             <div className="text-xs text-white/50">Questa settimana</div>
             <div className="mt-1 flex items-baseline gap-2">
@@ -262,7 +257,7 @@ export default function CinematicKinetiqLoop({
       </div>
 
       <style jsx>{`
-        /* --- base visuals (same as before) --- */
+
         .kinetiq-bg {
           background: radial-gradient(
               900px 420px at 30% 40%,
@@ -412,7 +407,6 @@ export default function CinematicKinetiqLoop({
           opacity: 0.75;
         }
 
-        /* reveal */
         .kinetiq-reveal {
           animation: reveal 3.2s ease-in-out infinite;
         }
@@ -527,24 +521,20 @@ export default function CinematicKinetiqLoop({
           }
         }
 
-        /*  ' Mobile optimizations */
         @media (max-width: 640px) {
-          /* kill the heaviest overlay */
+
           .kinetiq-scanlinesOpt {
             display: none;
           }
 
-          /* reduce background complexity slightly */
           .kinetiq-grid {
             opacity: 0.25;
           }
 
-          /* hide dots (many DOM nodes) */
           :global(.kinetiq-dots) {
             display: none;
           }
 
-          /* soften glow cost */
           :global(svg) {
             filter: none;
           }
@@ -553,13 +543,11 @@ export default function CinematicKinetiqLoop({
             filter: blur(12px);
           }
 
-          /* optional: reduce live dot complexity */
           :global(.kinetiq-live) {
             opacity: 0.8;
           }
         }
 
-        /*  ' Reduced motion */
         @media (prefers-reduced-motion: reduce) {
           .kinetiq-sweep,
           .kinetiq-particles,

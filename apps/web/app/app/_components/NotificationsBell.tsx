@@ -77,7 +77,6 @@ export default function NotificationsBell() {
     }
   }, []);
 
-  // polling leggero
   React.useEffect(() => {
     fetchNotifications();
 
@@ -96,12 +95,10 @@ export default function NotificationsBell() {
     };
   }, [fetchNotifications]);
 
-  // refresh quando apri
   React.useEffect(() => {
     if (open) fetchNotifications();
   }, [open, fetchNotifications]);
 
-  // click outside + esc
   React.useEffect(() => {
     if (!open) return;
 
@@ -131,7 +128,7 @@ export default function NotificationsBell() {
         body: JSON.stringify({ id }),
       });
     } catch {
-      // silent
+
     }
   }, []);
 
@@ -139,7 +136,6 @@ export default function NotificationsBell() {
     try {
       await fetch("/api/notifications/read-all", { method: "POST" });
 
-      // ottimistico
       setUnreadCount(0);
       setItems((prev) =>
         prev.map((n) => ({
@@ -148,12 +144,12 @@ export default function NotificationsBell() {
         }))
       );
     } catch {
-      // silent
+
     }
   }, []);
 
   const onClickNotification = async (n: NotificationItem) => {
-    // ottimistico
+
     if (!n.readAt) {
       setUnreadCount((c) => Math.max(0, c - 1));
       setItems((prev) =>
@@ -192,7 +188,7 @@ export default function NotificationsBell() {
           role="dialog"
           aria-label="Pannello notifiche"
         >
-          {/* header */}
+
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-black/5 dark:border-white/10">
             <div className="min-w-0">
               <div className="text-sm font-semibold cf-text">Notifiche</div>
@@ -216,7 +212,6 @@ export default function NotificationsBell() {
             </button>
           </div>
 
-          {/* body */}
           <div className="max-h-[420px] overflow-auto">
             {loading ? (
               <div className="px-4 py-6 text-sm cf-muted">Caricamento…</div>
@@ -278,7 +273,6 @@ export default function NotificationsBell() {
             )}
           </div>
 
-          {/* footer */}
           <div className="flex items-center justify-between px-4 py-3 border-t border-black/5 dark:border-white/10">
             <button
               type="button"

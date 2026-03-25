@@ -1,4 +1,4 @@
-// lib/auth.ts
+
 import NextAuth from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import Nodemailer from "next-auth/providers/nodemailer";
@@ -8,9 +8,6 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/db";
 
-/**
- * Utils
- */
 function slugify(input: string) {
   return input
     .trim()
@@ -96,15 +93,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 
-  /**
-   * Attenzione:
-   * questa logica bootstrap crea automaticamente un tenant OWNER
-   * per ogni utente creato senza tenantId.
-   *
-   * Va bene per i PT.
-   * Per i CLIENT bisogna assicurarsi che vengano già creati/collegati
-   * con tenantId e role corretti prima che questo evento li intercetti.
-   */
   events: {
     async createUser({ user }) {
       if (!user.id) return;
@@ -122,10 +110,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (!dbUser) return;
 
-      // Se già collegato a un tenant, non fare nulla
       if (dbUser.tenantId) return;
 
-      // Se per qualche motivo è già CLIENT, non bootstrapparlo come OWNER
       if (dbUser.role === "CLIENT") return;
 
       const email = dbUser.email ?? "";
@@ -154,7 +140,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      // Primo login: il provider restituisce user
+
       if (user) {
         token.sub = user.id;
         token.email = user.email ?? token.email;
@@ -170,7 +156,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           null;
       }
 
-      // Fallback: se il token non ha ancora role/tenantId, leggi dal DB
       if (token.sub && (!token.role || token.tenantId === undefined)) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },

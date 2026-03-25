@@ -54,7 +54,6 @@ export default async function EditWorkoutPage({
         </Link>
       </header>
 
-      {/* Workout meta */}
       <div className="cf-card cf-hairline p-6">
         <form action={updateWorkoutTemplate} className="grid gap-4">
           <input type="hidden" name="id" value={w.id} />
@@ -96,7 +95,6 @@ export default async function EditWorkoutPage({
         </form>
       </div>
 
-      {/* Add item */}
       <div className="cf-card cf-hairline p-6">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -125,7 +123,6 @@ export default async function EditWorkoutPage({
         <AddWorkoutItemForm workoutId={w.id} exercises={exercises} />
       </div>
 
-      {/* Items list */}
       <div className="cf-card cf-hairline overflow-hidden">
         <div className="p-6">
           <div className="text-sm font-semibold">Esercizi in scheda</div>
@@ -171,12 +168,7 @@ export default async function EditWorkoutPage({
                       />
                       <Pill label="Tempo" value={it.tempo ?? "—"} />
                       <Pill label="RPE" value={it.rpe ?? "—"} />
-                      {/* <Pill
-                        label="Kg"
-                        value={
-                          it.loadsKg?.length ? it.loadsKg.join(" / ") : "—"
-                        }
-                      /> */}
+
                     </div>
 
                     {it.itemNotes ? (
@@ -185,7 +177,6 @@ export default async function EditWorkoutPage({
                       </div>
                     ) : null}
 
-                    {/* inline edit */}
                     <details className="mt-3">
                       <summary className="cursor-pointer text-xs cf-faint hover:opacity-90">
                         Modifica parametri

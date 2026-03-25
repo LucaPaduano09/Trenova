@@ -25,7 +25,7 @@ function readConsent(): Consent | null {
 function writeConsent(consent: Omit<Consent, "ts">) {
   const payload: Consent = { ...consent, ts: Date.now() };
   localStorage.setItem(CONSENT_KEY, JSON.stringify(payload));
-  // evento utile se vuoi agganciare analytics dopo
+
   window.dispatchEvent(
     new CustomEvent("cookie-consent-updated", { detail: payload })
   );

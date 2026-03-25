@@ -103,9 +103,7 @@ export default async function ClientTabSection({
   flash?: string;
   sid?: string;
 }) {
-  // -------------------------
-  // PACKAGES TAB
-  // -------------------------
+
   if (activeTab === "packages") {
     const [packages, purchases] = await Promise.all([
       prisma.package.findMany({
@@ -157,7 +155,7 @@ export default async function ClientTabSection({
         </div>
 
         <div className="px-6 pb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Assign package */}
+
           <div className="cf-card">
             <div className="text-sm font-semibold cf-text">Assegna pacchetto</div>
             <div className="mt-1 text-xs cf-muted">
@@ -224,7 +222,6 @@ export default async function ClientTabSection({
             )}
           </div>
 
-          {/* Purchases list */}
           <div className="cf-card">
             <div className="text-sm font-semibold cf-text">Pacchetti assegnati</div>
             <div className="mt-1 text-xs cf-muted">
@@ -316,7 +313,6 @@ export default async function ClientTabSection({
     );
   }
 
-  // WORKOUT TAB
 if (activeTab === "workouts") {
   return (
     <ClientWorkoutsTab
@@ -326,9 +322,6 @@ if (activeTab === "workouts") {
   );
 }
 
-  // -------------------------
-  // SESSIONS TAB
-  // -------------------------
   if (activeTab === "sessions") {
     const sessions = await prisma.appointment.findMany({
       where: {
@@ -581,16 +574,13 @@ if (activeTab === "workouts") {
     );
   }
 
-  // -------------------------
-  // PROGRESS TAB
-  // -------------------------
   if (activeTab === "progress") {
     const [profile, entries] = await Promise.all([
-      getClientProfile(client.id), // se ti serve in futuro
+      getClientProfile(client.id),
       listMetricsEntries(client.id),
     ]);
 
-    void profile; // per evitare warning se non lo usi ora
+    void profile;
 
     return (
       <div className="rounded-3xl border cf-surface p-6">
@@ -690,9 +680,6 @@ if (activeTab === "workouts") {
     );
   }
 
-  // -------------------------
-  // OVERVIEW TAB (default)
-  // -------------------------
   return (
     <>
       <OverviewStatsCards clientId={client.id} />
@@ -701,7 +688,7 @@ if (activeTab === "workouts") {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Notes */}
+
         <div className="lg:col-span-2 cf-surface cf-hairline p-6 shadow-sm backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">Note</div>

@@ -10,7 +10,6 @@ function isValidEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
-// Semplice “mail provider guess” per offrire un bottone più pertinente
 function guessMailProvider(email: string) {
   const e = email.trim().toLowerCase();
   if (e.endsWith("@gmail.com") || e.endsWith("@googlemail.com")) return "gmail";
@@ -40,8 +39,7 @@ export default function ForgotPasswordCard() {
   const provider = useMemo(() => guessMailProvider(emailNorm), [emailNorm]);
 
   function openInbox() {
-    // Non possiamo aprire il client nativo in modo affidabile via web,
-    // quindi apriamo i web inbox più comuni.
+
     if (provider === "gmail")
       window.open("https://mail.google.com", "_blank", "noopener,noreferrer");
     else if (provider === "outlook")
@@ -65,7 +63,7 @@ export default function ForgotPasswordCard() {
       <div className="pointer-events-none absolute inset-0 cf-surface" />
 
       <div className="relative">
-        {/* Header (coerente con AuthCard) */}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <Image
@@ -81,7 +79,6 @@ export default function ForgotPasswordCard() {
             </div>
           </div>
 
-          {/* Pill “Back to login” */}
           <div className="w-full sm:w-auto">
             <Link
               href="/app/sign-in"
@@ -164,7 +161,6 @@ export default function ForgotPasswordCard() {
           </div>
         </form>
 
-        {/* Post-send quick actions */}
         {sent ? (
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button

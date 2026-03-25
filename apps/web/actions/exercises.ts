@@ -7,8 +7,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-/** ---------------- helpers ---------------- */
-
 function normalizeTagsText(tags: string[]) {
   return tags
     .join(" ")
@@ -38,10 +36,8 @@ function parseRef(refRaw?: unknown): { kind: "c" | "g"; id: string } | null {
   return null;
 }
 
-/** ---------------- schemas ---------------- */
-
 const upsertSchema = z.object({
-  // ref: "c:<id>" or "g:<globalId>"
+
   ref: z.string().min(3, "Ref mancante"),
 
   name: z.string().min(2, "Nome troppo corto"),
@@ -53,9 +49,9 @@ const upsertSchema = z.object({
     .optional()
     .or(z.literal("")),
   tags: z.string().optional().or(z.literal("")),
-  // per custom: isArchived
+
   isArchived: z.string().optional().or(z.literal("")),
-  // per global: isHidden (nasconde dal PT)
+
   isHidden: z.string().optional().or(z.literal("")),
 });
 
@@ -71,8 +67,6 @@ const createCustomSchema = z.object({
   tags: z.string().optional().or(z.literal("")),
   isArchived: z.string().optional().or(z.literal("")),
 });
-
-/** ---------------- CREATE ---------------- */
 
 export async function createExercise(formData: FormData) {
   await requireOwner();
@@ -111,13 +105,6 @@ export async function createExercise(formData: FormData) {
   redirect("/app/exercises?flash=created");
 }
 
-/** ---------------- UPDATE ---------------- */
-
-/**
- * UPDATE:
- * - se ref = c:<id> -> update TenantExercise (custom)
- * - se ref = g:<globalId> -> upsert TenantExerciseOverride (personalizzazione)
- */
 export async function updateExercise(formData: FormData) {
   console.log("UPDATE CHIAMATA");
 
@@ -152,7 +139,6 @@ export async function updateExercise(formData: FormData) {
 
   const { tags, tagsText } = splitTags(parsed.data.tags);
 
-  // CUSTOM (TenantExercise)
   if (ref.kind === "c") {
     const payload = {
       tenantId: tenant.id,
@@ -165,7 +151,6 @@ export async function updateExercise(formData: FormData) {
       isArchived: parsed.data.isArchived === "on",
     };
 
-    // Proviamo prima a vedere se esiste davvero (multi-tenant safe)
     const existing = await prisma.tenantExercise.findFirst({
       where: { id: ref.id, tenantId: tenant.id },
       select: { id: true },
@@ -196,7 +181,7 @@ export async function updateExercise(formData: FormData) {
       )}/edit?flash=created`
     );
   }
-  // GLOBAL -> OVERRIDE (upsert)
+
   if (ref.kind === "g") {
     const g = await prisma.globalExercise.findFirst({
       where: { id: ref.id },
@@ -242,8 +227,6 @@ export async function updateExercise(formData: FormData) {
   }
 }
 
-/** ---------------- ARCHIVE / RESTORE ---------------- */
-
 export async function archiveExercise(formData: FormData) {
   await requireOwner();
   const { tenant } = await requireTenantFromSession();
@@ -259,7 +242,7 @@ export async function archiveExercise(formData: FormData) {
       data: { tenantId: tenant.id, isArchived: true },
     });
     revalidatePath("/app/exercises");
-    // return { ok: true as const };
+
   }
 
   if (ref.kind === "g") {
@@ -319,18 +302,16 @@ export async function restoreExercise(formData: FormData) {
   }
 }
 
-/** ---------------- LIST (MERGED) ---------------- */
-
 export type ExercisesFilters = {
   q?: string;
   state?: "active" | "archived" | "all";
   sort?: "updated" | "name" | "newest" | "oldest";
   image?: "any" | "with" | "without";
-  tag?: string; // contains
+  tag?: string;
 };
 
 export type ExerciseRow = {
-  ref: string; // "c:<id>" or "g:<id>"
+  ref: string;
   kind: "custom" | "global";
   name: string;
   imageUrl: string | null;
@@ -351,7 +332,6 @@ export async function listExercises(
   const image = filters?.image ?? "any";
   const tag = (filters?.tag ?? "").trim().toLowerCase();
 
-  // ------- CUSTOM (TenantExercise)
   const whereCustom: any = { tenantId: tenant.id };
   if (state === "active") whereCustom.isArchived = false;
   if (state === "archived") whereCustom.isArchived = true;
@@ -402,7 +382,6 @@ export async function listExercises(
     },
   });
 
-  // ------- GLOBAL (catalog) + OVERRIDES (tenant)
   const [globals, overrides] = await Promise.all([
     prisma.globalExercise.findMany({
       select: {
@@ -496,8 +475,6 @@ export async function listExercises(
   return all;
 }
 
-/** ---------------- GET (for edit) ---------------- */
-
 export async function getExercise(ref: string) {
   await requireOwner();
   const { tenant } = await requireTenantFromSession();
@@ -505,7 +482,6 @@ export async function getExercise(ref: string) {
   const parsed = parseRef(ref);
   if (!parsed) return null;
 
-  // CUSTOM edit (TenantExercise)
   if (parsed.kind === "c") {
     const ex = await prisma.tenantExercise.findFirst({
       where: { id: parsed.id, tenantId: tenant.id },
@@ -534,7 +510,6 @@ export async function getExercise(ref: string) {
     };
   }
 
-  // GLOBAL edit via override
   if (parsed.kind === "g") {
     const g = await prisma.globalExercise.findFirst({
       where: { id: parsed.id },

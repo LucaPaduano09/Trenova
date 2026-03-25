@@ -58,7 +58,7 @@ async function makeUniqueClientSlug(tenantId: string, base: string) {
 }
 
 export async function createClient(formData: FormData) {
-  // RBAC
+
   await requireOwner();
 
   const { tenant } = await requireTenantFromSession();
@@ -131,7 +131,6 @@ export async function listClients(filters: ClientsFilters = {}) {
 
   const createdGte = since(created);
 
-  // Costruiamo tutto con AND, e dentro mettiamo OR dove serve (Mongo safe)
   const and: any[] = [{ tenantId }];
 
   if (state === "active") {

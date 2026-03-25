@@ -1,4 +1,4 @@
-// apps/web/lib/email.ts
+
 "use server";
 import "server-only";
 import { Resend } from "resend";
@@ -140,7 +140,6 @@ m180 -93 c-15 -27 -83 -51 -144 -51 -57 0 -84 11 -72 30 15 24 72 39 148 40
 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;">
 
-          <!-- HEADER -->
           <tr>
             <td align="center" style="padding-bottom:20px;">
               <div style="color:#0f172a;">
@@ -149,7 +148,6 @@ m180 -93 c-15 -27 -83 -51 -144 -51 -57 0 -84 11 -72 30 15 24 72 39 148 40
             </td>
           </tr>
 
-          <!-- CARD -->
           <tr>
             <td style="
               background:#ffffff;
@@ -159,7 +157,6 @@ m180 -93 c-15 -27 -83 -51 -144 -51 -57 0 -84 11 -72 30 15 24 72 39 148 40
               overflow:hidden;
             ">
 
-              <!-- Top Accent -->
               <div style="height:6px;background:linear-gradient(90deg,#22c55e,#06b6d4,#6366f1);"></div>
 
               <div style="
@@ -178,7 +175,6 @@ m180 -93 c-15 -27 -83 -51 -144 -51 -57 0 -84 11 -72 30 15 24 72 39 148 40
                   Clicca il pulsante qui sotto per completare la verifica.
                 </p>
 
-                <!-- BUTTON -->
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
                     <td align="center"
@@ -223,7 +219,6 @@ m180 -93 c-15 -27 -83 -51 -144 -51 -57 0 -84 11 -72 30 15 24 72 39 148 40
             </td>
           </tr>
 
-          <!-- FOOTER -->
           <tr>
             <td align="center" style="padding:20px 8px 0 8px;">
               <p style="

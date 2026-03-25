@@ -64,7 +64,7 @@ export default async function WorkoutsPage({
                     <div className="truncate text-base font-semibold cf-text">
                       {w.title}
                     </div>
-                    {/* <div className="cf-text text-sm">{w.notes}</div> */}
+
                     <div className="mt-1 flex items-center gap-2 text-xs cf-faint">
                       <span className="cf-chip">{w._count.items} esercizi</span>
                       {w.isArchived ? (

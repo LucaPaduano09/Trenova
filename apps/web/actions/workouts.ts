@@ -7,8 +7,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-/** ---------------- helpers ---------------- */
-
 function parseRef(refRaw?: unknown): { kind: "c" | "g"; id: string } | null {
   const ref = String(refRaw ?? "");
   if (!ref) return null;
@@ -21,7 +19,7 @@ function parseLoadsKg(raw?: string | null): number[] {
   if (!s) return [];
   return s
     .split(",")
-    .map((x) => x.trim().replace(",", ".")) // supporta "40,5"
+    .map((x) => x.trim().replace(",", "."))
     .filter(Boolean)
     .map((x) => Number(x))
     .filter((n) => Number.isFinite(n) && n >= 0)
@@ -36,7 +34,6 @@ function normalizeLoadsKg(loads: number[], sets: number | null): number[] {
 
   if (loads.length > sets) return loads.slice(0, sets);
 
-  // se meno valori di sets -> replica ultimo
   const out = loads.slice();
   const last = out[out.length - 1] ?? 0;
   while (out.length < sets) out.push(last);
@@ -69,7 +66,7 @@ async function resolveExerciseForItem(args: { tenantId: string; ref: string }) {
   if (!parsed) throw new Error("Ref esercizio non valida");
 
   if (parsed.kind === "c") {
-    // TenantExercise
+
     const ex = await prisma.tenantExercise.findFirst({
       where: { id: parsed.id, tenantId: args.tenantId },
       select: { id: true, name: true, coachTips: true },
@@ -84,7 +81,6 @@ async function resolveExerciseForItem(args: { tenantId: string; ref: string }) {
     };
   }
 
-  // GlobalExercise + override
   const g = await prisma.globalExercise.findFirst({
     where: { id: parsed.id },
     select: { id: true, name: true },
@@ -114,8 +110,6 @@ async function resolveExerciseForItem(args: { tenantId: string; ref: string }) {
     tipsSnapshot: tips,
   };
 }
-
-/** ---------------- schemas ---------------- */
 
 const createWorkoutSchema = z.object({
   title: z.string().min(2, "Titolo troppo corto"),
@@ -165,8 +159,6 @@ const deleteItemSchema = z.object({
   workoutId: z.string().min(1),
   itemId: z.string().min(1),
 });
-
-/** ---------------- WORKOUT CRUD ---------------- */
 
 export async function createWorkoutTemplate(formData: FormData) {
   await requireOwner();
@@ -298,8 +290,6 @@ export async function getWorkoutTemplate(id: string) {
     },
   });
 }
-
-/** ---------------- ITEMS ---------------- */
 
 export async function addWorkoutItem(formData: FormData) {
   await requireOwner();
@@ -536,7 +526,6 @@ export async function deleteWorkoutItem(formData: FormData) {
 
   await prisma.workoutItem.delete({ where: { id: item.id } });
 
-  // compattiamo gli order (semplice e sicuro)
   const remaining = await prisma.workoutItem.findMany({
     where: { tenantId: tenant.id, workoutId: item.workoutId },
     orderBy: { order: "asc" },

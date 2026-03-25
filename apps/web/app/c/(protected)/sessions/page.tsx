@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import SessionsView from "../_components/SessionsView";
 import { buildClientCalendarFromAvailabilitySlots } from "@/lib/sessions/buildCalendarSlots";
 
-
 export const revalidate = 0;
 
 export default async function ClientSessionsPage({
@@ -53,7 +52,7 @@ export default async function ClientSessionsPage({
         tenantId: client.tenantId,
         startsAt: { gte: monthStart, lte: monthEnd },
         status: {
-          in: ["SCHEDULED"], // poi aggiungeremo anche "PENDING"
+          in: ["SCHEDULED"],
         },
         OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
       },

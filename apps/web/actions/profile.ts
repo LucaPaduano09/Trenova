@@ -6,7 +6,6 @@ import { requireTenantFromSession } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-/** --- helpers --- */
 function cmToMm(v?: string | null) {
   if (!v) return null;
   const n = Number(String(v).replace(",", "."));

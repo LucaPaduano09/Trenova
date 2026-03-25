@@ -51,7 +51,6 @@ export default function Heatmap({ days }: { days: Day[] }) {
     if (!host) return;
     const r = host.getBoundingClientRect();
 
-    // coordinate nel content space dello scroll container
     const x = e.clientX - r.left + host.scrollLeft;
     const y = e.clientY - r.top + host.scrollTop;
 
@@ -62,8 +61,8 @@ export default function Heatmap({ days }: { days: Day[] }) {
     const max = days.reduce((m, d) => Math.max(m, d.count), 0);
 
     const start = parseISODate(days[0]?.date ?? "2026-01-01");
-    const startDow = start.getDay(); // 0 Sun..6 Sat
-    const mondayBasedOffset = (startDow + 6) % 7; // Mon=0..Sun=6
+    const startDow = start.getDay();
+    const mondayBasedOffset = (startDow + 6) % 7;
 
     const padded: (Day | null)[] = Array(mondayBasedOffset)
       .fill(null)
@@ -110,7 +109,7 @@ export default function Heatmap({ days }: { days: Day[] }) {
           ref={scrollRef}
           className="relative w-full max-w-full overflow-x-auto overscroll-x-contain min-w-0"
         >
-          {/* Tooltip desktop (vicino al quadratino) */}
+
           {hover ? (
             <div
               className="pointer-events-none absolute z-10 hidden sm:block rounded-xl border border-black/10 bg-white/90 px-3 py-2 text-xs text-neutral-900 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 dark:text-neutral-100"
@@ -128,7 +127,7 @@ export default function Heatmap({ days }: { days: Day[] }) {
           ) : null}
 
           <div className="min-w-max">
-            {/* labels mesi */}
+
             <div className="mb-2 flex items-center gap-1 pl-10">
               {columns.map((_, idx) => {
                 const tick = monthTicks.find((t) => t.col === idx);
@@ -145,7 +144,7 @@ export default function Heatmap({ days }: { days: Day[] }) {
             </div>
 
             <div className="flex gap-3 min-w-0">
-              {/* Y labels */}
+
               <div className="w-8 pt-[2px] shrink-0">
                 {["lun", "", "mer", "", "ven", "", ""].map((l, i) => (
                   <div
@@ -157,7 +156,6 @@ export default function Heatmap({ days }: { days: Day[] }) {
                 ))}
               </div>
 
-              {/* Grid */}
               <div className="flex gap-1">
                 {columns.map((col, colIdx) => (
                   <div key={colIdx} className="flex flex-col gap-1">
@@ -183,7 +181,7 @@ export default function Heatmap({ days }: { days: Day[] }) {
                           }}
                           onMouseLeave={() => setHover(null)}
                           onClick={() => {
-                            // Mobile: tap -> tooltip centrato
+
                             setOpenMobile(cell);
                           }}
                           className={[
@@ -201,10 +199,9 @@ export default function Heatmap({ days }: { days: Day[] }) {
           </div>
         </div>
 
-        {/* Tooltip mobile centrato */}
         {openMobile ? (
           <>
-            {/* backdrop per chiudere */}
+
             <button
               type="button"
               onClick={() => setOpenMobile(null)}

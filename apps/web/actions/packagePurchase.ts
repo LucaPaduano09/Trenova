@@ -9,7 +9,7 @@ import { z } from "zod";
 import { PackageType } from "@prisma/client";
 
 function endOfCurrentMonth(d = new Date()) {
-  // ultimo millisecondo del mese corrente
+
   return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
 }
 
@@ -100,7 +100,7 @@ export async function assignPackageToClient(formData: FormData) {
           packageId: pkg.id,
           remainingSessions: credits,
           active: true,
-          expiresAt: exp, // fine mese default
+          expiresAt: exp,
         },
         select: { id: true },
       });

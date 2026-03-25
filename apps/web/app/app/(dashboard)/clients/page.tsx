@@ -117,7 +117,7 @@ export default async function ClientsPage({
               href="/app/clients/invite"
               className={[
                 "group inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
-                "bg-neutral-900 text-white shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:opacity-95",
+                "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:opacity-95",
                 "dark:bg-white dark:text-neutral-900",
               ].join(" ")}
             >

@@ -18,6 +18,5 @@ export async function requestPasswordReset(input: { email: string }) {
     await createAndSendPasswordReset({ email, name: user.fullName });
   }
 
-  // sempre ok: non leakiamo se email esiste
   return { ok: true as const };
 }

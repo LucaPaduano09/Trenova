@@ -9,7 +9,6 @@ import {
   type CreateMetricsEntryState,
 } from "./metrics.schema";
 
-/** helpers (NON exportare nulla in file use server) */
 function kgToG(v?: string | null) {
   if (!v) return null;
   const n = Number(String(v).replace(",", "."));
@@ -52,7 +51,6 @@ export async function createMetricsEntry(
     armRmm: formData.get("armRmm"),
     armLmm: formData.get("armLmm"),
 
-    //  match form names
     forearmRmm: formData.get("forearmRmm"),
     forearmLmm: formData.get("forearmLmm"),
 
@@ -121,11 +119,8 @@ export async function createMetricsEntry(
     select: { id: true },
   });
 
-  // refresh UI (tab progress + lista)
   revalidatePath("/app/clients");
-  revalidatePath(`/app/clients/${tenant.id}`); // opzionale se hai route per tenant
-  // se vuoi essere super preciso (slug): meglio revalidatePath(`/app/clients/${slug}`)
-  // ma qui non lo abbiamo. Va bene refresh lato client.
+  revalidatePath(`/app/clients/${tenant.id}`);
 
   return { ok: true, entryId: entry.id };
 }

@@ -77,7 +77,7 @@ export default function LoadsPerSet({
 
   return (
     <div className="rounded-3xl border cf-surface p-3">
-      {/* hidden input che finisce nella server action */}
+
       <input type="hidden" name={name} value={csv} />
 
       <div className="flex items-start justify-between gap-3">

@@ -25,14 +25,13 @@ export default async function ClientProtectedLayout({
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      {/* Background glow */}
+
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-[-140px] top-[-80px] h-[320px] w-[320px] rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="absolute right-[-140px] top-[18%] h-[300px] w-[300px] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute bottom-[-140px] left-1/2 h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
       </div>
 
-      {/* subtle grid */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.035]"
         style={{
@@ -97,7 +96,6 @@ export default async function ClientProtectedLayout({
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <div className="fixed inset-x-0 bottom-4 z-20 px-4 md:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between rounded-[26px] border border-white/10 bg-white/[0.05] p-2 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
           <Link

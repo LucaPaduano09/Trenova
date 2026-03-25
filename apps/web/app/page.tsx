@@ -11,7 +11,7 @@ export const revalidate = 0;
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Background glow */}
+
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-[-120px] h-[520px] w-[520px] rounded-full bg-blue-500/20 blur-3xl" />
         <div className="absolute top-32 right-[-180px] h-[560px] w-[560px] rounded-full bg-cyan-400/15 blur-3xl" />
@@ -20,15 +20,9 @@ export default function LandingPage() {
         <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(to_right,rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
-      {/* Topbar */}
       <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          {/* <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur"> */}
-          {/* <span className="text-sm font-semibold tracking-tight">
-              <span className="text-blue-400">C</span>
-              <span className="text-yellow-300">F</span>
-            </span> */}
-          {/* </div> */}
+
           <div className="leading-tight">
             <div className="text-sm font-semibold">
               <Image
@@ -40,7 +34,7 @@ export default function LandingPage() {
                 src={"/landing/Frame-1.svg"}
               />
             </div>
-            {/* <div className="text-xs text-white/60">Minimal • Fast • Clean</div> */}
+
           </div>
         </div>
 
@@ -49,7 +43,7 @@ export default function LandingPage() {
             href="/app/sign-in?type=pt"
             className="rounded-2xl bg-white/5 px-4 py-2 text-sm ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
           >
-            {/* test 2*/}
+
             Area PT
           </Link>
           <Link
@@ -62,7 +56,7 @@ export default function LandingPage() {
       </header>
 
       <main className="relative mx-auto max-w-6xl px-6 pb-20">
-        {/* Hero */}
+
         <section className="grid items-center gap-10 lg:grid-cols-2">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-white/70 ring-1 ring-white/10 backdrop-blur">
@@ -128,13 +122,11 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right: image + glass cards */}
           <div className="relative">
             <div className="hidden lg:block relative overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10 backdrop-blur">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.25),transparent_45%)]" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(52, 211, 153, 0.6),transparent_45%)]" />
 
-              {/* hero image */}
               <div className="relative aspect-[16/10]">
                 <Image
                   src="/landing/hero-image.png"
@@ -146,7 +138,6 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
               </div>
 
-              {/* floating mini-cards */}
               <div className="grid gap-3 p-4 sm:grid-cols-3">
                 <MiniGlass
                   title="Sessioni"
@@ -244,7 +235,7 @@ export default function LandingPage() {
           </div>
         </section>
         <section className="relative py-32 overflow-hidden">
-          {/* background */}
+
           <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-cyan-500/5 to-blue-500/5" />
           <div className="absolute -top-48 right-0 w-[700px] h-[500px] bg-blue-500/10 blur-[160px] rounded-full" />
           <div className="absolute -bottom-48 left-0 w-[700px] h-[500px] bg-emerald-400/10 blur-[160px] rounded-full" />
@@ -263,7 +254,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* value pills */}
             <div className="flex flex-wrap justify-center gap-3 mb-12">
               {[
                 "Zero caos",
@@ -280,7 +270,6 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* cards */}
             <div className="grid md:grid-cols-3 gap-10">
               {[
                 {
@@ -313,12 +302,11 @@ export default function LandingPage() {
                   key={i}
                   className="group relative p-8 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:border-emerald-400/30"
                 >
-                  {/* light beam */}
+
                   <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
                     <div className="absolute -left-1/2 top-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-12 translate-x-[-160%] group-hover:translate-x-[260%] transition-all duration-[1800ms]" />
                   </div>
 
-                  {/* top accent */}
                   <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
 
                   <h3 className="text-xl font-semibold text-white mb-2">
@@ -338,13 +326,11 @@ export default function LandingPage() {
                     ))}
                   </ul>
 
-                  {/* glow */}
                   <div className="absolute -inset-6 rounded-[32px] opacity-0 group-hover:opacity-100 transition duration-500 bg-gradient-to-br from-emerald-400/10 to-blue-500/10 blur-2xl pointer-events-none" />
                 </div>
               ))}
             </div>
 
-            {/* CTA */}
             <div className="mt-16 flex flex-col items-center gap-4">
               <Link
                 href={"/app/sign-in?type=pt&mode=register"}
@@ -364,8 +350,6 @@ export default function LandingPage() {
     </div>
   );
 }
-
-/* ---------- UI bits ---------- */
 
 function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (

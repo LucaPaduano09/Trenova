@@ -76,9 +76,7 @@ export async function registerWithPassword(input: {
 
   try {
     const created = await prisma.$transaction(async (tx) => {
-      // =========================
-      // CLIENT REGISTER
-      // =========================
+
       if (variant === "client") {
         const user = await tx.user.create({
           data: {
@@ -120,9 +118,6 @@ export async function registerWithPassword(input: {
         };
       }
 
-      // =========================
-      // PT REGISTER
-      // =========================
       const base = safeFullName
         ? `${safeFullName.split(" ")[0]}-studio`
         : baseSlugFromEmail(emailNorm);

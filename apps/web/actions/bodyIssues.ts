@@ -55,7 +55,7 @@ export async function listClientBodyIssues(clientId: string) {
 
 export async function upsertClientBodyIssue(input: {
   clientId: string;
-  zoneKey: string; // ZoneKey lato TS lo usi nel client, qui basta string validata da zod
+  zoneKey: string;
   side: BodySide;
   type?: IssueType;
   severity?: number | null;

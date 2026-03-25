@@ -1,9 +1,9 @@
 export default function ClientTabSkeleton({ tab }: { tab: string }) {
-  // puoi differenziare per tab se vuoi
+
   if (tab === "sessions") return <SessionsSkeleton />;
   if (tab === "packages") return <PackagesSkeleton />;
   if (tab === "progress") return <ProgressSkeleton />;
-  return <OverviewSkeleton />; // default
+  return <OverviewSkeleton />;
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -17,7 +17,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 function OverviewSkeleton() {
   return (
     <Shell>
-      {/* righe cards come nello screenshot */}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="cf-card h-[170px]" />
         <div className="cf-card h-[170px]" />

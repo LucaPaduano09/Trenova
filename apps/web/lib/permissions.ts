@@ -1,4 +1,4 @@
-// lib/permissions.ts
+
 import { auth } from "@/lib/auth";
 
 export async function requireOwner() {

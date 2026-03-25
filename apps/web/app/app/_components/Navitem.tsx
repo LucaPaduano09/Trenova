@@ -29,21 +29,18 @@ export default function NavItem({
             : "cf-text hover:bg-white/5 hover:-translate-y-[1px]",
         ].join(" ")}
       >
-        {/* ACTIVE BACKGROUND */}
+
         {active && (
           <>
-            {/* deep blue gradient */}
+
             <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95" />
 
-            {/* subtle glass highlight */}
             <span className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
 
-            {/* thin border glow */}
             <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/10" />
           </>
         )}
 
-        {/* DOT */}
         <span
           className={[
             "relative z-10 h-1.5 w-1.5 rounded-full transition-all duration-200",

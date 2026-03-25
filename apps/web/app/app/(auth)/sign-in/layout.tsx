@@ -6,14 +6,13 @@ import { FooterKinetiq } from "@/app/components/FooterKinetiq";
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      {/* Background glow */}
+
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-[-100px] top-[-60px] h-[320px] w-[320px] rounded-full bg-blue-500/14 blur-3xl" />
         <div className="absolute right-[-120px] top-[18%] h-[300px] w-[300px] rounded-full bg-yellow-400/10 blur-3xl" />
         <div className="absolute bottom-[-120px] left-1/2 h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
 
-      {/* Subtle grid */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
@@ -28,7 +27,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        {/* Top bar */}
+
         <header className="border-b border-white/6">
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link href="/" className="inline-flex items-center">
@@ -61,7 +60,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         <main className="mx-auto flex w-full max-w-7xl flex-1 items-center px-4 py-6 sm:px-6 lg:px-8">
           <div className="grid w-full items-center gap-12 lg:min-h-[calc(100vh-110px)] lg:grid-cols-[0.9fr_1.1fr]">
-            {/* Left */}
+
             <section className="hidden lg:block">
               <div className="max-w-[500px]">
                 <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/70 backdrop-blur">
@@ -115,7 +114,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               </div>
             </section>
 
-            {/* Right */}
             <section className="flex items-center justify-center lg:justify-end">
               <div className="w-full max-w-[760px] xl:max-w-[800px]">
                 {children}

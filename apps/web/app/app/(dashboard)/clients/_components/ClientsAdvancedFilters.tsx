@@ -127,7 +127,7 @@ export default function ClientsAdvancedFilters({
   return (
     <div className="rounded-3xl border cf-surface p-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        {/* Search */}
+
         <div className="flex-1">
           <div className="flex items-center gap-2 rounded-2xl border cf-surface px-3 py-2.5">
             <span className="text-xs cf-faint">⌕</span>
@@ -173,13 +173,12 @@ export default function ClientsAdvancedFilters({
 
           {open ? (
             <>
-              {/* overlay sopra TUTTO */}
+
               <div
                 className="fixed inset-0 z-[9998]"
                 onClick={() => setOpen(false)}
               />
 
-              {/* popover FIXED così non “va dietro” ai container */}
               <div className="fixed right-6 top-28 z-[9999] w-[340px] rounded-3xl border cf-surface p-3 shadow-xl">
                 <div className="px-2 pb-2 text-sm font-semibold cf-text">
                   Filtri avanzati

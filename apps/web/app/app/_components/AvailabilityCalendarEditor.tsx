@@ -7,9 +7,9 @@ import { saveTenantAvailabilityCalendar } from "@/actions/availability-calendar"
 
 type Slot = {
   id?: string;
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
+  date: string;
+  startTime: string;
+  endTime: string;
   isAvailable?: boolean;
 };
 
@@ -81,7 +81,7 @@ function getMonthDays(month: string, slots: Slot[]): DayCell[] {
 }
 
 function combineDateAndTime(date: string, time: string) {
-  // costruiamo una data locale stabile e poi la serializziamo
+
   const [year, month, day] = date.split("-").map(Number);
   const [hours, minutes] = time.split(":").map(Number);
 

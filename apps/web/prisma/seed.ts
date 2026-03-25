@@ -1,9 +1,7 @@
-/* prisma/seed.ts */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
-/** ---------------- utils ---------------- */
 
 function slugify(input: string) {
   return input
@@ -23,11 +21,8 @@ function cap(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** ---------------- tag canonici (IT) ----------------
- * Consiglio: tag corti e "standard", così filtri meglio.
- */
 const TAG = {
-  // gruppi muscolari
+
   petto: "petto",
   dorso: "dorso",
   spalle: "spalle",
@@ -45,7 +40,6 @@ const TAG = {
   schiena_bassa: "schiena bassa",
   trapezi: "trapezi",
 
-  // pattern movimento
   spinta: "spinta",
   tirata: "tirata",
   squat: "squat",
@@ -55,11 +49,9 @@ const TAG = {
   stabilita: "stabilità",
   condizionamento: "condizionamento",
 
-  // tipo
   multiarticolare: "multiarticolare",
   isolamento: "isolamento",
 
-  // attrezzi
   bilanciere: "bilanciere",
   manubri: "manubri",
   cavi: "cavi",
@@ -70,7 +62,6 @@ const TAG = {
   swiss_ball: "fitball",
   landmine: "landmine",
 
-  // livello
   base: "base",
   intermedio: "intermedio",
   avanzato: "avanzato",
@@ -95,16 +86,12 @@ type SeedExercise = {
 };
 
 type Variant = {
-  suffix: string; // testo da appendere al nome
+  suffix: string;
   tagsAdd: string[];
 };
 
-/** ---------------- generator ----------------
- * Partiamo da "archetipi" e generiamo varianti coerenti.
- */
-
 type Base = {
-  baseName: string; // es: "Panca piana"
+  baseName: string;
   description?: string;
   tags: string[];
   variants?: Variant[];
@@ -114,10 +101,6 @@ function makeExerciseName(base: string, suffix?: string) {
   return suffix ? `${base} (${suffix})` : base;
 }
 
-/**
- * Varianti comuni per attrezzi/esecuzione
- * NB: non tutte vanno bene per tutti gli esercizi, per questo le attacchiamo per-base.
- */
 const V = {
   bilanciere: { suffix: "Bilanciere", tagsAdd: [TAG.bilanciere] },
   manubri: { suffix: "Manubri", tagsAdd: [TAG.manubri] },
@@ -139,11 +122,8 @@ const V = {
   tempo: { suffix: "Tempo controllato", tagsAdd: [] },
 } satisfies Record<string, Variant>;
 
-/** ---------------- catalogo base (reale, non “fake”) ----------------
- * Qui mettiamo esercizi “padre”. Le varianti creano ampiezza.
- */
 const BASES: Base[] = [
-  // PETTO
+
   {
     baseName: "Panca piana",
     description: "Scapole addotte, piedi saldi, controllo in eccentrica.",
@@ -185,7 +165,6 @@ const BASES: Base[] = [
     ],
   },
 
-  // SPALLE
   {
     baseName: "Military press",
     description: "Glutei e addome attivi, evita iperestensione lombare.",
@@ -225,7 +204,6 @@ const BASES: Base[] = [
     variants: [V.bilanciere, V.manubri, V.macchina],
   },
 
-  // TRICIPITI
   {
     baseName: "Pushdown tricipiti",
     description: "Gomiti fissi, estendi senza spostare le spalle.",
@@ -249,7 +227,6 @@ const BASES: Base[] = [
     variants: [V.bilanciere, V.manubri],
   },
 
-  // DORSO
   {
     baseName: "Trazioni",
     description: "Depressione scapolare prima, tira con gomiti verso il basso.",
@@ -295,7 +272,6 @@ const BASES: Base[] = [
     variants: [V.cavi, V.manubri, V.macchina],
   },
 
-  // BICIPITI / AVAMBRACCI
   {
     baseName: "Curl",
     description: "Gomiti fermi, controlla l’eccentrica.",
@@ -311,7 +287,6 @@ const BASES: Base[] = [
     ],
   },
 
-  // GAMBE
   {
     baseName: "Squat",
     description: "Core attivo, ginocchia seguono la linea dei piedi.",
@@ -420,7 +395,6 @@ const BASES: Base[] = [
     ],
   },
 
-  // CORE
   {
     baseName: "Plank",
     description: "Glutei stretti, addome attivo, schiena neutra.",
@@ -447,7 +421,6 @@ const BASES: Base[] = [
     ],
   },
 
-  // CONDITIONING
   {
     baseName: "Kettlebell swing",
     description: "Hip hinge esplosivo, non è uno squat. Colonna neutra.",
@@ -465,12 +438,8 @@ const BASES: Base[] = [
   },
 ];
 
-/**
- * EXTRA: aggiungi “blocchi” che aumentano tantissimo il catalogo
- * senza inventare esercizi strani.
- */
 const EXTRAS: SeedExercise[] = [
-  // schiena bassa / post chain
+
   {
     name: "Iperestensioni",
     tags: [TAG.schiena_bassa, TAG.glutei, TAG.femorali, TAG.isolamento],
@@ -490,7 +459,6 @@ const EXTRAS: SeedExercise[] = [
     imageUrl: null,
   },
 
-  // tirate verticali alternative
   {
     name: "Pulldown braccia tese (cavi)",
     tags: [TAG.dorso, TAG.isolamento, TAG.cavi],
@@ -498,7 +466,6 @@ const EXTRAS: SeedExercise[] = [
     imageUrl: null,
   },
 
-  // core anti-rotazione
   {
     name: "Pallof press (cavi)",
     tags: [TAG.core, TAG.anti_rotazione, TAG.cavi, TAG.base],
@@ -512,7 +479,6 @@ const EXTRAS: SeedExercise[] = [
     imageUrl: null,
   },
 
-  // glutei
   {
     name: "Abduzioni anca (macchina)",
     tags: [TAG.glutei, TAG.macchina, TAG.isolamento, TAG.base],
@@ -520,7 +486,6 @@ const EXTRAS: SeedExercise[] = [
     imageUrl: null,
   },
 
-  // spalle cuffia
   {
     name: "Extra-rotazioni (cavi)",
     tags: [TAG.spalle, TAG.prehab, TAG.cavi, TAG.isolamento],
@@ -529,13 +494,11 @@ const EXTRAS: SeedExercise[] = [
   },
 ].filter(Boolean);
 
-/** ---------------- build final catalog ---------------- */
-
 function buildCatalog(): SeedExercise[] {
   const out: SeedExercise[] = [];
 
   for (const b of BASES) {
-    // se ha varianti, creiamo N esercizi
+
     if (b.variants?.length) {
       for (const v of b.variants) {
         out.push({
@@ -554,7 +517,6 @@ function buildCatalog(): SeedExercise[] {
       });
     }
 
-    // aggiungiamo anche una versione “base” senza suffix (se ha senso)
     const baseSlug = slugify(b.baseName);
     const alreadyHasExact = out.some((e) => slugify(e.name) === baseSlug);
     if (!alreadyHasExact) {
@@ -655,7 +617,6 @@ function buildCatalog(): SeedExercise[] {
     ]
   );
 
-  // pulizia finale
   return out
     .map((e) => ({
       ...e,
@@ -670,7 +631,6 @@ function buildCatalog(): SeedExercise[] {
 async function main() {
   const catalog = buildCatalog();
 
-  // dedup per slug (se due nomi finiscono uguali, uno vince)
   const bySlug = new Map<string, SeedExercise>();
   for (const e of catalog) {
     const slug = slugify(e.name);

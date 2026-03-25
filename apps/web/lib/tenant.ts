@@ -1,8 +1,6 @@
-// lib/tenant.ts
+
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-
-// lib/tenant.ts
 
 import { redirect } from "next/navigation";
 

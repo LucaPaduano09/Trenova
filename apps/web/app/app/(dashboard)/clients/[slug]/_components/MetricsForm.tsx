@@ -9,9 +9,6 @@ import {createMetricsInitialState,
   type CreateMetricsEntryState} from "@/actions/metrics.schema"
 import { useRouter } from "next/navigation";
 
-// usa i tuoi Field component (se è in scope), altrimenti importalo
-// import Field from "./Field";
-
 export default function MetricsForm({ clientId }: { clientId: string }) {
   const router = useRouter();
   const [state, formAction] = useActionState<CreateMetricsEntryState, FormData>(
@@ -31,7 +28,6 @@ export default function MetricsForm({ clientId }: { clientId: string }) {
     <form id="metrics-form" action={formAction} className="mt-5 space-y-4">
       <input type="hidden" name="clientId" value={clientId} />
 
-      {/*  feedback globale */}
       <div className="text-xs">
         {state.ok ? (
           <span className="text-emerald-500">Salvato ✔</span>

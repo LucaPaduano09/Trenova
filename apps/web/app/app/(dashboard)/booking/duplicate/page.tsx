@@ -71,7 +71,7 @@ export default async function BookingDuplicatePage({
             defaults: {
               ...a,
               durationMin,
-              paidAt: null, // duplicata non pagata
+              paidAt: null,
             },
           }}
         />

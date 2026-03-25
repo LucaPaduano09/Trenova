@@ -8,7 +8,7 @@ function slugify(input: string) {
   return input
     .toLowerCase()
     .trim()
-    .replace(/[^\p{L}\p{N}]+/gu, "-") // lettere/numeri -> dash (unicode safe)
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
 }
 
@@ -54,9 +54,6 @@ export async function registerWithPassword(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
-  // Qui decidi se creare anche il tenant automaticamente:
-  // - opzione A: crei tenant + setti tenantId
-  // - opzione B: tenant viene creato altrove (onboarding)
   const tenantSlug = await uniqueTenantSlug(parsed.data.fullName);
   const tenant = await prisma.tenant.create({
     data: {

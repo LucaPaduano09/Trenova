@@ -7,10 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//////////////////////
-// ENUMS
-//////////////////////
-
 enum UserRole {
   OWNER
   CLIENT
@@ -40,10 +36,6 @@ enum PackageType {
   SESSION_BUNDLE
   MONTHLY
 }
-
-//////////////////////
-// IDENTITY
-//////////////////////
 
 model Tenant {
   id         String    @id @default(cuid()) @map("_id")
@@ -89,10 +81,6 @@ model User {
 
   @@index([tenantId])
 }
-
-//////////////////////
-// CLIENTS
-//////////////////////
 
 model Client {
   id         String       @id @default(cuid()) @map("_id")
@@ -170,7 +158,6 @@ model BodyMetricsEntry {
 
   measuredAt DateTime @default(now())
 
-  // antropometria
   weightG    Int?
   waistMm    Int?
   hipsMm     Int?
@@ -185,17 +172,16 @@ model BodyMetricsEntry {
   calfRmm   Int?
   bodyFatBp Int?
 
-  // --- BIA (lean, numeri normalizzati) ---
-  tbwBp        Int? // Total Body Water %  (es 54.2 => 5420)
-  icwBp        Int? // Intracellular Water %
-  ecwBp        Int? // Extracellular Water %
-  muscleMassG  Int? // Muscle mass kg -> g
-  fatMassG     Int? // Fat mass kg -> g
-  ffmG         Int? // Fat free mass kg -> g
-  bmrKcal      Int? // kcal/day
-  visceralFat  Int? // scala device (spesso 1..59)
-  metabolicAge Int? // anni
-  phaseAngleBp Int? // (es 5.6 => 560)
+  tbwBp        Int?
+  icwBp        Int?
+  ecwBp        Int?
+  muscleMassG  Int?
+  fatMassG     Int?
+  ffmG         Int?
+  bmrKcal      Int?
+  visceralFat  Int?
+  metabolicAge Int?
+  phaseAngleBp Int?
 
   notes     String?
   createdAt DateTime @default(now())
@@ -204,10 +190,6 @@ model BodyMetricsEntry {
 
   @@index([tenantId, clientId, measuredAt])
 }
-
-//////////////////////
-// APPOINTMENTS
-//////////////////////
 
 enum AppointmentStatus {
   PENDING
@@ -244,7 +226,6 @@ model Appointment {
   workoutTemplateId String?          @db.ObjectId
   workoutTemplate   WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
 
-  // se vuoi storico immutabile:
   workoutSnapshotJson Json?
   appointmentWorkout  AppointmentWorkout?
 
@@ -282,22 +263,18 @@ model AppointmentWorkoutItemLog {
   appointmentWorkout   AppointmentWorkout @relation(fields: [appointmentWorkoutId], references: [id])
 
   planVersionItemId String @db.ObjectId
-  // NON metto relation diretta per evitare query pesanti; se vuoi la metti:
-  // planVersionItem     WorkoutPlanVersionItem @relation(fields: [planVersionItemId], references: [id])
 
   order Int
 
-  // snapshot ridondante (utile per render senza join)
   nameSnapshot     String
   imageUrlSnapshot String?
   setsPlanned      Int?
 
-  // output effettivo
   setsDone         Int?
-  repsDoneBySet    String[] // ["10","10","8","8"] oppure vuoto
-  loadsKgDoneBySet Float[] // [40, 45, 50, 50]
-  restSecDoneBySet Int[] // [60,60,75,75]
-  rpeDoneBySet     Int[] // [8,8,9,9] opzionale
+  repsDoneBySet    String[]
+  loadsKgDoneBySet Float[]
+  restSecDoneBySet Int[]
+  rpeDoneBySet     Int[]
 
   isCompleted Boolean @default(false)
   itemNotes   String?
@@ -305,21 +282,15 @@ model AppointmentWorkoutItemLog {
   @@index([tenantId, appointmentWorkoutId])
 }
 
-//////////////////////
-// PACKAGES & CREDITS
-//////////////////////
-
 model Package {
   id       String      @id @default(cuid()) @map("_id")
   tenantId String
   name     String
   type     PackageType
 
-  // bundle
   sessionCount Int?
   bundlePrice  Float?
 
-  // monthly
   monthlyPrice        Float?
   monthlySessionCount Int?
 
@@ -356,7 +327,7 @@ model SessionCreditLedger {
   id                String   @id @default(cuid()) @map("_id")
   tenantId          String
   packagePurchaseId String
-  delta             Int // +10 acquisto, -1 utilizzo
+  delta             Int
   reason            String?
   createdAt         DateTime @default(now())
 
@@ -365,10 +336,6 @@ model SessionCreditLedger {
 
   @@index([tenantId])
 }
-
-//////////////////////
-// WORKOUT ENGINE
-//////////////////////
 
 model WorkoutTemplateDay {
   id         String                    @id @default(cuid()) @map("_id")
@@ -400,7 +367,7 @@ model WorkoutSession {
   planVersionId String  @db.ObjectId
   appointmentId String?
 
-  status String @default("planned") // planned|in_progress|done
+  status String @default("planned")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -435,7 +402,6 @@ model WorkoutSessionItem {
   imageUrlSnapshot String?
   tagsSnapshot     String[]
 
-  // programmati (copiati dalla version)
   sets         Int?
   reps         String?
   restSec      Int?
@@ -445,10 +411,9 @@ model WorkoutSessionItem {
   restSecBySet Int[]
   itemNotes    String?
 
-  // (opzionale) “eseguiti” per futuro
   performedLoadsKg      Float[]
   performedRestSecBySet Int[]
-  performedRepsBySet    String[] // se vuoi “10,10,8,8”
+  performedRepsBySet    String[]
 
   @@index([tenantId, sessionId])
 }
@@ -465,10 +430,6 @@ model WorkoutSetLog {
 
   session WorkoutSession @relation(fields: [sessionId], references: [id])
 }
-
-//////////////////////
-// PROGRESS TRACKING
-//////////////////////
 
 model ProgressEntry {
   id        String   @id @default(cuid()) @map("_id")
@@ -495,10 +456,6 @@ model ProgressPhoto {
 
   entry ProgressEntry @relation(fields: [entryId], references: [id])
 }
-
-//////////////////////
-// MAGIC LINK (MVP)
-//////////////////////
 
 model MagicLinkToken {
   id        String   @id @default(cuid()) @map("_id")
@@ -561,10 +518,9 @@ model Exercise {
 
   name        String
   description String?
-  coachTips   String? // tips del PT
-  imageUrl    String? // o storageKey
+  coachTips   String?
+  imageUrl    String?
 
-  // opzionali per filtro/ricerca
   tags         String[]
   tagsText     String?
   isArchived   Boolean       @default(false)
@@ -572,8 +528,6 @@ model Exercise {
 
   @@index([tenantId, name])
 }
-
-///WORKOUTS///
 
 model WorkoutTemplate {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -629,13 +583,12 @@ model WorkoutPlan {
   tenantId String
   clientId String
 
-  // da quale template nasce (opzionale ma utile)
   workoutTemplateId String?          @db.ObjectId
   workoutTemplate   WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
 
   title   String
   notes   String?
-  status  String    @default("active") // active|paused|ended
+  status  String    @default("active")
   startAt DateTime  @default(now())
   endAt   DateTime?
 
@@ -645,7 +598,7 @@ model WorkoutPlan {
   updatedAt DateTime @updatedAt
 
   versions        WorkoutPlanVersion[]
-  appointments    AppointmentWorkout[] // log sessioni collegate al plan
+  appointments    AppointmentWorkout[]
   tenant          Tenant               @relation(fields: [tenantId], references: [id])
   client          Client               @relation(fields: [clientId], references: [id])
   workoutSessions WorkoutSession[]
@@ -664,7 +617,6 @@ model WorkoutPlanVersion {
   title   String
   notes   String?
 
-  // chi l'ha creata, opzionale
   createdByUserId String?
 
   createdAt DateTime @default(now())
@@ -686,7 +638,6 @@ model WorkoutPlanVersionItem {
 
   order Int
 
-  // NEW: raggruppamento workout/day
   workoutKey          String?
   workoutNameSnapshot String?
   workoutOrder        Int?    @default(0)
@@ -717,7 +668,6 @@ model WorkoutPlanVersionItem {
   @@index([tenantId, planVersionId, workoutOrder, order])
 }
 
-//////
 model GlobalExercise {
   id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
   slug                    String                   @unique
@@ -738,18 +688,17 @@ model TenantExerciseOverride {
   globalExerciseId String         @db.ObjectId
   globalExercise   GlobalExercise @relation(fields: [globalExerciseId], references: [id])
 
-  // override opzionali (se null => usa global)
   nameOverride        String?
   descriptionOverride String?
   coachTips           String?
   imageUrlOverride    String?
   tagsOverride        String[] @default([])
 
-  isHidden  Boolean  @default(false) // se il PT non lo vuole vedere
+  isHidden  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([tenantId, globalExerciseId]) // 1 override per PT per esercizio globale
+  @@unique([tenantId, globalExerciseId])
 }
 
 model TenantExercise {
@@ -772,9 +721,9 @@ model TenantAvailabilityRule {
   id       String @id @default(cuid()) @map("_id")
   tenantId String
 
-  weekday  Int // 0 = Sunday, 1 = Monday ... 6 = Saturday
-  startMin Int // minuti da mezzanotte, es. 540 = 09:00
-  endMin   Int // es. 1140 = 19:00
+  weekday  Int
+  startMin Int
+  endMin   Int
 
   isActive Boolean @default(true)
 
@@ -789,7 +738,7 @@ model TenantAvailabilitySlot {
   id       String @id @default(cuid()) @map("_id")
   tenantId String
 
-  date    DateTime // giorno specifico, normalizzato a mezzanotte o usato con startsAt
+  date    DateTime
   startAt DateTime
   endAt   DateTime
 
@@ -823,11 +772,11 @@ model ClientBodyIssue {
   tenantId String
   clientId String
 
-  zoneKey String // es: "shoulder", "lumbar", "knee"
+  zoneKey String
   side    BodySide @default(MIDLINE)
 
   type     IssueType @default(PAIN)
-  severity Int? // 0-10
+  severity Int?
   notes    String?
   active   Boolean   @default(true)
 
@@ -840,7 +789,6 @@ model ClientBodyIssue {
   @@index([tenantId, zoneKey])
 }
 
-// NOTIFICATION
 enum NotificationType {
   APPOINTMENT_BOOKED
   APPOINTMENT_CANCELED
@@ -858,10 +806,8 @@ model Notification {
   title String
   body  String?
 
-  // deep link nella dashboard PT (web)
   href String?
 
-  // contesto (facoltativo ma utile)
   appointmentId String?
   clientId      String?
 
@@ -878,7 +824,7 @@ model Notification {
 
 model PasswordResetToken {
   id         String   @id @default(cuid()) @map("_id")
-  identifier String // email
+  identifier String
   token      String   @unique
   expires    DateTime
   createdAt  DateTime @default(now())

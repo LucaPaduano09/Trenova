@@ -9,7 +9,7 @@ export async function createAndSendPasswordReset(args: {
   const email = args.email.trim().toLowerCase();
 
   const token = crypto.randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+  const expires = new Date(Date.now() + 1000 * 60 * 30);
 
   await prisma.passwordResetToken.deleteMany({
     where: { identifier: email },

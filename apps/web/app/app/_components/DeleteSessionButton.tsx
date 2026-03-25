@@ -42,7 +42,7 @@ export default function DeleteSessionButton({
           "disabled:opacity-60 disabled:cursor-not-allowed",
         ].join(" ")}
       >
-        {/* subtle red glow */}
+
         <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_30%_30%,rgba(239,68,68,0.18),transparent_60%)]" />
         <span className="relative">
           <Image

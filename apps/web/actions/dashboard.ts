@@ -4,8 +4,6 @@ import { prisma } from "@/lib/db";
 import { requireTenantFromSession } from "@/lib/tenant";
 import { unstable_cache, revalidateTag } from "next/cache";
 
-/** ---------------- date helpers ---------------- */
-
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -22,26 +20,23 @@ function toISODate(d: Date) {
 }
 function startOfWeekMonday(d: Date) {
   const x = startOfDay(d);
-  const day = x.getDay(); // 0=Sun..6=Sat
+  const day = x.getDay();
   const diff = (day === 0 ? -6 : 1) - day;
   x.setDate(x.getDate() + diff);
   return x;
 }
 function parseMonthStartISO(input?: string | null) {
-  // expects YYYY-MM-DD (we will use YYYY-MM-01); fallback to current month
+
   const now = new Date();
   const fallback = new Date(now.getFullYear(), now.getMonth(), 1);
 
   if (!input) return fallback;
 
-  // Safe parse to local midnight
   const d = new Date(input + "T00:00:00");
   if (Number.isNaN(d.getTime())) return fallback;
 
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
-
-/** ---------------- caching ---------------- */
 
 function dashboardTagTenant(tenantId: string) {
   return `dashboard:${tenantId}`;
@@ -64,10 +59,6 @@ function getCachedDashboardFn(tenantId: string, monthStartISO: string) {
   );
 }
 
-/**
- * Se non passi monthStartISO invalida “tutti i mesi” del tenant (tag generale).
- * Se passi monthStartISO invalida anche quel mese specifico.
- */
 export async function invalidateDashboardStatsCache(
   tenantId: string,
   monthStartISO?: string
@@ -76,8 +67,6 @@ export async function invalidateDashboardStatsCache(
   if (monthStartISO)
     revalidateTag(dashboardTagTenantMonth(tenantId, monthStartISO), "max");
 }
-
-/** ---------------- core builder ---------------- */
 
 async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   const now = new Date();
@@ -88,20 +77,17 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   const weekStart = startOfWeekMonday(now);
   const nextWeekStart = addDays(weekStart, 7);
 
-  // KPI month (current month for KPI)
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  //  ' Calendar month (driven by monthStartISO param)
   const calMonthStart = parseMonthStartISO(monthStartISO);
   const calNextMonthStart = new Date(
     calMonthStart.getFullYear(),
     calMonthStart.getMonth() + 1,
     1
   );
-  const calMonthStartISOSafe = toISODate(calMonthStart); // normalize
+  const calMonthStartISOSafe = toISODate(calMonthStart);
 
-  // ============ KPI (parallel) ============
   const clientsActivePromise = prisma.client.count({
     where: {
       tenantId,
@@ -149,7 +135,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     select: { remainingSessions: true },
   });
 
-  // ============ CHARTS BASE ============
   const appointments30Promise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -175,7 +160,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     select: { package: { select: { name: true } } },
   });
 
-  // ============ OPERATIONAL ============
   const upcomingAppointmentsPromise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -223,7 +207,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     select: { clientId: true, priceCents: true },
   });
 
-  // Heatmap 90 days
   const heatmapDays = 90;
   const heatmapStart = addDays(today, -(heatmapDays - 1));
   const completedForHeatmapPromise = prisma.appointment.findMany({
@@ -236,7 +219,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     select: { startsAt: true },
   });
 
-  //  ' Calendar appointments (for requested month)
   const calendarAppointmentsPromise = prisma.appointment.findMany({
     where: {
       tenantId,
@@ -297,8 +279,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     clientsLitePromise,
   ]);
 
-  // ============ compute ============
-
   const revenueMonthCents = paidAppointmentsMonth.reduce(
     (sum, a) => sum + (a.priceCents ?? 0),
     0
@@ -309,7 +289,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     0
   );
 
-  // Sessions by day (last 30)
   const dayMap = new Map<
     string,
     { date: string; sessions: number; completed: number; canceled: number }
@@ -329,14 +308,12 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   }
   const sessionsByDay = Array.from(dayMap.values());
 
-  // Compliance donut (last 30)
   const compliance = {
     completed: appointments30.filter((a) => a.status === "COMPLETED").length,
     scheduled: appointments30.filter((a) => a.status === "SCHEDULED").length,
     canceled: appointments30.filter((a) => a.status === "CANCELED").length,
   };
 
-  // Revenue by week (last 8 weeks)
   const weekBuckets: { weekStart: string; revenueCents: number }[] = [];
   const start = startOfWeekMonday(addDays(today, -7 * 7));
   for (let i = 0; i < 8; i++) {
@@ -354,7 +331,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     weekBuckets[idx].revenueCents += a.priceCents ?? 0;
   }
 
-  // Package mix (top 6)
   const mixMap = new Map<string, number>();
   for (const p of packageMix) {
     const name = p.package?.name ?? "Package";
@@ -365,18 +341,15 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
 
-  // Weekly volume
   const weeklyVolumeKg = workoutLogsWeek.reduce((sum, log) => {
     return sum + (log.weight ?? 0) * (log.reps ?? 0);
   }, 0);
 
-  // MRR
   const mrr = monthlyActive.reduce(
     (sum, p) => sum + (p.package.monthlyPrice ?? 0),
     0
   );
 
-  // LTV avg
   const revenueByClient = new Map<string, number>();
   for (const a of paidAppointmentsAll) {
     revenueByClient.set(
@@ -390,7 +363,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
       : Array.from(revenueByClient.values()).reduce((a, b) => a + b, 0) /
         revenueByClient.size;
 
-  // Heatmap 90 days
   const heatmapCountMap = new Map<string, number>();
   for (const a of completedForHeatmap) {
     const key = toISODate(a.startsAt);
@@ -403,7 +375,6 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
     heatmap.push({ date: key, count: heatmapCountMap.get(key) ?? 0 });
   }
 
-  //  ' Calendar by day (REQUESTED month)
   const calendarByDay = new Map<
     string,
     {
@@ -444,7 +415,7 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   const calendar = Array.from(calendarByDay.values());
 
   return {
-    monthStartISO: calMonthStartISOSafe, //  ' utile da passare al client
+    monthStartISO: calMonthStartISOSafe,
     kpi: {
       clientsActive,
       sessionsToday,
@@ -472,12 +443,9 @@ async function buildDashboardStats(tenantId: string, monthStartISO: string) {
   };
 }
 
-/** ---------------- public API (auth + cached) ---------------- */
-
 export async function getDashboardStats(monthStartISO?: string) {
   const { tenant } = await requireTenantFromSession();
 
-  // normalize monthStartISO to YYYY-MM-01
   const ms = parseMonthStartISO(monthStartISO);
   const iso = toISODate(ms);
 

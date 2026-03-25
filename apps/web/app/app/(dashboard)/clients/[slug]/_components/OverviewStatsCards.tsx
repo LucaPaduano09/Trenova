@@ -58,7 +58,7 @@ export default async function OverviewStatsCards({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      {/* Compliance */}
+
       <div className="cf-card">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -94,7 +94,6 @@ export default async function OverviewStatsCards({
         </div>
       </div>
 
-      {/* Revenue */}
       <div className="cf-card">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -120,7 +119,6 @@ export default async function OverviewStatsCards({
         </div>
       </div>
 
-      {/* Next session */}
       <div className="cf-card">
         <div className="text-sm font-semibold cf-text">Prossima sessione</div>
         <div className="mt-1 text-xs cf-muted">Pianificata</div>
@@ -155,7 +153,6 @@ export default async function OverviewStatsCards({
         )}
       </div>
 
-      {/* Package */}
       <div className="cf-card">
         <div className="text-sm font-semibold cf-text">Pacchetto / Crediti</div>
         <div className="mt-1 text-xs cf-muted">Stato attuale</div>
@@ -192,7 +189,6 @@ export default async function OverviewStatsCards({
         )}
       </div>
 
-      {/* Sessions this week */}
       <div className="cf-card">
         <div className="text-sm font-semibold cf-text">Allenamenti (7g)</div>
         <div className="mt-1 text-xs cf-muted">Sessioni completate</div>
@@ -205,7 +201,6 @@ export default async function OverviewStatsCards({
         </div>
       </div>
 
-      {/* Weight trend */}
       <div className="cf-card lg:col-span-3">
         <div className="flex items-start justify-between gap-3">
           <div>

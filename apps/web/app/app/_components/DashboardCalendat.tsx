@@ -16,7 +16,7 @@ type CalItem = {
 };
 
 export type CalDay = {
-  date: string; // YYYY-MM-DD
+  date: string;
   scheduled: number;
   completed: number;
   canceled: number;
@@ -36,9 +36,9 @@ function addMonths(d: Date, n: number) {
   return new Date(d.getFullYear(), d.getMonth() + n, 1);
 }
 function startOfGrid(monthStart: Date) {
-  // Monday grid
+
   const x = new Date(monthStart);
-  const day = x.getDay(); // 0=Sun
+  const day = x.getDay();
   const diff = (day === 0 ? -6 : 1) - day;
   x.setDate(x.getDate() + diff);
   return x;
@@ -67,19 +67,16 @@ function Dot({ className }: { className: string }) {
   );
 }
 
-/* ---------------- Skeleton ---------------- */
-
 function CalendarSkeleton() {
   return (
     <div className="w-full">
-      {/* week header skeleton */}
+
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
         {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="h-3 rounded bg-neutral-200/70 dark:bg-white/10 animate-pulse" />
         ))}
       </div>
 
-      {/* grid skeleton */}
       <div className="mt-2 grid grid-cols-7 gap-1.5 sm:gap-2">
         {Array.from({ length: 42 }).map((_, i) => (
           <div
@@ -108,7 +105,7 @@ export default function DashboardCalendar({
   clients,
   workoutTemplates,
 }: {
-  monthStartISO: string; // REQUIRED: YYYY-MM-01
+  monthStartISO: string;
   days: CalDay[];
   clients: { id: string; fullName: string }[];
   workoutTemplates: { id: string; title: string }[];
@@ -120,18 +117,15 @@ export default function DashboardCalendar({
   const pendingISORef = useRef<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  // “today” only once
   const today = useMemo(() => new Date(), []);
 
   function pushMonth(d: Date) {
     const ms = startOfMonth(d);
-    const iso = toISODate(ms); // YYYY-MM-01
+    const iso = toISODate(ms);
 
-    // se sto già caricando o sto già andando a quel mese → ignora
     if (loading) return;
     if (iso === monthStartISO) return;
 
-    // micro delay anti-flicker (150ms)
     pendingISORef.current = iso;
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
@@ -145,7 +139,6 @@ export default function DashboardCalendar({
 
   const [openCreate, setOpenCreate] = useState(false);
 
-  // Cursor follows monthStartISO (server-driven)
   const [cursor, setCursor] = useState(
     () => new Date(monthStartISO + "T00:00:00")
   );
@@ -153,7 +146,6 @@ export default function DashboardCalendar({
   useEffect(() => {
     setCursor(new Date(monthStartISO + "T00:00:00"));
 
-    // appena arriva il nuovo mese dal server → stop skeleton
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -193,7 +185,6 @@ export default function DashboardCalendar({
     return inThisMonth ? toISODate(now) : toISODate(startOfMonth(cursor));
   });
 
-  // When cursor changes, pick today if same month else 1st
   useEffect(() => {
     const now = new Date();
     const inThisMonth =
@@ -233,7 +224,7 @@ export default function DashboardCalendar({
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[360px_1fr]">
-      {/* LEFT */}
+
       <div className="cf-card p-4 sm:p-5 overflow-hidden min-w-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between min-w-0">
           <div className="min-w-0">
@@ -286,7 +277,6 @@ export default function DashboardCalendar({
           </div>
         </div>
 
-        {/* Calendar grid + skeleton overlay */}
         <div className="mt-4 w-full max-w-full relative">
           {loading ? (
             <div className="absolute inset-0 z-10 rounded-3xl bg-white/50 dark:bg-black/30 backdrop-blur-sm p-2 sm:p-0">
@@ -375,7 +365,6 @@ export default function DashboardCalendar({
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="cf-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -476,7 +465,6 @@ export default function DashboardCalendar({
         </div>
       </div>
 
-      {/* MODAL */}
       {openCreate ? (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4"
@@ -550,7 +538,7 @@ function QuickCreateSession({
     ) as HTMLFormElement | null;
     form?.reset();
 
-    router.refresh(); //  ' ricarica anche il mese corrente (server)
+    router.refresh();
     onCreated?.();
   }, [state, onCreated, router]);
 
@@ -563,7 +551,7 @@ function QuickCreateSession({
       <input type="hidden" name="date" value={dateISO} />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {/* Cliente */}
+
         <div>
           <label className="text-xs cf-muted">Cliente</label>
           <select
@@ -585,7 +573,6 @@ function QuickCreateSession({
           ) : null}
         </div>
 
-        {/* Ora */}
         <div>
           <label className="text-xs cf-muted">Ora</label>
           <input
@@ -601,7 +588,6 @@ function QuickCreateSession({
           ) : null}
         </div>
 
-        {/* Durata */}
         <div>
           <label className="text-xs cf-muted">Durata (min)</label>
           <input
@@ -615,7 +601,6 @@ function QuickCreateSession({
           />
         </div>
 
-        {/* Location */}
         <div>
           <label className="text-xs cf-muted">Luogo</label>
           <select

@@ -95,13 +95,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className={["min-h-screen", shellBg].join(" ")}>
-      {/* background glow */}
+
       <div className="pointer-events-none fixed inset-0 opacity-60 dark:opacity-35">
         <div className="absolute -top-24 left-10 h-72 w-72 rounded-full bg-neutral-200 blur-3xl dark:bg-white/10" />
         <div className="absolute top-40 right-10 h-72 w-72 rounded-full bg-neutral-200 blur-3xl dark:bg-white/10" />
       </div>
 
-      {/* Mobile drawer */}
       <div
         className={[
           "fixed inset-0 z-50 md:hidden",
@@ -109,7 +108,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         ].join(" ")}
         aria-hidden={!mobileOpen}
       >
-        {/* overlay */}
+
         <button
           type="button"
           aria-label="Chiudi menu"
@@ -121,7 +120,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           onClick={() => setMobileOpen(false)}
         />
 
-        {/* panel */}
         <div
           className={[
             "absolute left-0 top-0 h-full w-[86%] max-w-sm p-3",
@@ -130,7 +128,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           ].join(" ")}
         >
           <div className="h-full cf-surface cf-hairline overflow-hidden shadow-2xl">
-            {/* header */}
+
             <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/10">
               <BrandLogo className="w-[150px]" />
 
@@ -144,7 +142,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
-            {/* content */}
             <div className="p-4">
               <SidebarNav />
             </div>
@@ -154,18 +151,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {/* Shell */}
       <div className="relative mx-auto flex min-h-screen max-w-7xl gap-6 p-4 sm:p-6">
-        {/* Desktop Sidebar */}
+
         <aside className="hidden w-60 shrink-0 md:block">
           <div className="sticky top-6">
             <SidebarContent />
           </div>
         </aside>
 
-        {/* Main */}
         <main className="flex-1 min-w-0">
-          {/* Topbar */}
+
           <div className="sticky top-4 sm:top-6 z-10 mb-4 sm:mb-6 cf-surface cf-hairline px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">

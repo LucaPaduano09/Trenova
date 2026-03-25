@@ -28,7 +28,7 @@ export function WorkoutsFiltersBar() {
   const [state, setState] = React.useState<State>(urlState);
 
   const didInit = React.useRef(false);
-  // ultimo valore che abbiamo “spedito” all’URL
+
   const lastSentQ = React.useRef<string | null>(null);
   const lastSentState = React.useRef<State | null>(null);
 
@@ -58,7 +58,7 @@ export function WorkoutsFiltersBar() {
   }, [urlQ, urlState]);
 
   React.useEffect(() => {
-    // se non inizializzato, non fare push
+
     if (!didInit.current) return;
 
     const t = setTimeout(() => {

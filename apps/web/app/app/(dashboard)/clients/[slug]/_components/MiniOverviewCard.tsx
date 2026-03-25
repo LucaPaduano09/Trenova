@@ -9,7 +9,7 @@ function fmtTimeShort(d: Date) {
   return d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 }
 function dayKeyTZ(d: Date, tz = "Europe/Rome") {
-  // ritorna tipo "27/02/2026" in tz
+
   return d.toLocaleDateString("it-IT", { timeZone: tz });
 }
 
@@ -21,14 +21,12 @@ function recencyLabel(now: Date, d?: Date | null, tz = "Europe/Rome") {
 
   if (dKey === nowKey) return "Oggi";
 
-  // calcolo "ieri" in tz (semplice: prendo now e tolgo 1 giorno)
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
 
   const yKey = dayKeyTZ(yesterday, tz);
   if (dKey === yKey) return "Ieri";
 
-  // fallback: Xg fa (a calendario, approx ok)
   const diffMs = now.getTime() - d.getTime();
   if (diffMs < 0) return "—";
 
@@ -56,14 +54,10 @@ export function MiniOverviewCard({
     ? `${fmtDateShort(kpi.nextAt)} • ${fmtTimeShort(kpi.nextAt)}`
     : "—";
 
-  //  ' qui la fix: usa la tua recencyLabel
   const lastLabel = recencyLabel(now, kpi?.lastAt ?? null);
 
   return (
     <div className="relative overflow-hidden rounded-3xl border cf-surface cf-hairline p-5">
-      {/* glow */}
-      {/* <div className="pointer-events-none absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_20%_10%,rgba(16,185,129,0.20),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.14),transparent_55%)]" /> */}
 
       <div className="relative flex items-start justify-between gap-3">
         <div>
@@ -78,7 +72,6 @@ export function MiniOverviewCard({
         </span>
       </div>
 
-      {/* KPI grid */}
       <div className="relative mt-4 grid grid-cols-2 gap-3">
         <KpiTile label="Ultima sessione" value={lastLabel} hint="Recency" />
         <KpiTile label="Prossima sessione" value={nextLabel} hint="Planning" />

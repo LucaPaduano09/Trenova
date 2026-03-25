@@ -201,7 +201,6 @@ const openEdit = (p: any) => {
                     Modifica
                   </button>
 
-                  {/*  non è delete, è ARCHIVE */}
                   <button
                     type="button"
                     onClick={() => setConfirmId(p.id)}
@@ -216,7 +215,6 @@ const openEdit = (p: any) => {
         )}
       </div>
 
-      {/* Modal create/edit */}
       {open ? (
         <>
           <button
@@ -299,7 +297,6 @@ const openEdit = (p: any) => {
                       />
                     </label>
 
-                    {/* hidden per monthly */}
                     <input type="hidden" name="monthlyPrice" value="" />
                     <input type="hidden" name="monthlySessionCount" value="" />
                   </>
@@ -329,7 +326,6 @@ const openEdit = (p: any) => {
                       />
                     </label>
 
-                    {/* hidden per bundle */}
                     <input type="hidden" name="sessionCount" value="" />
                     <input type="hidden" name="bundlePrice" value="" />
                   </>
@@ -356,7 +352,6 @@ const openEdit = (p: any) => {
         </>
       ) : null}
 
-      {/* Confirm archive */}
       {confirmId ? (
         <>
           <button

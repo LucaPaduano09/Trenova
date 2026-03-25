@@ -17,8 +17,8 @@ function addDays(d: Date, n: number) {
 }
 function startOfWeekMonday(d: Date) {
   const x = startOfDay(d);
-  const day = x.getDay(); // 0=Sun..6=Sat
-  const diff = (day === 0 ? -6 : 1) - day; // move to Monday
+  const day = x.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
   x.setDate(x.getDate() + diff);
   return x;
 }
@@ -80,7 +80,6 @@ export default async function BookingPage({
 }) {
   const { tenant } = await requireTenantFromSession();
 
-  //  ' IMPORTANT: searchParams is a Promise in recent Next
   const sp = await searchParams;
   const range: RangeKey = sp.range ?? "week";
   const status: AppointmentStatus | undefined = sp.status;
@@ -97,7 +96,7 @@ export default async function BookingPage({
       ? { gte: today, lt: tomorrow }
       : range === "week"
       ? { gte: weekStart, lt: nextWeekStart }
-      : undefined; // "all" => no filter
+      : undefined;
 
   const appointments = await prisma.appointment.findMany({
     where: {
@@ -131,11 +130,11 @@ export default async function BookingPage({
     range?: RangeKey | null;
     status?: AppointmentStatus | null;
   }) => {
-    const r = next.range === undefined ? range : next.range; // undefined = keep
-    const s = next.status === undefined ? status : next.status; // undefined = keep
+    const r = next.range === undefined ? range : next.range;
+    const s = next.status === undefined ? status : next.status;
 
     const qs = new URLSearchParams();
-    if (r && r !== "week") qs.set("range", r); // opzionale: non scrivere default
+    if (r && r !== "week") qs.set("range", r);
     if (s) qs.set("status", s);
 
     const str = qs.toString();
@@ -144,7 +143,7 @@ export default async function BookingPage({
 
   return (
     <div className="space-y-6 p-6 cf-text">
-      {/* Header */}
+
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold cf-text">Booking</h1>
@@ -163,7 +162,6 @@ export default async function BookingPage({
         </div>
       </header>
 
-      {/* KPI mini row */}
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="cf-card">
           <div className="text-xs cf-muted">Sessioni ({rangeLabel(range)})</div>
@@ -188,10 +186,9 @@ export default async function BookingPage({
         </div>
       </div>
 
-      {/* Filters sticky */}
       <div className="sticky top-6 z-10 cf-card p-3">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Range segmented */}
+
           <div className="flex rounded-2xl border cf-surface p-1">
             {(["today", "week", "all"] as const).map((r) => (
               <Link
@@ -200,7 +197,7 @@ export default async function BookingPage({
                 className={[
                   "rounded-xl px-3 py-2 text-sm transition",
                   range === r
-                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-black"
                     : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
                 ].join(" ")}
               >
@@ -211,14 +208,13 @@ export default async function BookingPage({
 
           <div className="mx-1 h-6 w-px bg-black/10 dark:bg-white/10" />
 
-          {/* Status segmented */}
           <div className="flex rounded-2xl border cf-surface p-1">
             <Link
               href={makeHref({ range, status: null })}
               className={[
                 "rounded-xl px-3 py-2 text-sm transition",
                 !status
-                  ? "bg-black text-white dark:bg-white dark:text-black"
+                  ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-black"
                   : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
               ].join(" ")}
             >
@@ -233,7 +229,7 @@ export default async function BookingPage({
                 className={[
                   "rounded-xl px-3 py-2 text-sm transition",
                   status === s
-                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-black"
                     : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
                 ].join(" ")}
               >
@@ -256,7 +252,6 @@ export default async function BookingPage({
         </div>
       </div>
 
-      {/* List */}
       <div className="cf-card p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
           <div className="text-sm font-semibold cf-text">{total} sessioni</div>
@@ -279,7 +274,7 @@ export default async function BookingPage({
                   key={a.id}
                   className="px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {/* Left */}
+
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="text-sm font-semibold cf-text">
@@ -319,7 +314,6 @@ export default async function BookingPage({
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Link
                       href={`/app/booking/edit?id=${a.id}`}

@@ -70,14 +70,14 @@ export default function PricingPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* background */}
+
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
       <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-emerald-400/10 blur-[170px] rounded-full" />
       <div className="absolute -bottom-40 right-0 w-[900px] h-[520px] bg-blue-500/10 blur-[160px] rounded-full" />
       <div className="absolute inset-0 opacity-40 pointer-events-none [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(closest-side_at_50%_20%,rgba(0,0,0,1),rgba(0,0,0,0))]" />
 
       <div className="relative max-w-6xl mx-auto px-6 py-24">
-        {/* header */}
+
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-6xl font-semibold text-white">
             Prezzi{" "}
@@ -92,7 +92,6 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* plans */}
         <div className="grid lg:grid-cols-3 gap-8">
           {plans.map((p) => (
             <div
@@ -105,12 +104,11 @@ export default function PricingPage() {
                 "transition-all duration-500 hover:-translate-y-2",
               ].join(" ")}
             >
-              {/* light beam */}
+
               <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
                 <div className="absolute -left-1/2 top-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-12 translate-x-[-160%] group-hover:translate-x-[260%] transition-all duration-[1800ms]" />
               </div>
 
-              {/* badge */}
               {p.highlight && (
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/15 border border-emerald-400/25 text-emerald-200 text-xs mb-6">
                   Più scelto
@@ -155,7 +153,6 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              {/* glow */}
               <div
                 className={[
                   "absolute -inset-6 rounded-[36px] blur-2xl opacity-0 group-hover:opacity-100 transition duration-500 pointer-events-none",
@@ -168,7 +165,6 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* trust row */}
         <div className="mt-14 flex flex-wrap items-center justify-center gap-3 text-sm text-white/60">
           <span className="px-4 py-2 rounded-full bg-white/[0.04] border border-white/10">
             Pagamenti sicuri
@@ -181,7 +177,6 @@ export default function PricingPage() {
           </span>
         </div>
 
-        {/* FAQ */}
         <div className="mt-24 max-w-4xl mx-auto">
           <h3 className="text-3xl md:text-4xl font-semibold text-white text-center">
             Domande{" "}
@@ -203,7 +198,6 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* final CTA */}
         <div className="mt-24 text-center mb-24">
           <div className="inline-block rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-xl p-10">
             <h4 className="text-3xl md:text-4xl font-semibold text-white">

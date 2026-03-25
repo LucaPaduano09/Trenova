@@ -21,11 +21,9 @@ const createPackageSchema = z.object({
   name: z.string().min(1),
   type: z.nativeEnum(PackageType),
 
-  // bundle
   sessionCount: z.string().optional().or(z.literal("")),
   bundlePrice: z.string().optional().or(z.literal("")),
 
-  // monthly
   monthlyPrice: z.string().optional().or(z.literal("")),
   monthlySessionCount: z.string().optional().or(z.literal("")),
 });

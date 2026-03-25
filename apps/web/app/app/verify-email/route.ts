@@ -1,4 +1,4 @@
-// apps/web/app/app/verify-email/route.ts
+
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 

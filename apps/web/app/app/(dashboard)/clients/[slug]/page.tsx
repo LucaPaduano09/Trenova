@@ -65,7 +65,6 @@ export default async function ClientDetailPage({
 
   if (!client) return notFound();
 
-  // KPI card (sempre)
   const now = new Date();
   const from30 = new Date();
   from30.setDate(from30.getDate() - 30);
@@ -115,9 +114,6 @@ export default async function ClientDetailPage({
     paidRate30,
   };
 
-  // (opzionale) overviewStats SOLO se overview è attivo
-  // Se ti serve altrove, puoi tenerlo qui.
-  // Se non serve più, puoi rimuoverlo del tutto.
   if (activeTab === "overview") {
     await getClientOverviewStats(client.id);
   }
@@ -126,10 +122,10 @@ export default async function ClientDetailPage({
 
   return (
     <div className="space-y-6 cf-text">
-      {/* Top hero */}
+
       <div className="cf-card cf-hairline p-6 space-y-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-          {/* LEFT */}
+
           <div className="flex items-start gap-4">
             <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border bg-white/70 text-sm font-semibold cf-text shadow-sm dark:bg-[#111a2e]/70 dark:border-white/10">
               <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_55%)] dark:bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent_55%)]" />
@@ -159,12 +155,10 @@ export default async function ClientDetailPage({
             </div>
           </div>
 
-          {/* RIGHT */}
           <MiniOverviewCard client={client} kpi={kpi} />
         </div>
       </div>
 
-      {/* Tabs (URL-driven) */}
       <div className="sticky top-6 z-10 cf-surface cf-hairline p-2">
         <div className="flex flex-wrap gap-2">
           <TabLink
@@ -220,8 +214,6 @@ export default async function ClientDetailPage({
     </div>
   );
 }
-
-/* ---------- UI bits ---------- */
 
 function StatusPill({ status }: { status: string }) {
   const isActive = status.toUpperCase() === "ACTIVE";

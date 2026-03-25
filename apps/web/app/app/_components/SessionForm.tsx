@@ -53,7 +53,6 @@ export default function SessionForm({ mode }: { mode: Mode }) {
     Boolean(defaults?.paidAt)
   );
 
-  // sync quando cambiano defaults (es: navigazione)
   useEffect(() => {
     if (mode.kind === "edit") {
       setStatusValue(defaults?.status ?? "SCHEDULED");
@@ -62,7 +61,6 @@ export default function SessionForm({ mode }: { mode: Mode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode.kind, defaults?.status, defaults?.paidAt]);
 
-  // se CANCELED → forza unpaid
   useEffect(() => {
     if (mode.kind === "edit" && statusValue === "CANCELED") {
       setIsPaidChecked(false);
@@ -91,7 +89,7 @@ export default function SessionForm({ mode }: { mode: Mode }) {
                 : undefined
             }
             className="mt-2 w-full rounded-2xl border cf-surface px-4 py-2.5 text-sm outline-none focus:ring-2"
-            required={mode.kind !== "duplicate"} // nel duplicate non serve, ma lo teniamo
+            required={mode.kind !== "duplicate"}
           />
           <FieldError msg={e("startsAt")} />
         </div>

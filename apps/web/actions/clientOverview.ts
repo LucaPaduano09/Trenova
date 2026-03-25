@@ -15,7 +15,7 @@ function addDays(d: Date, days: number) {
 }
 
 function diffDays(a: Date, b: Date) {
-  // a - b in days
+
   const ms = a.getTime() - b.getTime();
   return Math.floor(ms / (1000 * 60 * 60 * 24));
 }
@@ -32,7 +32,6 @@ export async function getClientOverviewStats(clientId: string) {
 
   const now = new Date();
 
-  // --- PERFORMANCE: compliance 28d ---
   const from28 = addDays(now, -28);
 
   const appts28 = await prisma.appointment.findMany({
@@ -52,7 +51,6 @@ export async function getClientOverviewStats(clientId: string) {
   const complianceRate =
     total28 > 0 ? Math.round((completed / total28) * 100) : 0;
 
-  // --- PERFORMANCE: next session ---
   const nextSession = await prisma.appointment.findFirst({
     where: {
       tenantId: tenant.id,
@@ -73,7 +71,6 @@ export async function getClientOverviewStats(clientId: string) {
     },
   });
 
-  // --- PERFORMANCE: sessions completed last 7d ---
   const from7 = addDays(now, -7);
   const completed7 = await prisma.appointment.count({
     where: {
@@ -85,7 +82,6 @@ export async function getClientOverviewStats(clientId: string) {
     },
   });
 
-  // --- WEIGHT sparkline 90d (BodyMetricsEntry.weightG) ---
   const from90 = addDays(now, -90);
   const weights90 = await prisma.bodyMetricsEntry.findMany({
     where: {
@@ -101,14 +97,13 @@ export async function getClientOverviewStats(clientId: string) {
     .filter((x) => typeof x.weightG === "number" && x.weightG! > 0)
     .map((x) => ({
       date: x.measuredAt,
-      weightKg: Math.round((x.weightG! / 1000) * 10) / 10, // 1 dec
+      weightKg: Math.round((x.weightG! / 1000) * 10) / 10,
     }));
 
   const lastWeight = weightPoints.length
     ? weightPoints[weightPoints.length - 1].weightKg
     : null;
 
-  // delta 30d
   const from30 = addDays(now, -30);
   const w30 = weightPoints.filter((p) => p.date >= from30);
   const delta30 =
@@ -116,14 +111,13 @@ export async function getClientOverviewStats(clientId: string) {
       ? Math.round((w30[w30.length - 1].weightKg - w30[0].weightKg) * 10) / 10
       : null;
 
-  // --- BUSINESS: revenue 30d + paid rate ---
   const appts30 = await prisma.appointment.findMany({
     where: {
       tenantId: tenant.id,
       clientId,
       startsAt: { gte: from30, lte: now },
       OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
-      // prende anche scheduled/completed, purché abbia price
+
     },
     select: { priceCents: true, paidAt: true },
   });
@@ -137,7 +131,6 @@ export async function getClientOverviewStats(clientId: string) {
     ? Math.round((paid.length / withPrice.length) * 100)
     : 0;
 
-  // --- BUSINESS: active package (most recent) ---
   const activePackage = await prisma.packagePurchase.findFirst({
     where: {
       tenantId: tenant.id,
@@ -156,7 +149,7 @@ export async function getClientOverviewStats(clientId: string) {
   const packageExpiresInDays = activePackage?.expiresAt
     ? diffDays(activePackage.expiresAt, now)
     : null;
-  // --- CHURN: last activity (last completed/scheduled) ---
+
   const lastActivity = await prisma.appointment.findFirst({
     where: {
       tenantId: tenant.id,

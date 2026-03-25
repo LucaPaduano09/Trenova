@@ -90,9 +90,9 @@ export default function RestPerSet({
 
   return (
     <div className="cf-card cf-hairline rounded-3xl p-3 sm:p-3 mb-4">
-      {/* hidden inputs */}
+
       <input type="hidden" name={name} value={csv} />
-      {/* (opzionale) ti lascio anche setsName se vuoi debug/telemetria */}
+
       <input type="hidden" name={`${name}__sets`} value={String(setsN)} />
 
       <div className="flex items-start justify-between gap-3">

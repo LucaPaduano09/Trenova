@@ -38,7 +38,6 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-// YYYY-MM-DDTHH:mm for datetime-local
 function toLocalDateTimeInputValue(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
     d.getHours()
@@ -49,7 +48,6 @@ export default function NewSessionForm({ clientSlug }: { clientSlug: string }) {
   const [state, action] = useActionState(createSession, initialState);
   const e = (key: string) => state?.error?.[key]?.[0];
 
-  // default start time: next full hour
   const [defaultStartsAt, setDefaultStartsAt] = useState<string>("");
 
   useEffect(() => {
@@ -67,7 +65,6 @@ export default function NewSessionForm({ clientSlug }: { clientSlug: string }) {
     <form action={action} className="space-y-5 cf-card">
       <input type="hidden" name="clientSlug" value={clientSlug} />
 
-      {/* Top error */}
       {hasAnyError ? (
         <div className="rounded-3xl border px-4 py-3 text-sm cf-surface cf-hairline border-red-200/60 text-red-700 dark:border-red-500/20 dark:text-red-200">
           Controlla i campi evidenziati.

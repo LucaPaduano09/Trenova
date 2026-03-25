@@ -81,7 +81,7 @@ export async function signUpWithInviteAction(
         email,
         fullName,
         passwordHash,
-        emailVerified: new Date(), // se vuoi evitare friction nel flow invito
+        emailVerified: new Date(),
         role: "CLIENT",
         tenantId: validInvite.invite.tenantId,
       },

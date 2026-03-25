@@ -25,8 +25,8 @@ import DashboardCalendar from "./DashboardCalendat";
 type Props = {
   data: DashboardStats;
   workoutTemplates: { id: string; title: string }[];
-  /** opzionale: se la page server già lo passa */
-  monthStartISO?: string; // YYYY-MM-01
+
+  monthStartISO?: string;
 };
 
 function formatMoneyEUR(cents: number) {
@@ -44,7 +44,6 @@ function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-// Palette
 const COLORS = {
   completed: "#10B981",
   scheduled: "#3B82F6",
@@ -80,7 +79,6 @@ export default function DashboardCharts({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Month ISO “source of truth”: URL > prop > oggi
   const monthISO =
     searchParams?.get("month") ??
     monthStartISO ??
@@ -93,16 +91,16 @@ export default function DashboardCharts({
   ];
 
   function onMonthChangeISO(nextMonthISO: string) {
-    // nextMonthISO = YYYY-MM-01
+
     const sp = new URLSearchParams(searchParams?.toString());
     sp.set("month", nextMonthISO);
     router.push(`?${sp.toString()}`);
-    // niente fetch qui: la page server rigenera `data` per quel month
+
   }
 
   return (
     <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6">
-      {/* KPI */}
+
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <div className="cf-card p-4 sm:p-6">
           <div className="text-xs cf-muted">Clienti attivi</div>
@@ -138,7 +136,6 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      {/* Calendar */}
       <div className="mt-6 w-full max-w-full overflow-x-auto overscroll-x-contain sm:overflow-visible">
         <div className="min-w-0 sm:min-w-0">
           <DashboardCalendar
@@ -150,12 +147,10 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      {/* Heatmap */}
       <div className="mt-6 w-full max-w-full">
         <Heatmap days={data.charts.heatmap} />
       </div>
 
-      {/* Charts row 1 */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <div className="cf-card p-4 sm:p-6">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
@@ -221,7 +216,6 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      {/* Charts row 2 */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <div className="cf-card p-4 sm:p-6">
           <h2 className="text-sm font-semibold cf-text">Mix pacchetti (top)</h2>
@@ -307,7 +301,6 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      {/* Operational */}
       <div className="cf-card p-4 sm:p-6">
         <h2 className="text-sm font-semibold cf-text">Prossime sessioni</h2>
         <ul className="mt-3 space-y-2 text-sm cf-muted">

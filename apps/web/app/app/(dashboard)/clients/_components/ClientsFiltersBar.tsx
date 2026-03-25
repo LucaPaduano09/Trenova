@@ -153,7 +153,7 @@ export default function ClientsFiltersBar({
   return (
     <div className="rounded-3xl border cf-surface p-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        {/* Search */}
+
         <div className="flex-1">
           <div className="flex items-center gap-2 rounded-2xl border cf-surface px-3 py-2.5">
             <span className="text-xs cf-faint">⌕</span>
@@ -175,7 +175,6 @@ export default function ClientsFiltersBar({
           </div>
         </div>
 
-        {/* Right side */}
         <div className="flex items-center gap-2">
           <div className="relative">
             <button
@@ -201,12 +200,12 @@ export default function ClientsFiltersBar({
             {open && anchor
               ? createPortal(
                   <>
-                    {/* overlay */}
+
                     <div
                       className="fixed inset-0 z-[9998]"
                       onClick={() => setOpen(false)}
                     />
-                    {/* panel */}
+
                     <div
                       className="fixed z-[9999] w-[320px] rounded-3xl border cf-surface p-3 shadow-xl"
                       style={{ top: anchor.top, right: anchor.right }}

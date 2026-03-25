@@ -2,7 +2,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer components {
-  /* Glass surfaces (light + dark) */
+
   .cf-surface {
   @apply rounded-3xl border backdrop-blur-xl shadow-sm;
   @apply bg-white/70 border-neutral-200/70;
@@ -33,7 +33,6 @@
   @apply dark:bg-[#18233b] dark:border-white/10 dark:text-neutral-200;
 }
 
-  /* Muted text helpers */
   .cf-muted {
     @apply text-neutral-600 dark:text-neutral-300;
   }

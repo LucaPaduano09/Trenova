@@ -66,7 +66,6 @@ export default async function ExercisesPage({
         </div>
       </header>
 
-      {/* Toolbar */}
       <ExercisesFiltersBar
         initialQ={q}
         initialState={state}
@@ -76,7 +75,6 @@ export default async function ExercisesPage({
         resultsCount={items.length}
       />
 
-      {/* List */}
       <section className="overflow-hidden rounded-3xl border cf-surface">
         {items.length === 0 ? (
           <div className="p-10">

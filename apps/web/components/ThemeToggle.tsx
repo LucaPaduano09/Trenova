@@ -81,7 +81,7 @@ export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
-  if (!mounted) return null; // evita mismatch
+  if (!mounted) return null;
 
   const isDark = (theme === "system" ? resolvedTheme : theme) === "dark";
 

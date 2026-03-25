@@ -34,7 +34,6 @@ function intensityClass(sev: number | null | undefined, active: boolean) {
   if (!active) return "bg-neutral-200/70 dark:bg-white/10";
   const s = typeof sev === "number" ? sev : 0;
 
-  // 0..10 => 5 livelli (0,1-2,3-4,5-7,8-10)
   if (s <= 0) return "bg-neutral-200/70 dark:bg-white/10";
   if (s <= 2) return "bg-emerald-200/80 dark:bg-emerald-500/20";
   if (s <= 4) return "bg-emerald-300/90 dark:bg-emerald-500/30";
@@ -61,7 +60,7 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
   }
 
   function intensityFill(sev: number, active: boolean) {
-    if (!active) return "rgba(0,0,0,0.06)"; // inattivo (ghost)
+    if (!active) return "rgba(0,0,0,0.06)";
     if (sev <= 0) return "rgba(0,0,0,0.08)";
 
     if (sev <= 2) return "rgba(16,185,129,0.25)";
@@ -118,7 +117,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
 
       if (!res.ok) return;
 
-      // optimistic refresh locale: aggiorno/creo item
       setIssues((prev) => {
         const k = keyOf(open.zoneKey, open.side);
         const idx = prev.findIndex((x) => keyOf(x.zoneKey, x.side) === k);
@@ -156,9 +154,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
     });
   }
 
-  // --- ZONE DEFINITIONS (MVP) ---
-  // Rect “hotspots” sullo skeleton: abbastanza accurati e responsive.
-  // In futuro possiamo sostituirli con path più anatomici.
   const zonesFront = [
     {
       zoneKey: "head" as const,
@@ -290,7 +285,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
     },
   ];
 
-  // Back è simile, ma spostiamo “thoracic/lumbar” un pelo e aggiungiamo una “scapole” style
   const zonesBack = [
     {
       zoneKey: "head" as const,
@@ -426,7 +420,7 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
-      {/* Skeleton */}
+
       <div className="rounded-3xl border cf-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold cf-text">Mappa corpo</div>
@@ -460,7 +454,7 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
 
         <div className="mt-4">
           <div className="relative mx-auto w-full max-w-[280px]">
-            {/* "skeleton" base (minimal) */}
+
             <svg viewBox="0 0 220 340" className="w-full h-auto">
               <defs>
                 <linearGradient id="sk" x1="0" y1="0" x2="0" y2="1">
@@ -469,7 +463,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
                 </linearGradient>
               </defs>
 
-              {/* silhouette */}
               <path
                 d="M110 6
                    C95 6 86 18 86 34
@@ -511,7 +504,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
                 opacity="0.65"
               />
 
-              {/* hotspots */}
               {(view === "front" ? zonesFront : zonesBack).map((z) => {
                 const issue = map.get(keyOf(z.zoneKey, z.side));
                 const sev = issue?.severity ?? 0;
@@ -537,7 +529,7 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
                       fill={intensityFill(sev, active)}
                       stroke={active ? "rgba(0,0,0,0.10)" : "rgba(0,0,0,0.35)"}
                       strokeWidth={active ? 1 : 1.5}
-                      strokeDasharray={active ? undefined : "4 3"} // <-- tratteggio
+                      strokeDasharray={active ? undefined : "4 3"}
                       strokeLinecap="round"
                       opacity={0.95}
                       onClick={() => onZoneClick(z.zoneKey, z.side)}
@@ -550,7 +542,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
               })}
             </svg>
 
-            {/* popover */}
             {open ? (
               <Popover
                 pending={pending}
@@ -568,7 +559,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
             ) : null}
           </div>
 
-          {/* legenda + max */}
           <div className="mt-4 rounded-2xl border cf-surface p-3">
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold cf-text">Legenda</div>
@@ -590,7 +580,6 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
         </div>
       </div>
 
-      {/* List */}
       <div className="rounded-3xl border cf-surface p-4">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold cf-text">

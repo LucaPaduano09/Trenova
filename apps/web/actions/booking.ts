@@ -16,15 +16,12 @@ function parseEuroToCents(value?: string | null) {
   const raw = (value ?? "").trim();
   if (!raw) return null;
 
-  // accetta "45", "45.5", "45,50"
   const normalized = raw.replace(",", ".");
   const n = Number(normalized);
 
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n * 100);
 }
-
-/* ----------------------------- CREATE ----------------------------- */
 
 const createSessionSchema = z.object({
   clientSlug: z.string().min(1),
@@ -101,7 +98,6 @@ export async function createSession(
 
       status: "SCHEDULED",
 
-      // 💶 billing
       priceCents,
       currency: priceCents != null ? "EUR" : null,
       paidAt: paid ? new Date() : null,
@@ -115,15 +111,12 @@ export async function createSession(
   redirect(`/app/clients/${client.slug}`);
 }
 
-/* ------------------------------ UPDATE ---------------------------- */
-
 const updateSessionSchema = z.object({
   id: z.string().min(1),
   startsAt: z.string().min(1, "Seleziona data e ora"),
   durationMin: z.coerce.number().int().min(15).max(240),
   locationType: z.nativeEnum(LocationType),
 
-  //  ' REQUIRED: vogliamo sempre poterlo cambiare in edit
   status: z.nativeEnum(AppointmentStatus),
 
   price: z.string().optional().or(z.literal("")),
@@ -190,10 +183,6 @@ export async function updateSession(
   const priceCents = parseEuroToCents(parsed.data.price);
   const paid = parsed.data.isPaid === "on";
 
-  //  ' paidAt smart:
-  // - se CANCELED => mai pagata
-  // - se paid ON  => mantieni paidAt se già esiste, altrimenti now
-  // - se paid OFF => null
   const nextPaidAt =
     status === "CANCELED" ? null : paid ? appt.paidAt ?? new Date() : null;
 
@@ -206,7 +195,7 @@ export async function updateSession(
       location: parsed.data.location?.trim() || null,
       notes: parsed.data.notes?.trim() || null,
 
-      status, //  ' sempre aggiornato
+      status,
 
       priceCents,
       currency: priceCents != null ? "EUR" : null,
@@ -220,8 +209,6 @@ export async function updateSession(
 
   redirect(`/app/clients/${appt.client.slug}?tab=sessions`);
 }
-
-/* ---------------------------- DUPLICATE --------------------------- */
 
 export async function duplicateSession(
   _prevState: { ok: boolean; error: Record<string, string[]> },
@@ -261,7 +248,6 @@ export async function duplicateSession(
     };
   }
 
-  // di default duplichiamo "domani stessa ora"
   const start = new Date(src.startsAt);
   start.setDate(start.getDate() + 1);
 
@@ -288,7 +274,7 @@ export async function duplicateSession(
 
       priceCents: src.priceCents ?? null,
       currency: src.priceCents != null ? src.currency ?? "EUR" : null,
-      paidAt: null, // duplicata = non pagata
+      paidAt: null,
       paymentMethod: src.paymentMethod ?? null,
     },
     select: { id: true },
@@ -301,8 +287,8 @@ export async function duplicateSession(
 }
 const createSessionFromDashboardSchema = z.object({
   clientId: z.string().min(1, "Seleziona un cliente"),
-  date: z.string().min(1, "Data mancante"), // YYYY-MM-DD
-  time: z.string().min(1, "Ora mancante"), // HH:mm
+  date: z.string().min(1, "Data mancante"),
+  time: z.string().min(1, "Ora mancante"),
   durationMin: z.coerce.number().int().min(15).max(240),
   locationType: z.nativeEnum(LocationType),
 
@@ -340,7 +326,6 @@ export async function createSessionFromDashboard(
     return { ok: false as const, error: parsed.error.flatten().fieldErrors };
   }
 
-  //  ' sicurezza tenant: client deve appartenere al tenant
   const client = await prisma.client.findFirst({
     where: { id: parsed.data.clientId, tenantId: tenant.id },
     select: { id: true },
@@ -350,7 +335,6 @@ export async function createSessionFromDashboard(
     return { ok: false as const, error: { clientId: ["Cliente non trovato"] } };
   }
 
-  // date+time => startsAt locale
   const start = new Date(`${parsed.data.date}T${parsed.data.time}:00`);
   if (Number.isNaN(start.getTime())) {
     return { ok: false as const, error: { time: ["Data/ora non valida"] } };
@@ -414,7 +398,6 @@ export async function createSessionFromDashboard(
     },
   });
 
-  //  ' refresh dashboard + booking + client list
   revalidatePath("/app/dashboard");
   revalidatePath("/app/booking");
 

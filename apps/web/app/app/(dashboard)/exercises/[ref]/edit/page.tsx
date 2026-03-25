@@ -16,7 +16,7 @@ export default async function EditExercisePage({
   params: Promise<{ ref: string }>;
 }) {
   const { ref: refRaw } = await params;
-  const ref = decodeURIComponent(refRaw); // 👈 IMPORTANT
+  const ref = decodeURIComponent(refRaw);
   const ex = await getExercise(ref);
   console.log("REF:", ref);
   if (!ex) return notFound();
@@ -44,7 +44,7 @@ export default async function EditExercisePage({
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Form */}
+
         <div className="lg:col-span-2 cf-card cf-hairline p-6">
           <form action={updateExercise} className="grid gap-4">
             <input type="hidden" name="ref" value={ex.ref} />
@@ -121,7 +121,6 @@ export default async function EditExercisePage({
           </form>
         </div>
 
-        {/* Preview + actions */}
         <div className="cf-card cf-hairline p-6">
           <div className="text-sm font-semibold cf-text">Anteprima</div>
           <div className="mt-3 flex items-center gap-4">

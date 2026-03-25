@@ -19,7 +19,6 @@ export default auth((req) => {
     nextUrl.pathname === "/c/sign-in" ||
     nextUrl.pathname.startsWith("/c/verify");
 
-  // Protezione area PT
   if (isApp && !isAppAuth) {
     if (!session?.user) {
       return NextResponse.redirect(new URL("/app/sign-in", nextUrl));
@@ -29,7 +28,6 @@ export default auth((req) => {
     }
   }
 
-  // Protezione area cliente
   if (isClient && !isClientAuth) {
     if (!session?.user) {
       return NextResponse.redirect(new URL("/c/sign-in", nextUrl));

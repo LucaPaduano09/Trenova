@@ -118,8 +118,6 @@ export default async function ClientWorkoutsPage() {
     );
   }
 
-  // DEBUG TEMPORANEO:
-  // controlla in terminale server se i campi workout* sono davvero valorizzati
   console.log(
     currentVersion.items.map((item) => ({
       name: item.nameSnapshot,

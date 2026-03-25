@@ -1,4 +1,4 @@
-// apps/web/lib/verification.ts
+
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { sendVerifyEmail } from "@/lib/email";
@@ -8,9 +8,8 @@ export async function createAndSendEmailVerification(args: {
   name?: string | null;
 }) {
   const token = crypto.randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
-  // opzionale: elimina token precedenti per stessa email
   await prisma.verificationToken.deleteMany({
     where: { identifier: args.email },
   });
