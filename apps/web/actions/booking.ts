@@ -285,6 +285,61 @@ export async function duplicateSession(
 
   redirect(`/app/booking/edit?id=${created.id}`);
 }
+
+const cancelSessionSchema = z.object({
+  appointmentId: z.string().min(1),
+});
+
+export async function cancelScheduledSession(formData: FormData) {
+  await requireOwner();
+  const { tenant } = await requireTenantFromSession();
+
+  const parsed = cancelSessionSchema.safeParse({
+    appointmentId: formData.get("appointmentId")?.toString(),
+  });
+
+  if (!parsed.success) {
+    throw new Error("Sessione non valida");
+  }
+
+  const appointment = await prisma.appointment.findFirst({
+    where: {
+      id: parsed.data.appointmentId,
+      tenantId: tenant.id,
+      status: "SCHEDULED",
+      OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+    },
+    select: {
+      id: true,
+      client: {
+        select: {
+          slug: true,
+        },
+      },
+    },
+  });
+
+  if (!appointment) {
+    throw new Error("Sessione non trovata");
+  }
+
+  await prisma.appointment.update({
+    where: {
+      id: appointment.id,
+    },
+    data: {
+      status: "CANCELED",
+      notes: "Sessione annullata dal personal trainer",
+    },
+  });
+
+  revalidatePath("/app/booking");
+  revalidatePath(`/app/clients/${appointment.client.slug}`);
+  revalidatePath(`/app/clients/${appointment.client.slug}?tab=sessions`);
+
+  redirect("/app/booking?range=all");
+}
+
 const createSessionFromDashboardSchema = z.object({
   clientId: z.string().min(1, "Seleziona un cliente"),
   date: z.string().min(1, "Data mancante"),

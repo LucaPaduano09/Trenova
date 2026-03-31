@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { requireOwner } from "@/lib/permissions";
+import { publishTenantAvailabilityEvent } from "@/lib/realtime";
 import { requireTenantFromSession } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -58,4 +59,11 @@ export async function saveTenantAvailability(input: {
 
   revalidatePath("/app/settings/availability");
   revalidatePath("/c/sessions");
+
+  await publishTenantAvailabilityEvent({
+    tenantId: tenant.id,
+    data: {
+      scope: "rules",
+    },
+  });
 }

@@ -40,6 +40,7 @@ function SidebarNav() {
       <NavItem href="/app/exercises">Esercizi</NavItem>
       <NavItem href="/app/workouts">Workouts</NavItem>
       <NavItem href="/app/packages">Pacchetti</NavItem>
+      <NavItem href="/app/settings/availability">Disponibilita</NavItem>
 
       <div className="mt-4 border-t border-black/5 pt-4 dark:border-white/10">
         <NavItem href="/api/auth/signout">Sign out</NavItem>

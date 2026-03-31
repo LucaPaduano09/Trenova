@@ -1,9 +1,16 @@
 export const revalidate = 100;
 
 import Link from "next/link";
+import { cancelScheduledSession } from "@/actions/booking";
 import { prisma } from "@/lib/db";
+import { isRealtimeEnabled } from "@/lib/realtime";
 import { requireTenantFromSession } from "@/lib/tenant";
 import { AppointmentStatus } from "@prisma/client";
+import BookingRealtimeBridge from "./BookingRealtimeBridge";
+import {
+  acceptBookingRequest,
+  rejectBookingRequest,
+} from "@/actions/booking-requests";
 
 type RangeKey = "today" | "week" | "all";
 
@@ -53,12 +60,15 @@ function fmtDateLine(startsAt: Date, endsAt?: Date | null) {
 }
 
 function statusLabel(s: AppointmentStatus) {
+  if (s === "PENDING") return "In attesa";
   if (s === "SCHEDULED") return "Pianificata";
   if (s === "COMPLETED") return "Completata";
   return "Cancellata";
 }
 
 function statusChipClass(s: AppointmentStatus) {
+  if (s === "PENDING")
+    return "border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-200";
   if (s === "COMPLETED")
     return "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200";
   if (s === "CANCELED")
@@ -79,6 +89,7 @@ export default async function BookingPage({
   }>;
 }) {
   const { tenant } = await requireTenantFromSession();
+  const realtimeEnabled = isRealtimeEnabled();
 
   const sp = await searchParams;
   const range: RangeKey = sp.range ?? "week";
@@ -143,6 +154,7 @@ export default async function BookingPage({
 
   return (
     <div className="space-y-6 p-6 cf-text">
+      <BookingRealtimeBridge tenantId={tenant.id} enabled={realtimeEnabled} />
 
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -186,7 +198,7 @@ export default async function BookingPage({
         </div>
       </div>
 
-      <div className="sticky top-6 z-10 cf-card p-3">
+      <div className="sticky top-6 z-1 cf-card p-3">
         <div className="flex flex-wrap items-center gap-2">
 
           <div className="flex rounded-2xl border cf-surface p-1">
@@ -197,7 +209,7 @@ export default async function BookingPage({
                 className={[
                   "rounded-xl px-3 py-2 text-sm transition",
                   range === r
-                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-black"
+                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-white"
                     : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
                 ].join(" ")}
               >
@@ -214,14 +226,14 @@ export default async function BookingPage({
               className={[
                 "rounded-xl px-3 py-2 text-sm transition",
                 !status
-                  ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-black"
+                  ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-white"
                   : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
               ].join(" ")}
             >
               Tutti
             </Link>
             {(
-              ["SCHEDULED", "COMPLETED", "CANCELED"] as AppointmentStatus[]
+              ["PENDING", "SCHEDULED", "COMPLETED", "CANCELED"] as AppointmentStatus[]
             ).map((s) => (
               <Link
                 key={s}
@@ -229,12 +241,14 @@ export default async function BookingPage({
                 className={[
                   "rounded-xl px-3 py-2 text-sm transition",
                   status === s
-                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-black"
+                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-white"
                     : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
                 ].join(" ")}
               >
                 {s === "SCHEDULED"
                   ? "Pianificate"
+                  : s === "PENDING"
+                  ? "In attesa"
                   : s === "COMPLETED"
                   ? "Completate"
                   : "Cancellate"}
@@ -315,19 +329,50 @@ export default async function BookingPage({
                   </div>
 
                   <div className="flex items-center gap-2 self-end sm:self-auto">
-                    <Link
-                      href={`/app/booking/edit?id=${a.id}`}
-                      className="rounded-xl border cf-surface px-3 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
-                    >
-                      Modifica
-                    </Link>
+                    {a.status === "PENDING" ? (
+                      <>
+                        <form action={acceptBookingRequest}>
+                          <input type="hidden" name="appointmentId" value={a.id} />
+                          <button
+                            type="submit"
+                            className="rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-200"
+                          >
+                            Accetta
+                          </button>
+                        </form>
 
-                    <Link
-                      href={`/app/booking/duplicate?id=${a.id}`}
-                      className="rounded-xl border cf-surface px-3 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
-                    >
-                      Duplica
-                    </Link>
+                        <form action={rejectBookingRequest}>
+                          <input type="hidden" name="appointmentId" value={a.id} />
+                          <button
+                            type="submit"
+                            className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/15 dark:text-rose-200"
+                          >
+                            Rifiuta
+                          </button>
+                        </form>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href={`/app/booking/edit?id=${a.id}`}
+                          className="rounded-xl border cf-surface px-3 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
+                        >
+                          Modifica
+                        </Link>
+
+                        {a.status === "SCHEDULED" ? (
+                          <form action={cancelScheduledSession}>
+                            <input type="hidden" name="appointmentId" value={a.id} />
+                            <button
+                              type="submit"
+                              className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/15 dark:text-rose-200"
+                            >
+                              Cancella
+                            </button>
+                          </form>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 </div>
               );

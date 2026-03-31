@@ -32,11 +32,10 @@ export default async function ClientSessionsPage({
     prisma.tenantAvailabilitySlot.findMany({
       where: {
         tenantId: client.tenantId,
-        date: {
+        startAt: {
           gte: monthStart,
           lte: monthEnd,
         },
-        isAvailable: true,
       },
       orderBy: [{ date: "asc" }, { startAt: "asc" }],
       select: {
@@ -52,7 +51,7 @@ export default async function ClientSessionsPage({
         tenantId: client.tenantId,
         startsAt: { gte: monthStart, lte: monthEnd },
         status: {
-          in: ["SCHEDULED"],
+          in: ["PENDING", "SCHEDULED"],
         },
         OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
       },

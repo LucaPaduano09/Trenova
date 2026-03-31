@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { getTrainerTenantChannel } from "@trenova/contracts";
+import { isRealtimeEnabled } from "@/lib/realtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +42,13 @@ export async function GET() {
       }),
     ]);
 
-    return NextResponse.json({ unreadCount, items });
+    return NextResponse.json({
+      unreadCount,
+      items,
+      realtimeChannel: isRealtimeEnabled()
+        ? getTrainerTenantChannel(user.tenantId)
+        : null,
+    });
   } catch (e: any) {
     console.error("GET /api/notifications ERROR:", e);
     return NextResponse.json(

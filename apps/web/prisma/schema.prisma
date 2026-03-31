@@ -58,6 +58,7 @@ model Tenant {
   workoutSessions         WorkoutSession[]
   progressEntries         ProgressEntry[]
   notifications           Notification[]
+  mobilePushDevices       MobilePushDevice[]
   tenantAvailabilitySlots TenantAvailabilitySlot[]
 }
 
@@ -78,8 +79,32 @@ model User {
   sessions      Session[]
   appointments  Appointment[]
   notifications Notification[]
+  mobilePushDevices MobilePushDevice[]
 
   @@index([tenantId])
+}
+
+model MobilePushDevice {
+  id String @id @default(cuid()) @map("_id")
+
+  tenantId String?
+  userId   String
+
+  expoPushToken String @unique
+  platform      String
+  deviceName    String?
+  appOwnership  String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastSeenAt DateTime @default(now())
+  revokedAt  DateTime?
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+
+  @@index([userId, revokedAt])
+  @@index([tenantId, userId, revokedAt])
 }
 
 model Client {

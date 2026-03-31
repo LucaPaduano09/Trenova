@@ -117,11 +117,10 @@ export default async function ClientsPage({
               href="/app/clients/invite"
               className={[
                 "group inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
-                "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:opacity-95",
-                "dark:bg-white dark:text-neutral-900",
+                "cf-card",
               ].join(" ")}
             >
-              <span>Vai agli inviti</span>
+              <span className="cf-text">Vai agli inviti</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
 

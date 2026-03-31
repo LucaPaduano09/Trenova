@@ -1,13 +1,10 @@
 "use server";
 
-import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/db";
 import { signIn } from "@/lib/auth";
-import { getValidClientInvite } from "@/lib/invites/getValidClientInvite";
-import { attachUserToClientInvite } from "@/lib/invites/attachUserToClientInvite";
+import { registerClientWithInvite } from "@/lib/invites/registerClientWithInvite";
 
 export type SignUpWithInviteState = {
   ok: boolean;
@@ -26,94 +23,37 @@ export type SignUpWithInviteState = {
     | "INTERNAL_SERVER_ERROR";
 };
 
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
-
 export async function signUpWithInviteAction(
   prevState: SignUpWithInviteState,
   formData: FormData
 ): Promise<SignUpWithInviteState> {
   const fullName = String(formData.get("fullName") ?? "").trim();
-  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const inviteToken = String(formData.get("inviteToken") ?? "").trim();
 
-  if (fullName.length < 2) {
-    return { ok: false, error: "INVALID_NAME" };
-  }
-
-  if (!email || !email.includes("@")) {
-    return { ok: false, error: "INVALID_EMAIL" };
-  }
-
-  if (password.length < 8) {
-    return { ok: false, error: "INVALID_PASSWORD" };
-  }
-
-  const validInvite = await getValidClientInvite(inviteToken);
-
-  if (!validInvite.ok) {
-    return { ok: false, error: validInvite.error };
-  }
-
-  const normalizedInviteEmail =
-    validInvite.invite.email?.trim().toLowerCase() ?? null;
-
-  if (normalizedInviteEmail && normalizedInviteEmail !== email) {
-    return { ok: false, error: "INVITE_EMAIL_MISMATCH" };
-  }
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
+  const result = await registerClientWithInvite({
+    fullName,
+    email,
+    password,
+    inviteToken,
   });
 
-  if (existingUser) {
-    return { ok: false, error: "EMAIL_ALREADY_USED" };
+  if (!result.ok) {
+    return { ok: false, error: result.error };
   }
 
   try {
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const createdUser = await prisma.user.create({
-      data: {
-        email,
-        fullName,
-        passwordHash,
-        emailVerified: new Date(),
-        role: "CLIENT",
-        tenantId: validInvite.invite.tenantId,
-      },
-      select: {
-        id: true,
-        email: true,
-      },
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
     });
-
-    const attachResult = await attachUserToClientInvite(
-      createdUser.id,
-      inviteToken
-    );
-
-    if (!attachResult.ok) {
-      return { ok: false, error: attachResult.error };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { ok: false, error: "INTERNAL_SERVER_ERROR" };
     }
-
-    try {
-      await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-    } catch (error) {
-      if (error instanceof AuthError) {
-        return { ok: false, error: "INTERNAL_SERVER_ERROR" };
-      }
-      throw error;
-    }
-  } catch {
-    return { ok: false, error: "INTERNAL_SERVER_ERROR" };
+    throw error;
   }
 
   redirect("/c");

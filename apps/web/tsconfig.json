@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@trenova/contracts": ["../../packages/contracts/src/index.ts"],
+      "@trenova/api-client": ["../../packages/api-client/src/index.ts"]
     }
   },
   "include": [

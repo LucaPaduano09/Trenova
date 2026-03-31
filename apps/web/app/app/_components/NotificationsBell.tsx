@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { getWebAblyClient } from "./realtime/ably-web";
 
 type NotificationItem = {
   id: string;
@@ -11,6 +12,20 @@ type NotificationItem = {
   readAt?: string | null;
   createdAt: string;
 };
+
+function normalizeNotificationHref(href: string) {
+  if (!href.startsWith("/app/booking")) {
+    return href;
+  }
+
+  const [pathname, rawSearch = ""] = href.split("?");
+  const searchParams = new URLSearchParams(rawSearch);
+  searchParams.delete("status");
+  searchParams.set("range", "all");
+
+  const nextSearch = searchParams.toString();
+  return `${pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+}
 
 function timeAgo(input: string | Date) {
   const d = typeof input === "string" ? new Date(input) : input;
@@ -58,6 +73,7 @@ export default function NotificationsBell() {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const [err, setErr] = React.useState<string | null>(null);
+  const [realtimeChannel, setRealtimeChannel] = React.useState<string | null>(null);
 
   const fetchNotifications = React.useCallback(async () => {
     try {
@@ -70,6 +86,9 @@ export default function NotificationsBell() {
       const json = await res.json();
       setUnreadCount(Number(json.unreadCount ?? 0));
       setItems(Array.isArray(json.items) ? json.items : []);
+      setRealtimeChannel(
+        typeof json.realtimeChannel === "string" ? json.realtimeChannel : null
+      );
     } catch {
       setErr("Impossibile caricare le notifiche.");
     } finally {
@@ -98,6 +117,31 @@ export default function NotificationsBell() {
   React.useEffect(() => {
     if (open) fetchNotifications();
   }, [open, fetchNotifications]);
+
+  React.useEffect(() => {
+    if (!realtimeChannel) {
+      return;
+    }
+
+    const client = getWebAblyClient();
+
+    if (!client) {
+      return;
+    }
+
+    const channel = client.channels.get(realtimeChannel);
+    const listener = () => {
+      void fetchNotifications();
+    };
+
+    void channel.subscribe(listener).catch(() => {
+      setRealtimeChannel(null);
+    });
+
+    return () => {
+      void channel.unsubscribe(listener);
+    };
+  }, [fetchNotifications, realtimeChannel]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -162,11 +206,11 @@ export default function NotificationsBell() {
 
     setOpen(false);
 
-    if (n.href) router.push(n.href);
+    if (n.href) router.push(normalizeNotificationHref(n.href));
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative z-[90]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -176,7 +220,7 @@ export default function NotificationsBell() {
         <BellIcon className="h-5 w-5" />
 
         {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-semibold text-white">
+          <span className="absolute right-0 top-0 z-20 flex h-5 min-w-[20px] translate-x-1/3 -translate-y-1/3 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[11px] font-semibold leading-none text-white shadow-sm dark:border-[#111827]">
             {badgeText(unreadCount)}
           </span>
         ) : null}
@@ -184,15 +228,18 @@ export default function NotificationsBell() {
 
       {open ? (
         <div
-          className="absolute right-0 mt-2 w-[360px] overflow-hidden rounded-3xl border cf-surface shadow-lg"
+          className={[
+            "absolute right-0 top-full mt-3 z-[100] w-[380px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[28px] border",
+            "border-black/10 bg-white/96 shadow-2xl shadow-slate-900/12 backdrop-blur-xl",
+            "dark:border-white/10 dark:bg-[#11192b]/96 dark:shadow-black/45",
+          ].join(" ")}
           role="dialog"
           aria-label="Pannello notifiche"
         >
-
-          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-black/5 dark:border-white/10">
+          <div className="flex items-center justify-between gap-3 border-b border-black/5 px-5 py-4 dark:border-white/10">
             <div className="min-w-0">
-              <div className="text-sm font-semibold cf-text">Notifiche</div>
-              <div className="text-xs cf-muted">
+              <div className="text-base font-semibold cf-text">Notifiche</div>
+              <div className="mt-1 text-xs cf-muted">
                 {unreadCount > 0
                   ? `${unreadCount} non lette`
                   : "Nessuna nuova notifica"}
@@ -204,7 +251,7 @@ export default function NotificationsBell() {
               onClick={markAllRead}
               disabled={unreadCount === 0}
               className={[
-                "rounded-2xl px-3 py-2 text-xs border cf-surface",
+                "shrink-0 rounded-2xl border px-3 py-2 text-xs cf-surface",
                 "hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed",
               ].join(" ")}
             >
@@ -212,13 +259,13 @@ export default function NotificationsBell() {
             </button>
           </div>
 
-          <div className="max-h-[420px] overflow-auto">
+          <div className="max-h-[440px] overflow-auto">
             {loading ? (
-              <div className="px-4 py-6 text-sm cf-muted">Caricamento…</div>
+              <div className="px-5 py-8 text-sm cf-muted">Caricamento…</div>
             ) : err ? (
-              <div className="px-4 py-6 text-sm text-rose-600">{err}</div>
+              <div className="px-5 py-8 text-sm text-rose-600">{err}</div>
             ) : items.length === 0 ? (
-              <div className="px-4 py-10 text-sm cf-muted">
+              <div className="px-5 py-10 text-sm cf-muted">
                 Nessuna notifica al momento.
               </div>
             ) : (
@@ -230,7 +277,7 @@ export default function NotificationsBell() {
                       <button
                         type="button"
                         onClick={() => onClickNotification(n)}
-                        className="w-full text-left px-4 py-3 transition hover:bg-white/70 dark:hover:bg-white/10"
+                        className="w-full px-5 py-4 text-left transition hover:bg-black/[0.03] dark:hover:bg-white/5"
                       >
                         <div className="flex items-start gap-3">
                           <div className="mt-1">
@@ -244,7 +291,7 @@ export default function NotificationsBell() {
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <div className="truncate text-sm font-semibold cf-text">
+                              <div className="truncate pr-2 text-[15px] font-semibold leading-5 cf-text">
                                 {n.title}
                               </div>
                               <div className="shrink-0 text-[11px] cf-faint">
@@ -253,13 +300,13 @@ export default function NotificationsBell() {
                             </div>
 
                             {n.body ? (
-                              <div className="mt-0.5 line-clamp-2 text-xs cf-muted">
+                              <div className="mt-1 line-clamp-2 text-[13px] leading-5 cf-muted">
                                 {n.body}
                               </div>
                             ) : null}
 
                             {n.href ? (
-                              <div className="mt-1 text-[11px] cf-faint">
+                              <div className="mt-2 text-[11px] font-medium cf-faint">
                                 Apri →
                               </div>
                             ) : null}
@@ -273,7 +320,7 @@ export default function NotificationsBell() {
             )}
           </div>
 
-          <div className="flex items-center justify-between px-4 py-3 border-t border-black/5 dark:border-white/10">
+          <div className="flex items-center justify-between border-t border-black/5 px-5 py-4 dark:border-white/10">
             <button
               type="button"
               onClick={fetchNotifications}
