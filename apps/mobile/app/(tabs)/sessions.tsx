@@ -543,7 +543,7 @@ export default function SessionsScreen() {
                 occupati o prenotati.
               </Text>
 
-              {activeDayAppointments.length > 0 ? (
+              {/* {activeDayAppointments.length > 0 ? (
                 <View style={styles.bookedDayStack}>
                   {activeDayAppointments.map((appointment) => (
                     <View key={appointment.id} style={styles.bookedDayCard}>
@@ -566,7 +566,7 @@ export default function SessionsScreen() {
                     </View>
                   ))}
                 </View>
-              ) : null}
+              ) : null} */}
 
               {activeDayHistory.length > 0 ? (
                 <View style={styles.dayHistoryCard}>

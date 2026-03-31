@@ -28,6 +28,10 @@ function minutesToTime(minutes: number) {
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 }
 
+function minutesToCompactHour(minutes: number) {
+  return String(Math.floor(minutes / 60)).padStart(2, "0");
+}
+
 function timeToMinutes(value: string) {
   const [hours, mins] = value.split(":").map(Number);
   return hours * 60 + mins;
@@ -160,37 +164,47 @@ export default function AvailabilityRulesEditor({
                 <div className="space-y-3">
                   {dayRules.map(({ rule, index }) => (
                     <div key={`${weekday.value}-${index}`} className="rounded-2xl border cf-surface p-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-3 min-[520px]:grid-cols-2">
                         <div>
                           <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] cf-muted">
                             Inizio
                           </label>
-                          <input
-                            type="time"
-                            value={minutesToTime(rule.startMin)}
-                            onChange={(event) =>
-                              updateRule(index, {
-                                startMin: timeToMinutes(event.target.value),
-                              })
-                            }
-                            className="w-full rounded-2xl border cf-surface bg-transparent px-4 py-3 text-sm cf-text outline-none"
-                          />
+                          <div className="relative">
+                            <input
+                              type="time"
+                              value={minutesToTime(rule.startMin)}
+                              onChange={(event) =>
+                                updateRule(index, {
+                                  startMin: timeToMinutes(event.target.value),
+                                })
+                              }
+                              className="peer h-[62px] w-full min-w-0 rounded-2xl border cf-surface bg-transparent px-4 pr-10 text-[13px] font-medium tracking-[0.04em] text-transparent caret-transparent outline-none [color-scheme:dark]"
+                            />
+                            <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-[28px] font-semibold tracking-[0.08em] [font-variant-numeric:tabular-nums] cf-text">
+                              {minutesToCompactHour(rule.startMin)}
+                            </span>
+                          </div>
                         </div>
 
                         <div>
                           <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] cf-muted">
                             Fine
                           </label>
-                          <input
-                            type="time"
-                            value={minutesToTime(rule.endMin)}
-                            onChange={(event) =>
-                              updateRule(index, {
-                                endMin: timeToMinutes(event.target.value),
-                              })
-                            }
-                            className="w-full rounded-2xl border cf-surface bg-transparent px-4 py-3 text-sm cf-text outline-none"
-                          />
+                          <div className="relative">
+                            <input
+                              type="time"
+                              value={minutesToTime(rule.endMin)}
+                              onChange={(event) =>
+                                updateRule(index, {
+                                  endMin: timeToMinutes(event.target.value),
+                                })
+                              }
+                              className="peer h-[62px] w-full min-w-0 rounded-2xl border cf-surface bg-transparent px-4 pr-10 text-[13px] font-medium tracking-[0.04em] text-transparent caret-transparent outline-none [color-scheme:dark]"
+                            />
+                            <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-[28px] font-semibold tracking-[0.08em] [font-variant-numeric:tabular-nums] cf-text">
+                              {minutesToCompactHour(rule.endMin)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
