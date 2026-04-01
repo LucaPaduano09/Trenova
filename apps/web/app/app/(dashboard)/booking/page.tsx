@@ -366,7 +366,7 @@ export default async function BookingPage({
 
       <div className="sticky top-6 z-1 cf-card space-y-4 p-4">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <div className="rounded-[26px] border cf-surface p-4">
+          <div className="rounded-[26px] border cf-surface p-4 dark:bg-[rgba(12,20,38,0.9)]">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.14em] cf-muted">
@@ -387,7 +387,7 @@ export default async function BookingPage({
                   month: getMonthKey(new Date()),
                   page: 1,
                 })}
-                className="rounded-2xl border cf-surface px-3.5 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/10"
+                className="rounded-2xl border cf-soft px-3.5 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/12"
                 title="Reset filtri"
               >
                 Oggi
@@ -397,16 +397,16 @@ export default async function BookingPage({
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Link
                 href={makeHref({ month: changeMonth(selectedMonth, -1), page: 1 })}
-                className="rounded-2xl border cf-surface px-3 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/10"
+                className="rounded-2xl border cf-soft px-3 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/12"
               >
                 Mese prec.
               </Link>
-              <div className="min-w-[220px] rounded-2xl border cf-surface bg-white/70 px-4 py-2 text-center text-sm font-medium capitalize cf-text shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:bg-white/5 dark:shadow-none">
+              <div className="min-w-[220px] rounded-2xl border cf-soft px-4 py-2 text-center text-sm font-medium capitalize cf-text dark:bg-[rgba(25,37,64,0.92)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                 {formatMonthLabel(selectedMonth)}
               </div>
               <Link
                 href={makeHref({ month: changeMonth(selectedMonth, 1), page: 1 })}
-                className="rounded-2xl border cf-surface px-3 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/10"
+                className="rounded-2xl border cf-soft px-3 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/12"
               >
                 Mese succ.
               </Link>
@@ -414,7 +414,7 @@ export default async function BookingPage({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[26px] border cf-surface p-4">
+            <div className="rounded-[26px] border cf-surface p-4 dark:bg-[rgba(12,20,38,0.9)]">
               <div className="mb-2 text-[11px] uppercase tracking-[0.14em] cf-muted">
                 Periodo
               </div>
@@ -426,8 +426,8 @@ export default async function BookingPage({
                     className={[
                       "flex min-h-[52px] items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium transition",
                       range === r
-                        ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-[0_12px_30px_rgba(15,39,71,0.18)] dark:shadow-none"
-                        : "border border-transparent bg-black/[0.02] cf-text hover:border-black/5 hover:bg-white/70 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/10",
+                        ? "border border-sky-300/25 bg-gradient-to-r from-[#18355f] via-[#1d4377] to-[#18355f] text-white shadow-[0_16px_34px_rgba(17,54,100,0.24)]"
+                        : "border border-black/5 bg-black/[0.02] cf-text hover:border-black/5 hover:bg-white/70 dark:border-white/10 dark:bg-[rgba(28,42,72,0.72)] dark:text-slate-100 dark:hover:border-white/18 dark:hover:bg-[rgba(38,56,93,0.82)]",
                     ].join(" ")}
                   >
                     {rangeLabel(r)}
@@ -436,7 +436,7 @@ export default async function BookingPage({
               </div>
             </div>
 
-            <div className="rounded-[26px] border cf-surface p-4">
+            <div className="rounded-[26px] border cf-surface p-4 dark:bg-[rgba(12,20,38,0.9)]">
               <div className="mb-2 text-[11px] uppercase tracking-[0.14em] cf-muted">
                 Stato sessione
               </div>
@@ -446,8 +446,8 @@ export default async function BookingPage({
                   className={[
                     "flex min-h-[52px] items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium transition",
                     !status
-                      ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-[0_12px_30px_rgba(15,39,71,0.18)] dark:shadow-none"
-                      : "border border-transparent bg-black/[0.02] cf-text hover:border-black/5 hover:bg-white/70 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/10",
+                      ? "border border-sky-300/25 bg-gradient-to-r from-[#18355f] via-[#1d4377] to-[#18355f] text-white shadow-[0_16px_34px_rgba(17,54,100,0.24)]"
+                      : "border border-black/5 bg-black/[0.02] cf-text hover:border-black/5 hover:bg-white/70 dark:border-white/10 dark:bg-[rgba(28,42,72,0.72)] dark:text-slate-100 dark:hover:border-white/18 dark:hover:bg-[rgba(38,56,93,0.82)]",
                   ].join(" ")}
                 >
                   Tutti
@@ -462,8 +462,8 @@ export default async function BookingPage({
                       "flex min-h-[52px] items-center justify-center rounded-2xl px-3 py-2 text-center text-sm font-medium transition",
                       s === "COMPLETED" || s === "CANCELED" ? "col-span-2" : "",
                       status === s
-                        ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-[0_12px_30px_rgba(15,39,71,0.18)] dark:shadow-none"
-                        : "border border-transparent bg-black/[0.02] cf-text hover:border-black/5 hover:bg-white/70 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/10",
+                        ? "border border-sky-300/25 bg-gradient-to-r from-[#18355f] via-[#1d4377] to-[#18355f] text-white shadow-[0_16px_34px_rgba(17,54,100,0.24)]"
+                        : "border border-black/5 bg-black/[0.02] cf-text hover:border-black/5 hover:bg-white/70 dark:border-white/10 dark:bg-[rgba(28,42,72,0.72)] dark:text-slate-100 dark:hover:border-white/18 dark:hover:bg-[rgba(38,56,93,0.82)]",
                     ].join(" ")}
                   >
                     {s === "SCHEDULED"
