@@ -256,7 +256,7 @@ export default function CinematicKinetiqLoop({
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
 
         .kinetiq-bg {
           background: radial-gradient(
