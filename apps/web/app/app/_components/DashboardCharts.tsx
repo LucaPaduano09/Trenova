@@ -16,7 +16,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import Heatmap from "./Heatmap";
 import type { DashboardStats } from "../../../actions/dashboard";
@@ -25,7 +25,6 @@ import DashboardCalendar from "./DashboardCalendat";
 type Props = {
   data: DashboardStats;
   workoutTemplates: { id: string; title: string }[];
-
   monthStartISO?: string;
 };
 
@@ -37,9 +36,11 @@ function formatMoneyEUR(cents: number) {
 function pad(n: number) {
   return String(n).padStart(2, "0");
 }
+
 function toISODate(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
@@ -75,8 +76,6 @@ export default function DashboardCharts({
   monthStartISO,
 }: Props) {
   const { kpi, charts } = data;
-
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const monthISO =
@@ -107,53 +106,96 @@ export default function DashboardCharts({
     percent: packageMixTotal ? Math.round((item.count / packageMixTotal) * 100) : 0,
   }));
 
-  function onMonthChangeISO(nextMonthISO: string) {
-
-    const sp = new URLSearchParams(searchParams?.toString());
-    sp.set("month", nextMonthISO);
-    router.push(`?${sp.toString()}`);
-
-  }
-
   return (
-    <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6">
+    <div className="mt-4 grid gap-5 sm:mt-6 sm:gap-6">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.55fr)]">
+        <section className="relative overflow-hidden rounded-[30px] border cf-surface px-5 py-5 sm:px-6 sm:py-6">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_34%),radial-gradient(circle_at_75%_18%,rgba(16,185,129,0.12),transparent_26%)]" />
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="cf-card p-4 sm:p-4">
-          <div className="text-xs cf-muted">Clienti attivi</div>
-          <div className="mt-1 text-2xl font-semibold cf-text">
-            {kpi.clientsActive}
-          </div>
-        </div>
+          <div className="relative flex flex-col gap-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+                  Snapshot
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight cf-text sm:text-[2rem]">
+                  Operatività e performance del mese
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 cf-muted">
+                  Una cabina di regia per capire cosa sta muovendo sessioni,
+                  ricavi, carico attivo e continuità del business.
+                </p>
+              </div>
 
-        <div className="cf-card p-4 sm:p-4">
-          <div className="text-xs cf-muted">Sessioni oggi</div>
-          <div className="mt-1 text-2xl font-semibold cf-text">
-            {kpi.sessionsToday}
-          </div>
-          <div className="mt-1 text-xs cf-muted">
-            Settimana: {kpi.sessionsWeek} • Mese: {kpi.sessionsMonth}
-          </div>
-        </div>
+              <div className="rounded-[24px] border cf-surface bg-white/70 px-4 py-3 text-sm capitalize cf-text shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:bg-white/[0.04] dark:shadow-none">
+                {new Intl.DateTimeFormat("it-IT", {
+                  month: "long",
+                  year: "numeric",
+                }).format(new Date(monthISO))}
+              </div>
+            </div>
 
-        <div className="cf-card p-4 sm:p-4">
-          <div className="text-xs cf-muted">Revenue mese</div>
-          <div className="mt-1 text-2xl font-semibold cf-text">
-            {formatMoneyEUR(kpi.revenueMonthCents)}
+            <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+              <MetricShell
+                label="Clienti attivi"
+                value={String(kpi.clientsActive)}
+                helper="Base attiva"
+              />
+              <MetricShell
+                label="Sessioni oggi"
+                value={String(kpi.sessionsToday)}
+                helper={`Settimana ${kpi.sessionsWeek} • Mese ${kpi.sessionsMonth}`}
+              />
+              <MetricShell
+                label="Revenue mese"
+                value={formatMoneyEUR(kpi.revenueMonthCents)}
+                helper="Sessioni pagate"
+              />
+              <MetricShell
+                label="Crediti rimanenti"
+                value={String(kpi.creditsRemaining)}
+                helper="Bundle attivi"
+              />
+            </div>
           </div>
-          <div className="mt-1 text-xs cf-muted">Da sessioni pagate</div>
-        </div>
+        </section>
 
-        <div className="cf-card p-4 sm:p-4">
-          <div className="text-xs cf-muted">Crediti rimanenti</div>
-          <div className="mt-1 text-2xl font-semibold cf-text">
-            {kpi.creditsRemaining}
+        <section className="rounded-[30px] border cf-surface p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+                Quick pulse
+              </div>
+              <div className="mt-2 text-lg font-semibold cf-text">
+                Traiettoria business
+              </div>
+            </div>
+            <div className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+              Live
+            </div>
           </div>
-          <div className="mt-1 text-xs cf-muted">Somma bundle attivi</div>
-        </div>
+
+          <div className="mt-5 space-y-3">
+            <PulseCard
+              title="Volume settimanale"
+              value={`${data.kpi.weeklyVolumeKg.toLocaleString()} kg`}
+              tone="blue"
+            />
+            <PulseCard
+              title="Abbonamenti"
+              value={`€ ${data.kpi.mrr.toLocaleString()}`}
+              tone="emerald"
+            />
+            <PulseCard
+              title="LTV medio cliente"
+              value={`€ ${(data.kpi.ltvAverage / 100).toFixed(2)}`}
+              tone="slate"
+            />
+          </div>
+        </section>
       </div>
 
-      <div className="mt-6 w-full max-w-full overflow-x-auto overscroll-x-contain sm:overflow-visible">
+      <div className="w-full max-w-full overflow-x-auto overscroll-x-contain sm:overflow-visible">
         <div className="min-w-0 sm:min-w-0">
           <DashboardCalendar
             monthStartISO={monthISO}
@@ -164,12 +206,25 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      <div className="mt-6 w-full max-w-full">
+      <section className="rounded-[30px] border cf-surface p-4 sm:p-5">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+              Heatmap
+            </div>
+            <div className="mt-1 text-lg font-semibold cf-text">
+              Intensità operativa
+            </div>
+          </div>
+          <div className="text-sm cf-muted">
+            Distribuzione delle attività nel tempo
+          </div>
+        </div>
         <Heatmap days={data.charts.heatmap} />
-      </div>
+      </section>
 
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        <div className="cf-card p-4 sm:p-4">
+        <div className="cf-card p-4 sm:p-5">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-semibold cf-text">
               Sessioni (ultimi 30 giorni)
@@ -206,7 +261,7 @@ export default function DashboardCharts({
           </div>
         </div>
 
-        <div className="cf-card p-4 sm:p-4">
+        <div className="cf-card p-4 sm:p-5">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-semibold cf-text">
               Revenue (ultime 8 settimane)
@@ -220,7 +275,11 @@ export default function DashboardCharts({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="weekStart" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: any) => formatMoneyEUR(Number(v))} />
+                <Tooltip
+                  formatter={(v: number | string | undefined) =>
+                    formatMoneyEUR(Number(v ?? 0))
+                  }
+                />
                 <Legend />
                 <Bar
                   dataKey="revenueCents"
@@ -485,48 +544,146 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      <div className="cf-card p-4 sm:p-4">
-        <h2 className="text-sm font-semibold cf-text">Prossime sessioni</h2>
-        <ul className="mt-3 space-y-2 text-sm cf-muted">
-          {data.operational.upcomingAppointments.map((a: any) => (
-            <li key={a.id} className="break-words">
-              {new Date(a.startsAt).toLocaleString("it-IT")} —{" "}
-              {a.client.fullName}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="cf-card p-4 sm:p-4">
-        <h2 className="text-sm font-semibold cf-text">Clienti inattivi</h2>
-        <div className="mt-2 text-sm cf-muted">
-          {data.operational.clientsInactive.length} clienti senza sessioni negli
-          ultimi 14 giorni
-        </div>
-      </div>
-
-      <div className="cf-card p-4 sm:p-4">
-        <div className="text-xs cf-muted">Volume settimanale</div>
-        <div className="mt-1 text-2xl font-semibold cf-muted">
-          {data.kpi.weeklyVolumeKg.toLocaleString()} kg
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        <div className="cf-card p-4 sm:p-4">
-          <div className="text-xs cf-muted">Abbonamenti</div>
-          <div className="mt-1 text-2xl font-semibold cf-muted">
-            € {data.kpi.mrr.toLocaleString()}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
+        <section className="rounded-[30px] border cf-surface p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+                Agenda
+              </div>
+              <h2 className="mt-2 text-lg font-semibold cf-text">
+                Prossime sessioni
+              </h2>
+            </div>
+            <div className="text-sm cf-muted">
+              {data.operational.upcomingAppointments.length} in arrivo
+            </div>
           </div>
-        </div>
 
-        <div className="cf-card p-4 sm:p-4">
-          <div className="text-xs cf-muted">LTV medio cliente</div>
-          <div className="mt-1 text-2xl font-semibold cf-muted">
-            € {(data.kpi.ltvAverage / 100).toFixed(2)}
+          <div className="mt-5 space-y-3">
+            {data.operational.upcomingAppointments.length > 0 ? (
+              data.operational.upcomingAppointments.map((a: any) => (
+                <div
+                  key={a.id}
+                  className="rounded-[24px] border cf-surface px-4 py-4"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold cf-text">
+                        {a.client.fullName}
+                      </div>
+                      <div className="mt-1 text-sm cf-muted">
+                        {new Date(a.startsAt).toLocaleString("it-IT")}
+                      </div>
+                    </div>
+                    <div className="rounded-full border cf-surface px-3 py-1 text-xs cf-faint">
+                      In calendario
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-black/10 px-4 py-8 text-sm cf-muted dark:border-white/10">
+                Nessuna sessione imminente da mostrare.
+              </div>
+            )}
           </div>
+        </section>
+
+        <div className="grid gap-4">
+          <section className="rounded-[30px] border cf-surface p-5 sm:p-6">
+            <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+              Rischio churn
+            </div>
+            <h2 className="mt-2 text-lg font-semibold cf-text">
+              Clienti inattivi
+            </h2>
+            <div className="mt-3 text-4xl font-semibold cf-text">
+              {data.operational.clientsInactive.length}
+            </div>
+            <div className="mt-2 text-sm leading-6 cf-muted">
+              clienti senza sessioni negli ultimi 14 giorni.
+            </div>
+          </section>
+
+          <section className="rounded-[30px] border cf-surface p-5 sm:p-6">
+            <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+              Business mix
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <MetricShell
+                label="MRR"
+                value={`€ ${data.kpi.mrr.toLocaleString()}`}
+                helper="Abbonamenti"
+                compact
+              />
+              <MetricShell
+                label="LTV medio"
+                value={`€ ${(data.kpi.ltvAverage / 100).toFixed(2)}`}
+                helper="Per cliente"
+                compact
+              />
+            </div>
+          </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MetricShell({
+  label,
+  value,
+  helper,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "rounded-[24px] border cf-surface bg-white/70 shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:bg-white/[0.04] dark:shadow-none",
+        compact ? "px-4 py-4" : "px-4 py-4 sm:px-5 sm:py-5",
+      ].join(" ")}
+    >
+      <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+        {label}
+      </div>
+      <div className="mt-2 text-2xl font-semibold tracking-tight cf-text">
+        {value}
+      </div>
+      <div className="mt-1 text-sm cf-muted">{helper}</div>
+    </div>
+  );
+}
+
+function PulseCard({
+  title,
+  value,
+  tone,
+}: {
+  title: string;
+  value: string;
+  tone: "blue" | "emerald" | "slate";
+}) {
+  const toneClass =
+    tone === "blue"
+      ? "from-[#1d4ed8]/12 to-transparent"
+      : tone === "emerald"
+        ? "from-emerald-500/12 to-transparent"
+        : "from-slate-500/12 to-transparent";
+
+  return (
+    <div
+      className={`rounded-[24px] border cf-surface bg-gradient-to-r ${toneClass} px-4 py-4`}
+    >
+      <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+        {title}
+      </div>
+      <div className="mt-2 text-xl font-semibold cf-text">{value}</div>
     </div>
   );
 }
