@@ -32,33 +32,85 @@ function BrandLogo({ className }: { className?: string }) {
 }
 
 function SidebarNav() {
-  return (
-    <nav className="space-y-1 text-sm">
-      <NavItem href="/app">Panoramica</NavItem>
-      <NavItem href="/app/clients">Clienti</NavItem>
-      <NavItem href="/app/booking">Booking</NavItem>
-      <NavItem href="/app/exercises">Esercizi</NavItem>
-      <NavItem href="/app/workouts">Workouts</NavItem>
-      <NavItem href="/app/packages">Pacchetti</NavItem>
-      <NavItem href="/app/settings/availability">Disponibilita</NavItem>
+  const primaryItems = [
+    { href: "/app", label: "Panoramica", eyebrow: "Overview", icon: "OV" },
+    { href: "/app/clients", label: "Clienti", eyebrow: "CRM", icon: "CL" },
+    { href: "/app/booking", label: "Booking", eyebrow: "Calendar", icon: "BK" },
+    { href: "/app/exercises", label: "Esercizi", eyebrow: "Library", icon: "EX" },
+    { href: "/app/workouts", label: "Workouts", eyebrow: "Programming", icon: "WO" },
+    { href: "/app/packages", label: "Pacchetti", eyebrow: "Revenue", icon: "PK" },
+    {
+      href: "/app/settings/availability",
+      label: "Disponibilita",
+      eyebrow: "Schedule",
+      icon: "AV",
+    },
+  ] as const;
 
-      <div className="mt-4 border-t border-black/5 pt-4 dark:border-white/10">
-        <NavItem href="/api/auth/signout">Sign out</NavItem>
+  return (
+    <nav className="space-y-5 text-sm">
+      <div>
+        <div className="mb-3 px-1 text-[11px] uppercase tracking-[0.18em] cf-faint">
+          Workspace
+        </div>
+        <div className="space-y-2">
+          {primaryItems.map((item) => (
+            <NavItem
+              key={item.href}
+              href={item.href}
+              eyebrow={item.eyebrow}
+              icon={item.icon}
+            >
+              {item.label}
+            </NavItem>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-4 text-xs cf-faint">v1.0 • Dashboard</div>
+      <div className="border-t border-black/5 pt-4 dark:border-white/10">
+        <div className="mb-3 px-1 text-[11px] uppercase tracking-[0.18em] cf-faint">
+          Sessione
+        </div>
+        <NavItem href="/api/auth/signout" eyebrow="Account" icon="SO">
+          Sign out
+        </NavItem>
+      </div>
+
+      <div className="rounded-[26px] border border-white/40 bg-white/40 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.05)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none">
+        <div className="text-[11px] uppercase tracking-[0.2em] cf-faint">
+          Trenova OS
+        </div>
+        <div className="mt-2 text-sm font-medium cf-text">Dashboard PT</div>
+        <div className="mt-1 text-xs cf-muted">
+          Workspace operativo per clienti, booking e programmazione.
+        </div>
+        <div className="mt-3 text-xs cf-faint">v1.0</div>
+      </div>
     </nav>
   );
 }
 
 function SidebarContent() {
   return (
-    <div className="cf-card cf-hairline">
-      <div className="mb-4">
-        <BrandLogo className="w-[180px]" />
-      </div>
+    <div className="relative overflow-hidden rounded-[34px] border border-white/45 bg-white/44 px-4 py-4 shadow-[0_24px_70px_rgba(15,23,42,0.07)] backdrop-blur-[24px] dark:border-white/10 dark:bg-[rgba(12,20,36,0.68)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_24%),radial-gradient(circle_at_76%_10%,rgba(16,185,129,0.14),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.02)_30%,transparent_55%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(96,165,250,0.2),transparent_24%),radial-gradient(circle_at_76%_10%,rgba(16,185,129,0.14),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.01)_28%,transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-white/70 dark:bg-white/18" />
 
-      <SidebarNav />
+      <div className="relative">
+        <div className="mb-6 rounded-[30px] border border-white/40 bg-white/34 px-4 py-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]">
+          <div className="text-[11px] uppercase tracking-[0.22em] cf-faint">
+            Trenova
+          </div>
+          <div className="mt-3 flex items-center justify-center rounded-[26px] border border-white/45 bg-white/50 px-4 py-7 shadow-[0_18px_40px_rgba(15,23,42,0.05)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.045] dark:shadow-none">
+            <BrandLogo className="w-[176px]" />
+          </div>
+          <div className="mt-4 text-sm cf-muted">
+            Sistema premium per gestire clienti, sessioni e risultati.
+          </div>
+        </div>
+
+        <SidebarNav />
+      </div>
     </div>
   );
 }

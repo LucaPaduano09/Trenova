@@ -58,10 +58,12 @@ function bpToPct(v?: number | null) {
   if (v == null) return "—";
   return (v / 100).toFixed(1).replace(".", ",") + "%";
 }
+
 function gToKg(v?: number | null) {
   if (v == null) return "—";
   return (v / 1000).toFixed(1).replace(".", ",") + " kg";
 }
+
 function mmToCm(v?: number | null) {
   if (v == null) return "—";
   return (v / 10).toFixed(1).replace(".", ",") + " cm";
@@ -85,6 +87,38 @@ function Pill({
   );
 }
 
+function TabShell({
+  eyebrow,
+  title,
+  description,
+  action,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[30px] border cf-surface cf-hairline">
+      <div className="border-b border-black/5 p-6 dark:border-white/10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+              {eyebrow}
+            </div>
+            <div className="mt-2 text-xl font-semibold cf-text">{title}</div>
+            <div className="mt-1 text-sm cf-muted">{description}</div>
+          </div>
+          {action ? <div className="shrink-0">{action}</div> : null}
+        </div>
+      </div>
+      <div className="p-6">{children}</div>
+    </section>
+  );
+}
+
 export default async function ClientTabSection({
   tenantId,
   client,
@@ -103,7 +137,6 @@ export default async function ClientTabSection({
   flash?: string;
   sid?: string;
 }) {
-
   if (activeTab === "packages") {
     const [packages, purchases] = await Promise.all([
       prisma.package.findMany({
@@ -144,19 +177,13 @@ export default async function ClientTabSection({
     ]);
 
     return (
-      <div className="cf-surface cf-hairline overflow-hidden">
-        <div className="p-6 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-lg font-semibold cf-text">Pacchetti</div>
-            <div className="mt-1 text-sm cf-muted">
-              Assegna bundle o abbonamento mensile.
-            </div>
-          </div>
-        </div>
-
-        <div className="px-6 pb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-          <div className="cf-card">
+      <TabShell
+        eyebrow="Packages"
+        title="Pacchetti"
+        description="Assegna bundle o abbonamenti mensili e monitora il loro stato."
+      >
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="cf-card rounded-[28px]">
             <div className="text-sm font-semibold cf-text">Assegna pacchetto</div>
             <div className="mt-1 text-xs cf-muted">
               Seleziona un pacchetto creato in /app/packages.
@@ -213,7 +240,7 @@ export default async function ClientTabSection({
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="rounded-2xl bg-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                    className="rounded-2xl bg-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90 dark:bg-white dark:text-black"
                   >
                     Assegna
                   </button>
@@ -222,10 +249,10 @@ export default async function ClientTabSection({
             )}
           </div>
 
-          <div className="cf-card">
+          <div className="cf-card rounded-[28px]">
             <div className="text-sm font-semibold cf-text">Pacchetti assegnati</div>
             <div className="mt-1 text-xs cf-muted">
-              Bundle mostra crediti residui. Mensile mostra stato/periodo.
+              Bundle mostra crediti residui. Mensile mostra stato e periodo.
             </div>
 
             {purchases.length === 0 ? (
@@ -233,12 +260,11 @@ export default async function ClientTabSection({
             ) : (
               <ul className="mt-4 divide-y divide-black/5 dark:divide-white/10">
                 {purchases.map((p) => (
-                  <li key={p.id} className="py-3 flex items-start justify-between gap-4">
+                  <li key={p.id} className="flex items-start justify-between gap-4 py-4">
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold cf-text truncate">
+                      <div className="truncate text-sm font-semibold cf-text">
                         {p.package.name}
                       </div>
-
                       <div className="mt-1 text-xs cf-muted">
                         {p.package.type === "SESSION_BUNDLE" ? (
                           <>
@@ -272,9 +298,11 @@ export default async function ClientTabSection({
                         ) : null}
                       </div>
 
-                      <div className="mt-1 text-[11px] cf-muted">
-                        {p.active ? "Attivo" : "Disattivato"} • Avviato:{" "}
-                        {new Date(p.startedAt).toLocaleDateString("it-IT")}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="cf-chip">{p.active ? "Attivo" : "Disattivato"}</span>
+                        <span className="cf-chip">
+                          Avviato {new Date(p.startedAt).toLocaleDateString("it-IT")}
+                        </span>
                       </div>
                     </div>
 
@@ -309,18 +337,13 @@ export default async function ClientTabSection({
             )}
           </div>
         </div>
-      </div>
+      </TabShell>
     );
   }
 
-if (activeTab === "workouts") {
-  return (
-    <ClientWorkoutsTab
-      tenantId={tenantId}
-      client={client}
-    />
-  );
-}
+  if (activeTab === "workouts") {
+    return <ClientWorkoutsTab tenantId={tenantId} client={client} />;
+  }
 
   if (activeTab === "sessions") {
     const sessions = await prisma.appointment.findMany({
@@ -360,217 +383,193 @@ if (activeTab === "workouts") {
     const workoutTitleById = new Map(templates.map((t) => [t.id, t.title]));
 
     return (
-      <div className="cf-surface cf-hairline overflow-hidden">
-        <div className="p-6 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-lg font-semibold cf-text">Sessioni</div>
-            <div className="mt-1 text-sm cf-muted">Storico sessioni e pagamenti.</div>
-          </div>
-
+      <TabShell
+        eyebrow="Sessions"
+        title="Sessioni"
+        description="Storico appuntamenti, stato pagamento e collegamento workout."
+        action={
           <Link
             href={`/app/booking/new?client=${client.slug}`}
-            className="inline-flex items-center justify-center rounded-2xl cf-surface px-4 py-2 cf-text hover:border-black dark:hover:border-white"
+            className="inline-flex items-center justify-center rounded-2xl border cf-surface px-4 py-2 cf-text hover:border-black dark:hover:border-white"
           >
             Nuova sessione
           </Link>
-        </div>
-
+        }
+      >
         {sessions.length === 0 ? (
-          <div className="px-6 pb-8">
-            <div className="cf-soft cf-hairline p-8">
-              <div className="text-sm font-medium">Nessuna sessione</div>
-              <p className="mt-1 text-sm cf-muted">
-                Crea la prima sessione per questo cliente.
-              </p>
-              <Link
-                href={`/app/booking/new?client=${client.slug}`}
-                className="mt-6 inline-flex items-center justify-center rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
-              >
-                Crea prima sessione
-              </Link>
-            </div>
+          <div className="cf-soft cf-hairline rounded-[28px] p-8">
+            <div className="text-sm font-medium">Nessuna sessione</div>
+            <p className="mt-1 text-sm cf-muted">
+              Crea la prima sessione per questo cliente.
+            </p>
+            <Link
+              href={`/app/booking/new?client=${client.slug}`}
+              className="mt-6 inline-flex items-center justify-center rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
+            >
+              Crea prima sessione
+            </Link>
           </div>
         ) : (
-          <ul className="divide-y">
-            {sessions.map((s, index) => {
+          <ul className="space-y-4">
+            {sessions.map((s) => {
               const paid = !!s.paidAt;
               const start = new Date(s.startsAt);
               const end = new Date(s.endsAt);
-
               const isFlash = sid === s.id && (flash === "paid" || flash === "unpaid");
-
               const title = s.workoutTemplateId
                 ? workoutTitleById.get(s.workoutTemplateId) ?? null
                 : null;
 
               return (
-                <span
+                <li
                   key={s.id}
-                  className="border-none flex items-center justify-center flex-col"
+                  className="rounded-[28px] border cf-surface px-5 py-5 transition hover:-translate-y-[1px] hover:bg-black/5 dark:hover:bg-white/5"
                 >
-                  <li className="w-full border-none relative p-5 transition hover:bg-black/5 dark:hover:bg-white/5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="font-semibold cf-text">{formatDate(start)}</div>
-                          <div className="text-sm cf-faint">
-                            {formatTime(start)}–{formatTime(end)}
-                          </div>
-
-                          <span className="cf-chip">
-                            {labelLocationType(String(s.locationType))}
-                            {s.location ? ` · ${s.location}` : ""}
-                          </span>
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-semibold cf-text">{formatDate(start)}</div>
+                        <div className="text-sm cf-faint">
+                          {formatTime(start)}–{formatTime(end)}
                         </div>
-
-                        {s.notes ? (
-                          <div className="mt-2 text-sm cf-text line-clamp-2">{s.notes}</div>
-                        ) : (
-                          <div className="mt-2 text-sm cf-faint">—</div>
-                        )}
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs cf-faint">
-                          <span className="cf-chip">{formatMoneyEUR(s.priceCents)}</span>
-
-                          <span
-                            className={[
-                              "cf-chip relative overflow-hidden",
-                              isFlash ? "cf-wow" : "",
-                            ].join(" ")}
-                          >
-                            <span className="relative z-10">{paid ? "Pagata" : "Da pagare"}</span>
-                            {isFlash ? <span className="cf-wow-glow" /> : null}
-                          </span>
-
-                          {s.paymentMethod ? (
-                            <span className="cf-chip">{s.paymentMethod}</span>
-                          ) : null}
-
-                          {title ? <span className="cf-chip">{title}</span> : null}
-                        </div>
+                        <span className="cf-chip">
+                          {labelLocationType(String(s.locationType))}
+                          {s.location ? ` · ${s.location}` : ""}
+                        </span>
                       </div>
 
-                      <div className="cf-soft cf-hairline flex items-center gap-2 p-1">
-                        <Link
-                          href={`/app/sessions/${s.id}/${title ? "change-workout" : "add-workout"}`}
-                          className="group inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium border cf-soft backdrop-blur-xl cf-text shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.98] hover:border-black dark:hover:border-white"
-                          title="Assegna una scheda a questa sessione"
-                        >
-                          <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_60%)]" />
-                          <span className="relative">
-                            <Image
-                              alt="aggiungi-workout"
-                              width={16}
-                              height={16}
-                              src={"/icons/add-workout.svg"}
-                              className="block dark:hidden"
-                            />
-                            <Image
-                              alt="aggiungi-workout"
-                              width={16}
-                              height={16}
-                              src={"/icons/white-add-workout.svg"}
-                              className="hidden dark:block"
-                            />
-                          </span>
-                        </Link>
+                      {s.notes ? (
+                        <div className="mt-2 text-sm cf-text line-clamp-2">{s.notes}</div>
+                      ) : (
+                        <div className="mt-2 text-sm cf-faint">—</div>
+                      )}
 
-                        <Link
-                          href={`/app/sessions/${s.id}/edit`}
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs cf-faint">
+                        <span className="cf-chip">{formatMoneyEUR(s.priceCents)}</span>
+                        <span
                           className={[
-                            `p-2 group block rounded-3xl border backdrop-blur-xl shadow-sm transition
-                             bg-white/55 border-neutral-200/60 hover:bg-white/75
-                             dark:bg-neutral-950/25 dark:border-white/10 dark:hover:bg-neutral-950/35 hover:border-black dark:hover:border-white`,
+                            "cf-chip relative overflow-hidden",
+                            isFlash ? "cf-wow" : "",
                           ].join(" ")}
                         >
-                          <span className="relative">
-                            <Image
-                              alt="modifica"
-                              width={16}
-                              height={16}
-                              src={`/icons/white-edit-alt-outline.svg`}
-                              className="hidden dark:block"
-                            />
-                            <Image
-                              alt="modifica"
-                              width={16}
-                              height={16}
-                              src={`/icons/edit-alt-outline.svg`}
-                              className="block dark:hidden"
-                            />
-                          </span>
-                        </Link>
-
-                        {paid ? (
-                          <form action={markSessionUnpaid}>
-                            <input type="hidden" name="sessionId" value={s.id} />
-                            <button
-                              type="submit"
-                              className="group relative inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium border cf-soft backdrop-blur-xl cf-text shadow-sm transition-all duration-200 hover:shadow-md"
-                              title="Imposta come non pagata"
-                            >
-                              <span className="relative">
-                                <Image
-                                  alt="pay"
-                                  width={16}
-                                  height={16}
-                                  src="/icons/pay-now.svg"
-                                  className="block dark:hidden"
-                                />
-                                <Image
-                                  alt="pay"
-                                  width={16}
-                                  height={16}
-                                  src="/icons/white-pay-now.svg"
-                                  className="hidden dark:block"
-                                />
-                              </span>
-                            </button>
-                          </form>
-                        ) : (
-                          <form action={markSessionPaid}>
-                            <input type="hidden" name="sessionId" value={s.id} />
-                            <button
-                              type="submit"
-                              className="group relative inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-medium border cf-soft backdrop-blur-xl text-emerald-700 shadow-sm transition-all duration-200 hover:border-emerald-300/70 hover:shadow-md active:scale-[0.98]"
-                              title="Segna come pagata"
-                            >
-                              <span className="relative">
-                                <Image
-                                  alt="pay"
-                                  width={16}
-                                  height={16}
-                                  src="/icons/pay-now.svg"
-                                  className="block dark:hidden"
-                                />
-                                <Image
-                                  alt="pay"
-                                  width={16}
-                                  height={16}
-                                  src="/icons/white-pay-now.svg"
-                                  className="hidden dark:block"
-                                />
-                              </span>
-                            </button>
-                          </form>
-                        )}
-
-                        <DeleteSessionButton sessionId={s.id} action={deleteSession} />
+                          <span className="relative z-10">{paid ? "Pagata" : "Da pagare"}</span>
+                          {isFlash ? <span className="cf-wow-glow" /> : null}
+                        </span>
+                        {s.paymentMethod ? <span className="cf-chip">{s.paymentMethod}</span> : null}
+                        {title ? <span className="cf-chip">{title}</span> : null}
                       </div>
                     </div>
-                  </li>
 
-                  <div
-                    className={`${
-                      sessions.length === index + 1 ? "hidden" : ""
-                    } w-5 bg-black dark:bg-white h-0.5 m-3`}
-                  />
-                </span>
+                    <div className="cf-soft cf-hairline flex flex-wrap items-center gap-2 rounded-[24px] p-2">
+                      <Link
+                        href={`/app/sessions/${s.id}/${title ? "change-workout" : "add-workout"}`}
+                        className="group inline-flex items-center justify-center rounded-2xl border cf-soft px-3 py-2 text-sm font-medium cf-text shadow-sm transition-all duration-200 hover:border-black hover:shadow-md active:scale-[0.98] dark:hover:border-white"
+                        title="Assegna una scheda a questa sessione"
+                      >
+                        <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.08),transparent_60%)]" />
+                        <span className="relative">
+                          <Image
+                            alt="aggiungi-workout"
+                            width={16}
+                            height={16}
+                            src={"/icons/add-workout.svg"}
+                            className="block dark:hidden"
+                          />
+                          <Image
+                            alt="aggiungi-workout"
+                            width={16}
+                            height={16}
+                            src={"/icons/white-add-workout.svg"}
+                            className="hidden dark:block"
+                          />
+                        </span>
+                      </Link>
+
+                      <Link
+                        href={`/app/sessions/${s.id}/edit`}
+                        className="group block rounded-3xl border bg-white/55 p-2 shadow-sm transition hover:border-black hover:bg-white/75 dark:border-white/10 dark:bg-neutral-950/25 dark:hover:border-white dark:hover:bg-neutral-950/35"
+                      >
+                        <span className="relative">
+                          <Image
+                            alt="modifica"
+                            width={16}
+                            height={16}
+                            src={`/icons/white-edit-alt-outline.svg`}
+                            className="hidden dark:block"
+                          />
+                          <Image
+                            alt="modifica"
+                            width={16}
+                            height={16}
+                            src={`/icons/edit-alt-outline.svg`}
+                            className="block dark:hidden"
+                          />
+                        </span>
+                      </Link>
+
+                      {paid ? (
+                        <form action={markSessionUnpaid}>
+                          <input type="hidden" name="sessionId" value={s.id} />
+                          <button
+                            type="submit"
+                            className="group relative inline-flex items-center justify-center rounded-2xl border cf-soft px-3 py-2 text-sm font-medium cf-text shadow-sm transition-all duration-200 hover:shadow-md"
+                            title="Imposta come non pagata"
+                          >
+                            <span className="relative">
+                              <Image
+                                alt="pay"
+                                width={16}
+                                height={16}
+                                src="/icons/pay-now.svg"
+                                className="block dark:hidden"
+                              />
+                              <Image
+                                alt="pay"
+                                width={16}
+                                height={16}
+                                src="/icons/white-pay-now.svg"
+                                className="hidden dark:block"
+                              />
+                            </span>
+                          </button>
+                        </form>
+                      ) : (
+                        <form action={markSessionPaid}>
+                          <input type="hidden" name="sessionId" value={s.id} />
+                          <button
+                            type="submit"
+                            className="group relative inline-flex items-center justify-center rounded-2xl border cf-soft px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-all duration-200 hover:border-emerald-300/70 hover:shadow-md active:scale-[0.98]"
+                            title="Segna come pagata"
+                          >
+                            <span className="relative">
+                              <Image
+                                alt="pay"
+                                width={16}
+                                height={16}
+                                src="/icons/pay-now.svg"
+                                className="block dark:hidden"
+                              />
+                              <Image
+                                alt="pay"
+                                width={16}
+                                height={16}
+                                src="/icons/white-pay-now.svg"
+                                className="hidden dark:block"
+                              />
+                            </span>
+                          </button>
+                        </form>
+                      )}
+
+                      <DeleteSessionButton sessionId={s.id} action={deleteSession} />
+                    </div>
+                  </div>
+                </li>
               );
             })}
           </ul>
         )}
-      </div>
+      </TabShell>
     );
   }
 
@@ -583,115 +582,124 @@ if (activeTab === "workouts") {
     void profile;
 
     return (
-      <div className="rounded-3xl border cf-surface p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-lg font-semibold cf-text">Nuovo check-in</div>
-            <div className="mt-1 mb-4 text-sm cf-muted">
-              Peso, circonferenze e BIA (se disponibili).
+      <TabShell
+        eyebrow="Progress"
+        title="Check-in e progressi"
+        description="Peso, circonferenze e BIA con storico consultabile."
+      >
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-[28px] border cf-surface">
+            <div className="p-6">
+              <div className="text-lg font-semibold cf-text">Storico</div>
+              <div className="mt-1 text-sm cf-muted">Ultimi 25 check-in.</div>
             </div>
-          </div>
-        </div>
 
-        <div className="rounded-3xl border cf-surface overflow-hidden">
-          <div className="p-6">
-            <div className="text-lg font-semibold cf-text">Storico</div>
-            <div className="mt-1 text-sm cf-muted">Ultimi 25 check-in.</div>
+            {entries.length === 0 ? (
+              <div className="px-6 pb-8">
+                <div className="rounded-[26px] border cf-surface p-6">
+                  <div className="text-sm font-medium cf-text">Nessun check-in</div>
+                  <p className="mt-1 text-sm cf-muted">
+                    Aggiungi il primo check-in per iniziare a tracciare progressi e BIA.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ul className="divide-y divide-black/5 dark:divide-white/10">
+                {entries.map((e) => (
+                  <li key={e.id} className="p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold cf-text">
+                          {new Date(e.measuredAt).toLocaleString("it-IT", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <Pill label="Peso" value={gToKg(e.weightG)} />
+                          <Pill label="BF" value={bpToPct(e.bodyFatBp)} />
+                          <Pill label="Vita" value={mmToCm(e.waistMm)} />
+                          <Pill label="Fianchi" value={mmToCm(e.hipsMm)} />
+                          <Pill label="Braccio DX" value={mmToCm(e.armRmm)} />
+                          <Pill label="Braccio SX" value={mmToCm(e.armLmm)} />
+                          <Pill label="Avambr. DX" value={mmToCm(e.forearmRmm)} />
+                          <Pill label="Avambr. SX" value={mmToCm(e.forearmLmm)} />
+                          <Pill label="Coscia DX" value={mmToCm(e.thighRmm)} />
+                          <Pill label="Coscia SX" value={mmToCm(e.thighLmm)} />
+                          <Pill label="Polp. DX" value={mmToCm(e.calfRmm)} />
+                          <Pill label="Polp. SX" value={mmToCm(e.calfLmm)} />
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <Pill label="TBW" value={bpToPct(e.tbwBp)} />
+                          <Pill label="ICW" value={bpToPct(e.icwBp)} />
+                          <Pill label="ECW" value={bpToPct(e.ecwBp)} />
+                          <Pill label="Phase" value={bpToPct(e.phaseAngleBp)} />
+                          <Pill
+                            label="BMR"
+                            value={e.bmrKcal != null ? `${e.bmrKcal} kcal` : "—"}
+                          />
+                          <Pill label="Muscolo" value={gToKg(e.muscleMassG)} />
+                          <Pill label="Grasso" value={gToKg(e.fatMassG)} />
+                          <Pill label="FFM" value={gToKg(e.ffmG)} />
+                          <Pill label="Visc." value={e.visceralFat ?? "—"} />
+                          <Pill label="Età" value={e.metabolicAge ?? "—"} />
+                        </div>
+
+                        {e.notes ? (
+                          <div className="mt-3 whitespace-pre-wrap text-sm cf-muted">
+                            {e.notes}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-2xl border cf-surface px-3 py-2 text-xs cf-faint">
+                          Check-in
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
-          {entries.length === 0 ? (
-            <div className="px-6 pb-8">
-              <div className="rounded-3xl border cf-surface p-6">
-                <div className="text-sm font-medium cf-text">Nessun check-in</div>
-                <p className="mt-1 text-sm cf-muted">
-                  Aggiungi il primo check-in per iniziare a tracciare progressi e BIA.
-                </p>
+          <div className="rounded-[28px] border cf-surface p-6">
+            <div className="mb-4">
+              <div className="text-sm font-semibold cf-text">Nuovo check-in</div>
+              <div className="mt-1 text-sm cf-muted">
+                Inserisci dati antropometrici e BIA se disponibili.
               </div>
             </div>
-          ) : (
-            <ul className="divide-y divide-black/5 dark:divide-white/10">
-              {entries.map((e) => (
-                <li key={e.id} className="p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold cf-text">
-                        {new Date(e.measuredAt).toLocaleString("it-IT", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        <Pill label="Peso" value={gToKg(e.weightG)} />
-                        <Pill label="BF" value={bpToPct(e.bodyFatBp)} />
-                        <Pill label="Vita" value={mmToCm(e.waistMm)} />
-                        <Pill label="Fianchi" value={mmToCm(e.hipsMm)} />
-
-                        <Pill label="Braccio DX" value={mmToCm(e.armRmm)} />
-                        <Pill label="Braccio SX" value={mmToCm(e.armLmm)} />
-
-                        <Pill label="Avambr. DX" value={mmToCm(e.forearmRmm)} />
-                        <Pill label="Avambr. SX" value={mmToCm(e.forearmLmm)} />
-
-                        <Pill label="Coscia DX" value={mmToCm(e.thighRmm)} />
-                        <Pill label="Coscia SX" value={mmToCm(e.thighLmm)} />
-
-                        <Pill label="Polp. DX" value={mmToCm(e.calfRmm)} />
-                        <Pill label="Polp. SX" value={mmToCm(e.calfLmm)} />
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        <Pill label="TBW" value={bpToPct(e.tbwBp)} />
-                        <Pill label="ICW" value={bpToPct(e.icwBp)} />
-                        <Pill label="ECW" value={bpToPct(e.ecwBp)} />
-                        <Pill label="Phase" value={bpToPct(e.phaseAngleBp)} />
-                        <Pill label="BMR" value={e.bmrKcal != null ? `${e.bmrKcal} kcal` : "—"} />
-                        <Pill label="Muscolo" value={gToKg(e.muscleMassG)} />
-                        <Pill label="Grasso" value={gToKg(e.fatMassG)} />
-                        <Pill label="FFM" value={gToKg(e.ffmG)} />
-                        <Pill label="Visc." value={e.visceralFat ?? "—"} />
-                        <Pill label="Età" value={e.metabolicAge ?? "—"} />
-                      </div>
-
-                      {e.notes ? (
-                        <div className="mt-3 text-sm cf-muted whitespace-pre-wrap">
-                          {e.notes}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-2xl border cf-surface px-3 py-2 text-xs cf-faint">
-                        Check-in
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+            <MetricsForm clientId={client.id} />
+          </div>
         </div>
-
-        <MetricsForm clientId={client.id} />
-      </div>
+      </TabShell>
     );
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <OverviewStatsCards clientId={client.id} />
-      <div>
+
+      <div className="rounded-[30px] border cf-surface cf-hairline p-5 sm:p-6">
         <BodyMapCard clientId={client.id} clientSlug={client.slug} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-
-        <div className="lg:col-span-2 cf-surface cf-hairline p-6 shadow-sm backdrop-blur-xl">
+        <div className="lg:col-span-2 rounded-[30px] border cf-surface cf-hairline p-6 shadow-sm backdrop-blur-xl">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">Note</div>
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+                Notes
+              </div>
+              <div className="mt-2 text-sm font-medium cf-text">Note cliente</div>
+            </div>
             <span className="text-xs cf-faint">
               Creato il {new Date(client.createdAt).toLocaleDateString("it-IT")}
             </span>
@@ -701,8 +709,8 @@ if (activeTab === "workouts") {
             {client.notes?.trim() ? client.notes : "—"}
           </p>
 
-          <div className="mt-6 flex items-center gap-2">
-            <button className="rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <button className="rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90 dark:bg-white dark:text-black">
               Modifica note
             </button>
             <button className="rounded-2xl border cf-surface px-4 py-2 text-sm cf-text hover:border-black dark:hover:border-white">
@@ -711,6 +719,6 @@ if (activeTab === "workouts") {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

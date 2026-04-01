@@ -57,11 +57,14 @@ export function MiniOverviewCard({
   const lastLabel = recencyLabel(now, kpi?.lastAt ?? null);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border cf-surface cf-hairline p-5">
+    <div className="relative overflow-hidden rounded-[28px] border cf-surface cf-hairline p-5">
 
       <div className="relative flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold cf-text">Panoramica</div>
+          <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+            Snapshot
+          </div>
+          <div className="mt-2 text-sm font-semibold cf-text">Panoramica</div>
           <div className="mt-1 text-xs cf-muted">
             Performance & business (ultimi 30g)
           </div>

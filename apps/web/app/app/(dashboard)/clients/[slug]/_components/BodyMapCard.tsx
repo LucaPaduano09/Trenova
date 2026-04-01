@@ -14,10 +14,13 @@ export default async function BodyMapCard({
   const issues = await listClientBodyIssues(clientId);
 
   return (
-    <div className="cf-card">
+    <div className="cf-card rounded-[28px]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-base font-semibold cf-text">
+          <div className="text-[11px] uppercase tracking-[0.16em] cf-faint">
+            Body map
+          </div>
+          <div className="mt-2 text-base font-semibold cf-text">
             Scheletro / problematiche
           </div>
           <p className="mt-1 text-sm cf-muted">

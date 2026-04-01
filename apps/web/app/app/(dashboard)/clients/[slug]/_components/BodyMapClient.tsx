@@ -51,6 +51,14 @@ function maxActiveSeverity(issues: Issue[]) {
   return m;
 }
 
+function inactiveZoneFill() {
+  return "var(--body-map-zone-inactive-fill)";
+}
+
+function inactiveZoneStroke() {
+  return "var(--body-map-zone-inactive-stroke)";
+}
+
 export default function BodyMapClient({ clientId, initialIssues }: Props) {
   const [view, setView] = useState<"front" | "back">("front");
   const [issues, setIssues] = useState<Issue[]>(initialIssues);
@@ -60,8 +68,8 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
   }
 
   function intensityFill(sev: number, active: boolean) {
-    if (!active) return "rgba(0,0,0,0.06)";
-    if (sev <= 0) return "rgba(0,0,0,0.08)";
+    if (!active) return inactiveZoneFill();
+    if (sev <= 0) return inactiveZoneFill();
 
     if (sev <= 2) return "rgba(16,185,129,0.25)";
     if (sev <= 4) return "rgba(16,185,129,0.35)";
@@ -71,8 +79,9 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
   }
 
   function intensityStroke(sev: number, active: boolean) {
-    if (!active && sev > 0) return "rgba(0,0,0,0.25)";
-    return "rgba(0,0,0,0.10)";
+    if (!active && sev > 0) return inactiveZoneStroke();
+    if (!active) return inactiveZoneStroke();
+    return "rgba(15,23,42,0.14)";
   }
   const map = useMemo(() => {
     const m = new Map<string, Issue>();
@@ -421,7 +430,15 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
 
-      <div className="rounded-3xl border cf-surface p-4">
+      <div
+        className="rounded-3xl border cf-surface p-4"
+        style={
+          {
+            "--body-map-zone-inactive-fill": "rgba(255,255,255,0.02)",
+            "--body-map-zone-inactive-stroke": "rgba(15,23,42,0.28)",
+          } as React.CSSProperties
+        }
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold cf-text">Mappa corpo</div>
           <div className="flex items-center gap-2">
@@ -455,61 +472,16 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
         <div className="mt-4">
           <div className="relative mx-auto w-full max-w-[280px]">
 
-            <svg viewBox="0 0 220 340" className="w-full h-auto">
-              <defs>
-                <linearGradient id="sk" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(255,255,255,0.55)" />
-                  <stop offset="100%" stopColor="rgba(255,255,255,0.15)" />
-                </linearGradient>
-              </defs>
-
-              <path
-                d="M110 6
-                   C95 6 86 18 86 34
-                   C86 52 96 60 110 60
-                   C124 60 134 52 134 34
-                   C134 18 125 6 110 6
-                   Z
-                   M78 70
-                   C92 66 128 66 142 70
-                   C158 76 170 92 170 112
-                   C170 136 160 148 150 158
-                   C146 162 146 172 148 180
-                   L156 220
-                   C158 230 150 238 140 238
-                   C134 238 128 232 126 224
-                   L120 196
-                   C118 190 102 190 100 196
-                   L94 224
-                   C92 232 86 238 80 238
-                   C70 238 62 230 64 220
-                   L72 180
-                   C74 172 74 162 70 158
-                   C60 148 50 136 50 112
-                   C50 92 62 76 78 70
-                   Z
-                   M92 238
-                   L86 300
-                   C85 312 94 322 106 322
-                   C118 322 126 312 126 300
-                   L122 238
-                   Z
-                   M128 238
-                   L134 300
-                   C135 312 126 322 114 322
-                   C102 322 94 312 94 300
-                   L98 238
-                   Z"
-                fill="url(#sk)"
-                opacity="0.65"
-              />
+            <svg
+              viewBox="0 0 220 340"
+              className="h-auto w-full [--body-map-zone-inactive-fill:rgba(255,255,255,0.02)] [--body-map-zone-inactive-stroke:rgba(15,23,42,0.28)] dark:[--body-map-zone-inactive-fill:rgba(255,255,255,0.04)] dark:[--body-map-zone-inactive-stroke:rgba(226,232,240,0.32)]"
+            >
 
               {(view === "front" ? zonesFront : zonesBack).map((z) => {
                 const issue = map.get(keyOf(z.zoneKey, z.side));
                 const sev = issue?.severity ?? 0;
                 const active = issue?.active ?? false;
 
-                const cls = intensityClass(sev, active);
                 const title = `${z.zoneKey} • ${SIDE_LABEL[z.side]} • ${
                   issue?.severity != null
                     ? `dolore ${issue.severity}/10`
@@ -527,7 +499,7 @@ export default function BodyMapClient({ clientId, initialIssues }: Props) {
                       rx={8}
                       ry={8}
                       fill={intensityFill(sev, active)}
-                      stroke={active ? "rgba(0,0,0,0.10)" : "rgba(0,0,0,0.35)"}
+                      stroke={active ? intensityStroke(sev, active) : inactiveZoneStroke()}
                       strokeWidth={active ? 1 : 1.5}
                       strokeDasharray={active ? undefined : "4 3"}
                       strokeLinecap="round"

@@ -58,8 +58,7 @@ export default async function OverviewStatsCards({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-
-      <div className="cf-card">
+      <div className="cf-card rounded-[28px]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold cf-text">
@@ -94,7 +93,7 @@ export default async function OverviewStatsCards({
         </div>
       </div>
 
-      <div className="cf-card">
+      <div className="cf-card rounded-[28px]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold cf-text">Revenue (30g)</div>
@@ -119,7 +118,7 @@ export default async function OverviewStatsCards({
         </div>
       </div>
 
-      <div className="cf-card">
+      <div className="cf-card rounded-[28px]">
         <div className="text-sm font-semibold cf-text">Prossima sessione</div>
         <div className="mt-1 text-xs cf-muted">Pianificata</div>
 
@@ -153,7 +152,7 @@ export default async function OverviewStatsCards({
         )}
       </div>
 
-      <div className="cf-card">
+      <div className="cf-card rounded-[28px]">
         <div className="text-sm font-semibold cf-text">Pacchetto / Crediti</div>
         <div className="mt-1 text-xs cf-muted">Stato attuale</div>
 
@@ -189,7 +188,7 @@ export default async function OverviewStatsCards({
         )}
       </div>
 
-      <div className="cf-card">
+      <div className="cf-card rounded-[28px]">
         <div className="text-sm font-semibold cf-text">Allenamenti (7g)</div>
         <div className="mt-1 text-xs cf-muted">Sessioni completate</div>
 
@@ -201,7 +200,7 @@ export default async function OverviewStatsCards({
         </div>
       </div>
 
-      <div className="cf-card lg:col-span-3">
+      <div className="cf-card rounded-[28px] lg:col-span-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold cf-text">

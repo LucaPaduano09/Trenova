@@ -4,48 +4,58 @@
 @layer components {
 
   .cf-surface {
-  @apply rounded-3xl border backdrop-blur-xl shadow-sm;
-  @apply bg-white/70 border-neutral-200/70;
-  @apply dark:bg-[#111a2e]/60 dark:border-white/10;
-}
+    @apply rounded-3xl border backdrop-blur-xl shadow-sm;
+    @apply bg-white/72 border-neutral-200/75;
+    @apply dark:bg-[rgba(15,23,42,0.68)] dark:border-white/12;
+    box-shadow:
+      0 10px 28px rgba(15, 23, 42, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
 
-.cf-card {
-  @apply rounded-3xl border backdrop-blur-xl shadow-sm p-6;
-  @apply bg-white/70 border-neutral-200/70;
-  @apply dark:bg-[#111a2e]/60 dark:border-white/10;
-}
+  .cf-card {
+    @apply rounded-3xl border backdrop-blur-xl shadow-sm p-6;
+    @apply bg-white/74 border-neutral-200/75;
+    @apply dark:bg-[rgba(15,23,42,0.72)] dark:border-white/12;
+    box-shadow:
+      0 16px 42px rgba(15, 23, 42, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
 
-.cf-soft {
-  @apply rounded-3xl border backdrop-blur-xl;
-  @apply bg-white/55 border-neutral-200/60;
-  @apply dark:bg-[#111a2e]/40 dark:border-white/10;
-}
+  .cf-soft {
+    @apply rounded-3xl border backdrop-blur-xl;
+    @apply bg-white/60 border-neutral-200/65;
+    @apply dark:bg-[rgba(20,31,53,0.56)] dark:border-white/12;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
 
- .cf-hairline {
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.05) inset,
-    0 0 0 1px rgba(0,0,0,0.25);
-}
+  .cf-hairline {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 0 0 1px rgba(0, 0, 0, 0.18);
+  }
 
   .cf-chip {
-  @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs;
-  @apply bg-white/70 border-neutral-200/70 text-neutral-700;
-  @apply dark:bg-[#18233b] dark:border-white/10 dark:text-neutral-200;
-}
+    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs;
+    @apply bg-white/72 border-neutral-200/75 text-neutral-700;
+    @apply dark:bg-[rgba(27,40,67,0.82)] dark:border-white/14 dark:text-neutral-100;
+  }
 
   .cf-muted {
-    @apply text-neutral-600 dark:text-neutral-300;
+    @apply text-neutral-600 dark:text-slate-200;
   }
   .cf-strong {
     @apply text-neutral-900 dark:text-neutral-50;
   }
 }
 @layer components {
- .cf-input {
-  @apply w-full rounded-3xl border backdrop-blur-xl shadow-sm px-4 py-2.5 text-sm outline-none;
-  @apply bg-white/70 border-neutral-200/70 text-neutral-900;
-  @apply dark:bg-[#111a2e]/70 dark:border-white/10 dark:text-neutral-50;
-}
+  .cf-input {
+    @apply w-full rounded-3xl border backdrop-blur-xl shadow-sm px-4 py-2.5 text-sm outline-none;
+    @apply bg-white/72 border-neutral-200/75 text-neutral-900;
+    @apply dark:bg-[rgba(17,26,46,0.84)] dark:border-white/14 dark:text-neutral-50 dark:placeholder:text-slate-400;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 10px 24px rgba(15, 23, 42, 0.06);
+  }
 }
 @layer components {
   .cf-hairline {
@@ -58,10 +68,10 @@
     @apply text-neutral-900 dark:text-neutral-50;
   }
   .cf-muted {
-    @apply text-neutral-600 dark:text-neutral-300;
+    @apply text-neutral-600 dark:text-slate-200;
   }
   .cf-faint {
-    @apply text-neutral-500 dark:text-neutral-400;
+    @apply text-neutral-500 dark:text-slate-300;
   }
 }
 :root {
@@ -70,8 +80,8 @@
 }
 
 .dark {
-  --background: #0b1324;
-  --foreground: #e6edf7;
+  --background: #08111f;
+  --foreground: #eef4ff;
 }
 
 @theme inline {
@@ -97,6 +107,24 @@ body::before {
   );
   pointer-events: none;
   z-index: -1;
+}
+.dark body::before {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(59, 130, 246, 0.22), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(16, 185, 129, 0.14), transparent 26%),
+    radial-gradient(circle at 50% 100%, rgba(14, 165, 233, 0.12), transparent 32%);
+  filter: saturate(1.05);
+}
+
+.dark body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 55%);
 }
 @keyframes navsheen {
   0% {

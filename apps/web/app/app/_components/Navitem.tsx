@@ -7,9 +7,13 @@ import type { ReactNode } from "react";
 export default function NavItem({
   href,
   children,
+  eyebrow,
+  icon,
 }: {
   href: string;
   children: ReactNode;
+  eyebrow?: string;
+  icon?: string;
 }) {
   const pathname = usePathname();
 
@@ -22,10 +26,10 @@ export default function NavItem({
     <Link href={href} prefetch className="group relative block">
       <div
         className={[
-          "relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-2.5 text-sm",
+          "relative flex items-center gap-3 overflow-hidden rounded-[24px] px-4 py-3.5 text-sm",
           "transition-all duration-200",
           active
-            ? "text-white"
+            ? "text-white shadow-[0_18px_40px_rgba(15,39,71,0.22)]"
             : "cf-text hover:bg-white/5 hover:-translate-y-[1px]",
         ].join(" ")}
       >
@@ -43,14 +47,28 @@ export default function NavItem({
 
         <span
           className={[
-            "relative z-10 h-1.5 w-1.5 rounded-full transition-all duration-200",
+            "relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-[18px] border text-[11px] font-semibold uppercase tracking-[0.12em] transition-all duration-200",
             active
-              ? "bg-cyan-300 shadow-[0_0_6px_rgba(34,211,238,0.7)]"
-              : "bg-transparent group-hover:bg-white/40",
+              ? "border-white/12 bg-white/10 text-white"
+              : "border-black/5 bg-white/60 text-neutral-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-neutral-200",
           ].join(" ")}
-        />
+        >
+          {icon ?? "•"}
+        </span>
 
-        <span className="relative z-10">{children}</span>
+        <div className="relative z-10 min-w-0 flex-1">
+          {eyebrow ? (
+            <div
+              className={[
+                "text-[10px] uppercase tracking-[0.16em]",
+                active ? "text-white/70" : "cf-faint",
+              ].join(" ")}
+            >
+              {eyebrow}
+            </div>
+          ) : null}
+          <div className="truncate text-sm font-medium">{children}</div>
+        </div>
       </div>
     </Link>
   );

@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-neutral-50 cf-text dark:bg-neutral-950 dark:text-neutral-50">
+      <body className="min-h-screen bg-[var(--background)] cf-text">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
