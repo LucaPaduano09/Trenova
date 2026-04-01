@@ -68,7 +68,7 @@ export default function ForgotPasswordCard() {
           <div className="min-w-0">
             <Image
               alt="logo"
-              src={"/landing/Frame-1.svg"}
+              src={"/landing/logo-esteso.png"}
               width={120}
               height={50}
               className="mb-2 ml-[-7px] h-auto w-[108px] sm:w-[120px]"

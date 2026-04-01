@@ -55,7 +55,7 @@ export default async function ClientProtectedLayout({
               >
                 <Image
                   alt="brand-image"
-                  src={"/landing/Frame-1.svg"}
+                  src={"/landing/logo-esteso.png"}
                   width={200}
                   height={100}
                 />

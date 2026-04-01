@@ -3,9 +3,9 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
-function SunIcon(props: React.SVGProps<SVGSVGElement>) {
+function SunIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
       <path
         d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"
         stroke="currentColor"
@@ -63,9 +63,9 @@ function SunIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
+function MoonIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
       <path
         d="M21 14.5A7.5 7.5 0 0 1 9.5 3a6.8 6.8 0 1 0 11.5 11.5Z"
         stroke="currentColor"

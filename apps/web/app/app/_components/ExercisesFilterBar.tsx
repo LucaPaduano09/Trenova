@@ -102,6 +102,8 @@ export default function ExercisesFiltersBar({
     if (nt) p.set("tag", nt);
     else p.delete("tag");
 
+    p.delete("page");
+
     router.replace(`${pathname}${p.toString() ? `?${p.toString()}` : ""}`, {
       scroll: false,
     });

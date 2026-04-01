@@ -15,7 +15,7 @@ function BrandLogo({ className }: { className?: string }) {
         alt="brand-logo"
         width={200}
         height={50}
-        src="/landing/Frame-2.svg"
+        src="/landing/logo-esteso.png"
         priority
         className="block dark:hidden h-auto w-full object-contain"
       />
@@ -23,7 +23,7 @@ function BrandLogo({ className }: { className?: string }) {
         alt="brand-logo"
         width={200}
         height={50}
-        src="/landing/Frame-1.svg"
+        src="/landing/logo-esteso.png"
         priority
         className="hidden dark:block h-auto w-full object-contain"
       />

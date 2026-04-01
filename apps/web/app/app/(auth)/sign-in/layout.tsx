@@ -32,7 +32,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link href="/" className="inline-flex items-center">
               <Image
-                src="/landing/Frame-1.svg"
+                src="/landing/logo-esteso.png"
                 alt="Trenova"
                 width={120}
                 height={40}

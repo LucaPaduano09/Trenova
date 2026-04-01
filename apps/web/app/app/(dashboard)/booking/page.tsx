@@ -12,7 +12,7 @@ import {
   rejectBookingRequest,
 } from "@/actions/booking-requests";
 
-type RangeKey = "today" | "week" | "all";
+type RangeKey = "today" | "week" | "month" | "all";
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -28,6 +28,35 @@ function startOfWeekMonday(d: Date) {
   const diff = (day === 0 ? -6 : 1) - day;
   x.setDate(x.getDate() + diff);
   return x;
+}
+
+function getMonthKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function parseMonthKey(month: string) {
+  const [year, mon] = month.split("-").map(Number);
+  return new Date(year, mon - 1, 1);
+}
+
+function changeMonth(month: string, delta: number) {
+  const base = parseMonthKey(month);
+  const next = new Date(base.getFullYear(), base.getMonth() + delta, 1);
+  return getMonthKey(next);
+}
+
+function formatMonthLabel(month: string) {
+  return new Intl.DateTimeFormat("it-IT", {
+    month: "long",
+    year: "numeric",
+  }).format(parseMonthKey(month));
+}
+
+function formatMonthHeading(date: Date) {
+  return new Intl.DateTimeFormat("it-IT", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
 function fmtMoneyEUR(cents?: number | null) {
@@ -77,7 +106,20 @@ function statusChipClass(s: AppointmentStatus) {
 }
 
 function rangeLabel(r: RangeKey) {
-  return r === "today" ? "Oggi" : r === "week" ? "Settimana" : "Tutte";
+  return r === "today"
+    ? "Oggi"
+    : r === "week"
+      ? "Settimana"
+      : r === "month"
+        ? "Mese"
+        : "Tutte";
+}
+
+function formatRangeDescription(range: RangeKey, month: string) {
+  if (range === "today") return "Solo le sessioni di oggi";
+  if (range === "week") return "Panoramica della settimana corrente";
+  if (range === "month") return `Sessioni previste in ${formatMonthLabel(month)}`;
+  return "Archivio completo raggruppato per mese";
 }
 
 export default async function BookingPage({
@@ -86,14 +128,17 @@ export default async function BookingPage({
   searchParams: Promise<{
     range?: RangeKey;
     status?: AppointmentStatus;
+    month?: string;
   }>;
 }) {
   const { tenant } = await requireTenantFromSession();
   const realtimeEnabled = isRealtimeEnabled();
 
   const sp = await searchParams;
-  const range: RangeKey = sp.range ?? "week";
+  const range: RangeKey = sp.range ?? "month";
   const status: AppointmentStatus | undefined = sp.status;
+  const selectedMonth =
+    sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : getMonthKey(new Date());
 
   const now = new Date();
   const today = startOfDay(now);
@@ -101,13 +146,34 @@ export default async function BookingPage({
 
   const weekStart = startOfWeekMonday(now);
   const nextWeekStart = addDays(weekStart, 7);
+  const monthDate = parseMonthKey(selectedMonth);
+  const monthStart = new Date(
+    monthDate.getFullYear(),
+    monthDate.getMonth(),
+    1,
+    0,
+    0,
+    0,
+    0
+  );
+  const nextMonthStart = new Date(
+    monthDate.getFullYear(),
+    monthDate.getMonth() + 1,
+    1,
+    0,
+    0,
+    0,
+    0
+  );
 
   const dateFilter =
     range === "today"
       ? { gte: today, lt: tomorrow }
       : range === "week"
-      ? { gte: weekStart, lt: nextWeekStart }
-      : undefined;
+        ? { gte: weekStart, lt: nextWeekStart }
+        : range === "month"
+          ? { gte: monthStart, lt: nextMonthStart }
+          : undefined;
 
   const appointments = await prisma.appointment.findMany({
     where: {
@@ -136,17 +202,43 @@ export default async function BookingPage({
     (sum, a) => sum + (a.paidAt ? a.priceCents ?? 0 : 0),
     0
   );
+  const monthGroups = appointments.reduce<
+    Array<{
+      key: string;
+      label: string;
+      items: typeof appointments;
+    }>
+  >((groups, appointment) => {
+    const key = getMonthKey(appointment.startsAt);
+    const existingGroup = groups.at(-1);
+
+    if (existingGroup && existingGroup.key === key) {
+      existingGroup.items.push(appointment);
+      return groups;
+    }
+
+    groups.push({
+      key,
+      label: formatMonthHeading(appointment.startsAt),
+      items: [appointment],
+    });
+
+    return groups;
+  }, []);
 
   const makeHref = (next: {
     range?: RangeKey | null;
     status?: AppointmentStatus | null;
+    month?: string | null;
   }) => {
     const r = next.range === undefined ? range : next.range;
     const s = next.status === undefined ? status : next.status;
+    const m = next.month === undefined ? selectedMonth : next.month;
 
     const qs = new URLSearchParams();
-    if (r && r !== "week") qs.set("range", r);
+    if (r && r !== "month") qs.set("range", r);
     if (s) qs.set("status", s);
+    if (m) qs.set("month", m);
 
     const str = qs.toString();
     return `/app/booking${str ? `?${str}` : ""}`;
@@ -176,7 +268,9 @@ export default async function BookingPage({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="cf-card">
-          <div className="text-xs cf-muted">Sessioni ({rangeLabel(range)})</div>
+          <div className="text-xs cf-muted">
+            Sessioni ({rangeLabel(range)} • {formatMonthLabel(selectedMonth)})
+          </div>
           <div className="mt-1 text-2xl font-semibold cf-text">{total}</div>
         </div>
 
@@ -198,79 +292,171 @@ export default async function BookingPage({
         </div>
       </div>
 
-      <div className="sticky top-6 z-1 cf-card p-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="sticky top-6 z-1 cf-card space-y-4 p-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <div className="rounded-[26px] border cf-surface p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.14em] cf-muted">
+                  Vista calendario
+                </div>
+                <div className="mt-2 text-lg font-semibold cf-text">
+                  {formatMonthLabel(selectedMonth)}
+                </div>
+                <div className="mt-1 text-sm cf-muted">
+                  {formatRangeDescription(range, selectedMonth)}
+                </div>
+              </div>
 
-          <div className="flex rounded-2xl border cf-surface p-1">
-            {(["today", "week", "all"] as const).map((r) => (
               <Link
-                key={r}
-                href={makeHref({ range: r, status })}
-                className={[
-                  "rounded-xl px-3 py-2 text-sm transition",
-                  range === r
-                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-white"
-                    : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
-                ].join(" ")}
+                href={makeHref({
+                  range: "month",
+                  status: null,
+                  month: getMonthKey(new Date()),
+                })}
+                className="rounded-2xl border cf-surface px-3.5 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/10"
+                title="Reset filtri"
               >
-                {rangeLabel(r)}
+                Oggi
               </Link>
-            ))}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Link
+                href={makeHref({ month: changeMonth(selectedMonth, -1) })}
+                className="rounded-2xl border cf-surface px-3 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/10"
+              >
+                Mese prec.
+              </Link>
+              <div className="min-w-[220px] rounded-2xl border cf-surface bg-white/70 px-4 py-2 text-center text-sm font-medium capitalize cf-text shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:bg-white/5 dark:shadow-none">
+                {formatMonthLabel(selectedMonth)}
+              </div>
+              <Link
+                href={makeHref({ month: changeMonth(selectedMonth, 1) })}
+                className="rounded-2xl border cf-surface px-3 py-2 text-sm cf-text transition hover:bg-white/70 dark:hover:bg-white/10"
+              >
+                Mese succ.
+              </Link>
+            </div>
           </div>
 
-          <div className="mx-1 h-6 w-px bg-black/10 dark:bg-white/10" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[26px] border cf-surface p-4">
+              <div className="mb-2 text-[11px] uppercase tracking-[0.14em] cf-muted">
+                Periodo
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(["today", "week", "month", "all"] as const).map((r) => (
+                  <Link
+                    key={r}
+                    href={makeHref({ range: r, status })}
+                    className={[
+                      "rounded-xl px-3 py-2 text-sm transition",
+                      range === r
+                        ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-[0_12px_30px_rgba(15,39,71,0.18)] dark:shadow-none"
+                        : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {rangeLabel(r)}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-          <div className="flex rounded-2xl border cf-surface p-1">
+            <div className="rounded-[26px] border cf-surface p-4">
+              <div className="mb-2 text-[11px] uppercase tracking-[0.14em] cf-muted">
+                Stato sessione
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Link
+                  href={makeHref({ range, status: null })}
+                  className={[
+                    "rounded-xl px-3 py-2 text-sm transition",
+                    !status
+                      ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-[0_12px_30px_rgba(15,39,71,0.18)] dark:shadow-none"
+                      : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  Tutti
+                </Link>
+                {(
+                  ["PENDING", "SCHEDULED", "COMPLETED", "CANCELED"] as AppointmentStatus[]
+                ).map((s) => (
+                  <Link
+                    key={s}
+                    href={makeHref({ range, status: s })}
+                    className={[
+                      "rounded-xl px-3 py-2 text-sm transition",
+                      status === s
+                        ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white shadow-[0_12px_30px_rgba(15,39,71,0.18)] dark:shadow-none"
+                        : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {s === "SCHEDULED"
+                      ? "Pianificate"
+                      : s === "PENDING"
+                        ? "In attesa"
+                        : s === "COMPLETED"
+                          ? "Completate"
+                          : "Cancellate"}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-3">
+          {[
+            {
+              label: "Mese precedente",
+              href: makeHref({ month: changeMonth(selectedMonth, -1), range: "month" }),
+              value: formatMonthLabel(changeMonth(selectedMonth, -1)),
+            },
+            {
+              label: "Mese attuale",
+              href: makeHref({ month: getMonthKey(new Date()), range: "month" }),
+              value: formatMonthLabel(getMonthKey(new Date())),
+            },
+            {
+              label: "Mese successivo",
+              href: makeHref({ month: changeMonth(selectedMonth, 1), range: "month" }),
+              value: formatMonthLabel(changeMonth(selectedMonth, 1)),
+            },
+          ].map((monthCard) => (
             <Link
-              href={makeHref({ range, status: null })}
-              className={[
-                "rounded-xl px-3 py-2 text-sm transition",
-                !status
-                  ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-white"
-                  : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
-              ].join(" ")}
+              key={monthCard.label}
+              href={monthCard.href}
+              className="rounded-[22px] border cf-surface px-4 py-3 transition hover:bg-white/70 dark:hover:bg-white/10"
             >
-              Tutti
+              <div className="text-[11px] uppercase tracking-[0.14em] cf-muted">
+                {monthCard.label}
+              </div>
+              <div className="mt-1 text-sm font-medium capitalize cf-text">
+                {monthCard.value}
+              </div>
             </Link>
-            {(
-              ["PENDING", "SCHEDULED", "COMPLETED", "CANCELED"] as AppointmentStatus[]
-            ).map((s) => (
-              <Link
-                key={s}
-                href={makeHref({ range, status: s })}
-                className={[
-                  "rounded-xl px-3 py-2 text-sm transition",
-                  status === s
-                    ? "bg-gradient-to-r from-[#0f2747] via-[#12305a] to-[#0f2747] opacity-95 text-white dark:bg-white dark:text-white"
-                    : "cf-text hover:bg-white/70 dark:hover:bg-white/10",
-                ].join(" ")}
-              >
-                {s === "SCHEDULED"
-                  ? "Pianificate"
-                  : s === "PENDING"
-                  ? "In attesa"
-                  : s === "COMPLETED"
-                  ? "Completate"
-                  : "Cancellate"}
-              </Link>
-            ))}
-          </div>
-
-          <Link
-            href={makeHref({ range: "week", status: null })}
-            className="ml-auto text-sm cf-faint hover:underline"
-            title="Reset filtri"
-          >
-            Reset filtri
-          </Link>
+          ))}
         </div>
       </div>
 
-      <div className="cf-card p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
-          <div className="text-sm font-semibold cf-text">{total} sessioni</div>
-          <div className="text-xs cf-muted">
-            {status ? `Filtro: ${statusLabel(status)}` : "Tutti gli stati"}
+      <div className="cf-card overflow-hidden p-0">
+        <div className="border-b border-black/5 px-6 py-4 dark:border-white/10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold cf-text">{total} sessioni</div>
+              <div className="mt-1 text-xs cf-muted">
+                {status
+                  ? `Filtro attivo: ${statusLabel(status)}`
+                  : "Tutti gli stati"}
+              </div>
+            </div>
+
+            <div className="rounded-full border cf-surface px-3 py-1.5 text-xs capitalize cf-muted">
+              {range === "all"
+                ? "Archivio multi-mese"
+                : `${rangeLabel(range)} • ${formatMonthLabel(selectedMonth)}`}
+            </div>
           </div>
         </div>
 
@@ -280,103 +466,132 @@ export default async function BookingPage({
           </div>
         ) : (
           <div className="divide-y divide-black/5 dark:divide-white/10">
-            {appointments.map((a) => {
-              const paid = !!a.paidAt;
-
-              return (
-                <div
-                  key={a.id}
-                  className="px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-semibold cf-text">
-                        {fmtDateLine(a.startsAt, a.endsAt)}
-                      </div>
-
-                      <span
-                        className={[
-                          "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
-                          statusChipClass(a.status),
-                        ].join(" ")}
-                      >
-                        {statusLabel(a.status)}
-                      </span>
-
-                      {paid ? (
-                        <span className="rounded-full border px-2.5 py-1 text-[11px] font-semibold border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200">
-                          Pagata
-                        </span>
-                      ) : null}
+            {monthGroups.map((group) => (
+              <section key={group.key}>
+                <div className="border-b border-black/5 bg-neutral-50/90 px-6 py-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-semibold capitalize cf-text">
+                      {group.label}
                     </div>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs cf-muted">
-                      <span className="truncate">
-                        {a.locationType}
-                        {a.location ? ` • ${a.location}` : ""}
-                      </span>
-                      <span className="opacity-30">•</span>
-                      <Link
-                        href={`/app/clients/${a.client.slug}`}
-                        className="font-medium cf-text hover:underline"
-                      >
-                        {a.client.fullName}
-                      </Link>
-                      <span className="opacity-30">•</span>
-                      <span>{fmtMoneyEUR(a.priceCents)}</span>
+                    <div className="rounded-full border cf-surface px-3 py-1 text-xs cf-muted">
+                      {group.items.length}{" "}
+                      {group.items.length === 1 ? "sessione" : "sessioni"}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
-                    {a.status === "PENDING" ? (
-                      <>
-                        <form action={acceptBookingRequest}>
-                          <input type="hidden" name="appointmentId" value={a.id} />
-                          <button
-                            type="submit"
-                            className="rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-200"
-                          >
-                            Accetta
-                          </button>
-                        </form>
-
-                        <form action={rejectBookingRequest}>
-                          <input type="hidden" name="appointmentId" value={a.id} />
-                          <button
-                            type="submit"
-                            className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/15 dark:text-rose-200"
-                          >
-                            Rifiuta
-                          </button>
-                        </form>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          href={`/app/booking/edit?id=${a.id}`}
-                          className="rounded-xl border cf-surface px-3 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
-                        >
-                          Modifica
-                        </Link>
-
-                        {a.status === "SCHEDULED" ? (
-                          <form action={cancelScheduledSession}>
-                            <input type="hidden" name="appointmentId" value={a.id} />
-                            <button
-                              type="submit"
-                              className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/15 dark:text-rose-200"
-                            >
-                              Cancella
-                            </button>
-                          </form>
-                        ) : null}
-                      </>
-                    )}
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="divide-y divide-black/5 dark:divide-white/10">
+                  {group.items.map((a) => {
+                    const paid = !!a.paidAt;
+
+                    return (
+                      <div
+                        key={a.id}
+                        className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold cf-text">
+                              {fmtDateLine(a.startsAt, a.endsAt)}
+                            </div>
+
+                            <span
+                              className={[
+                                "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+                                statusChipClass(a.status),
+                              ].join(" ")}
+                            >
+                              {statusLabel(a.status)}
+                            </span>
+
+                            {paid ? (
+                              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-200">
+                                Pagata
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs cf-muted">
+                            <span className="truncate">
+                              {a.locationType}
+                              {a.location ? ` • ${a.location}` : ""}
+                            </span>
+                            <span className="opacity-30">•</span>
+                            <Link
+                              href={`/app/clients/${a.client.slug}`}
+                              className="font-medium cf-text hover:underline"
+                            >
+                              {a.client.fullName}
+                            </Link>
+                            <span className="opacity-30">•</span>
+                            <span>{fmtMoneyEUR(a.priceCents)}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+                          {a.status === "PENDING" ? (
+                            <>
+                              <form action={acceptBookingRequest}>
+                                <input
+                                  type="hidden"
+                                  name="appointmentId"
+                                  value={a.id}
+                                />
+                                <button
+                                  type="submit"
+                                  className="rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-200"
+                                >
+                                  Accetta
+                                </button>
+                              </form>
+
+                              <form action={rejectBookingRequest}>
+                                <input
+                                  type="hidden"
+                                  name="appointmentId"
+                                  value={a.id}
+                                />
+                                <button
+                                  type="submit"
+                                  className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/15 dark:text-rose-200"
+                                >
+                                  Rifiuta
+                                </button>
+                              </form>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                href={`/app/booking/edit?id=${a.id}`}
+                                className="rounded-xl border cf-surface px-3 py-2 text-sm cf-text hover:border-black dark:hover:border-white"
+                              >
+                                Modifica
+                              </Link>
+
+                              {a.status === "SCHEDULED" ? (
+                                <form action={cancelScheduledSession}>
+                                  <input
+                                    type="hidden"
+                                    name="appointmentId"
+                                    value={a.id}
+                                  />
+                                  <button
+                                    type="submit"
+                                    className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/15 dark:text-rose-200"
+                                  >
+                                    Cancella
+                                  </button>
+                                </form>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </div>

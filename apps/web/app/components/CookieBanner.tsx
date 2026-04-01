@@ -44,10 +44,28 @@ export default function CookieBanner() {
       setOpen(true);
     }
   }, []);
+
   useEffect(() => {
-    setTimeout(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
       setShow(true);
     }, 1000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   if (!open) return null;
@@ -69,90 +87,93 @@ export default function CookieBanner() {
 
   return (
     show && (
-      <div className="fixed inset-x-0 bottom-0 z-[999] p-4 sm:p-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-3xl bg-white/5 ring-1 ring-white/10 backdrop-blur-xl shadow-[0_20px_70px_rgba(0,0,0,0.45)] overflow-hidden">
-            <div className="p-5 sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-2">
-                  <div className="text-sm font-semibold text-white">
-                    Cookie & Privacy
+      <div className="fixed inset-0 z-[999]">
+        <div className="absolute inset-0 z-0 bg-black/70 backdrop-blur-md" />
+        <div className="absolute inset-x-0 top-0 z-10 p-4 sm:p-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10 shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+              <div className="p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-white">
+                      Cookie & Privacy
+                    </div>
+                    <p className="max-w-2xl text-sm text-white/70">
+                      Usiamo cookie necessari per il funzionamento del sito. Con
+                      il tuo consenso, possiamo usare cookie{" "}
+                      <span className="text-white">analytics</span> e{" "}
+                      <span className="text-white">marketing</span> per migliorare
+                      l’esperienza. Puoi cambiare idea in qualsiasi momento.
+                    </p>
+                    <div className="flex flex-wrap gap-3 text-xs text-white/60">
+                      <Link href="/privacy" className="hover:underline">
+                        Privacy Policy
+                      </Link>
+                      <span className="opacity-40">•</span>
+                      <Link href="/cookies" className="hover:underline">
+                        Cookie Policy
+                      </Link>
+                      <span className="opacity-40">•</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowPrefs((v) => !v)}
+                        className="hover:underline"
+                      >
+                        {showPrefs ? "Nascondi preferenze" : "Personalizza"}
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-sm text-white/70 max-w-2xl">
-                    Usiamo cookie necessari per il funzionamento del sito. Con
-                    il tuo consenso, possiamo usare cookie{" "}
-                    <span className="text-white">analytics</span> e{" "}
-                    <span className="text-white">marketing</span> per migliorare
-                    l’esperienza. Puoi cambiare idea in qualsiasi momento.
-                  </p>
-                  <div className="flex flex-wrap gap-3 text-xs text-white/60">
-                    <Link href="/privacy" className="hover:underline">
-                      Privacy Policy
-                    </Link>
-                    <span className="opacity-40">•</span>
-                    <Link href="/cookies" className="hover:underline">
-                      Cookie Policy
-                    </Link>
-                    <span className="opacity-40">•</span>
+
+                  <div className="flex flex-col gap-2 sm:min-w-[260px]">
                     <button
-                      type="button"
-                      onClick={() => setShowPrefs((v) => !v)}
-                      className="hover:underline"
+                      onClick={acceptAll}
+                      className="rounded-2xl bg-white px-4 py-2 text-sm font-medium text-black hover:opacity-95"
                     >
-                      {showPrefs ? "Nascondi preferenze" : "Personalizza"}
+                      Accetta tutto
+                    </button>
+
+                    <button
+                      onClick={rejectAll}
+                      className="rounded-2xl bg-white/5 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
+                    >
+                      Rifiuta non necessari
+                    </button>
+
+                    <button
+                      onClick={savePrefs}
+                      className="rounded-2xl bg-white/5 px-4 py-2 text-sm font-medium text-white/90 ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
+                    >
+                      Salva preferenze
                     </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:min-w-[260px]">
-                  <button
-                    onClick={acceptAll}
-                    className="rounded-2xl bg-white px-4 py-2 text-sm font-medium text-black hover:opacity-95"
-                  >
-                    Accetta tutto
-                  </button>
+                {showPrefs && (
+                  <div className="mt-5 grid gap-3 rounded-2xl bg-black/25 p-4 ring-1 ring-white/10">
+                    <ToggleRow
+                      label="Necessari"
+                      desc="Sempre attivi: login, sicurezza, preferenze essenziali."
+                      value={true}
+                      disabled
+                      onChange={() => {}}
+                    />
 
-                  <button
-                    onClick={rejectAll}
-                    className="rounded-2xl bg-white/5 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
-                  >
-                    Rifiuta non necessari
-                  </button>
+                    <ToggleRow
+                      label="Analytics"
+                      desc="Statistiche anonime per migliorare il prodotto."
+                      value={analytics}
+                      onChange={setAnalytics}
+                    />
 
-                  <button
-                    onClick={savePrefs}
-                    className="rounded-2xl bg-white/5 px-4 py-2 text-sm font-medium text-white/90 ring-1 ring-white/10 backdrop-blur hover:bg-white/10"
-                  >
-                    Salva preferenze
-                  </button>
-                </div>
+                    <ToggleRow
+                      label="Marketing"
+                      desc="Misurazione campagne e contenuti personalizzati (se presenti)."
+                      value={marketing}
+                      onChange={setMarketing}
+                    />
+                  </div>
+                )}
               </div>
-
-              {showPrefs && (
-                <div className="mt-5 grid gap-3 rounded-2xl bg-black/25 ring-1 ring-white/10 p-4">
-                  <ToggleRow
-                    label="Necessari"
-                    desc="Sempre attivi: login, sicurezza, preferenze essenziali."
-                    value={true}
-                    disabled
-                    onChange={() => {}}
-                  />
-
-                  <ToggleRow
-                    label="Analytics"
-                    desc="Statistiche anonime per migliorare il prodotto."
-                    value={analytics}
-                    onChange={setAnalytics}
-                  />
-
-                  <ToggleRow
-                    label="Marketing"
-                    desc="Misurazione campagne e contenuti personalizzati (se presenti)."
-                    value={marketing}
-                    onChange={setMarketing}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>

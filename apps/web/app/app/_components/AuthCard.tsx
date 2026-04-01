@@ -240,7 +240,7 @@ export default function AuthCard({
           <div className="min-w-0">
             <Image
               alt={brand}
-              src="/landing/Frame-1.svg"
+              src="/landing/logo-esteso.png"
               width={150}
               height={50}
               className="mb-2 ml-[-7px] h-auto w-[108px] opacity-95 sm:w-[120px]"
