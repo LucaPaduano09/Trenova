@@ -36,9 +36,24 @@ function SidebarNav() {
     { href: "/app", label: "Panoramica", eyebrow: "Overview", icon: "OV" },
     { href: "/app/clients", label: "Clienti", eyebrow: "CRM", icon: "CL" },
     { href: "/app/booking", label: "Booking", eyebrow: "Calendar", icon: "BK" },
-    { href: "/app/exercises", label: "Esercizi", eyebrow: "Library", icon: "EX" },
-    { href: "/app/workouts", label: "Workouts", eyebrow: "Programming", icon: "WO" },
-    { href: "/app/packages", label: "Pacchetti", eyebrow: "Revenue", icon: "PK" },
+    {
+      href: "/app/exercises",
+      label: "Esercizi",
+      eyebrow: "Library",
+      icon: "EX",
+    },
+    {
+      href: "/app/workouts",
+      label: "Workouts",
+      eyebrow: "Programming",
+      icon: "WO",
+    },
+    {
+      href: "/app/packages",
+      label: "Pacchetti",
+      eyebrow: "Revenue",
+      icon: "PK",
+    },
     {
       href: "/app/settings/availability",
       label: "Disponibilita",
@@ -75,17 +90,6 @@ function SidebarNav() {
           Sign out
         </NavItem>
       </div>
-
-      <div className="rounded-[26px] border border-white/40 bg-white/40 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.05)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none">
-        <div className="text-[11px] uppercase tracking-[0.2em] cf-faint">
-          Trenova OS
-        </div>
-        <div className="mt-2 text-sm font-medium cf-text">Dashboard PT</div>
-        <div className="mt-1 text-xs cf-muted">
-          Workspace operativo per clienti, booking e programmazione.
-        </div>
-        <div className="mt-3 text-xs cf-faint">v1.0</div>
-      </div>
     </nav>
   );
 }
@@ -103,9 +107,6 @@ function SidebarContent() {
           </div>
           <div className="mt-3 flex items-center justify-center rounded-[26px] border border-white/45 bg-white/50 px-4 py-7 shadow-[0_18px_40px_rgba(15,23,42,0.05)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.045] dark:shadow-none">
             <BrandLogo className="w-[176px]" />
-          </div>
-          <div className="mt-4 text-sm cf-muted">
-            Sistema premium per gestire clienti, sessioni e risultati.
           </div>
         </div>
 
@@ -143,12 +144,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const shellBg = useMemo(
     () => "bg-neutral-50 dark:bg-[var(--background)]",
-    []
+    [],
   );
 
   return (
     <div className={["min-h-screen", shellBg].join(" ")}>
-
       <div className="pointer-events-none fixed inset-0 opacity-60 dark:opacity-35">
         <div className="absolute -top-24 left-10 h-72 w-72 rounded-full bg-neutral-200 blur-3xl dark:bg-white/10" />
         <div className="absolute top-40 right-10 h-72 w-72 rounded-full bg-neutral-200 blur-3xl dark:bg-white/10" />
@@ -161,7 +161,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         ].join(" ")}
         aria-hidden={!mobileOpen}
       >
-
         <button
           type="button"
           aria-label="Chiudi menu"
@@ -181,7 +180,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           ].join(" ")}
         >
           <div className="h-full cf-surface cf-hairline overflow-hidden shadow-2xl">
-
             <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/10">
               <BrandLogo className="w-[150px]" />
 
@@ -205,7 +203,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl gap-6 p-4 sm:p-6">
-
         <aside className="hidden w-60 shrink-0 md:block">
           <div className="sticky top-6">
             <SidebarContent />
@@ -213,7 +210,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </aside>
 
         <main className="flex-1 min-w-0">
-
           <div className="sticky top-4 sm:top-6 z-10 mb-4 sm:mb-6 cf-surface cf-hairline px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">

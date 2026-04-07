@@ -89,7 +89,10 @@ export default function DashboardCharts({
     { name: "Cancellate", value: charts.compliance.canceled },
   ];
 
-  const complianceTotal = compliancePie.reduce((sum, item) => sum + item.value, 0);
+  const complianceTotal = compliancePie.reduce(
+    (sum, item) => sum + item.value,
+    0,
+  );
   const complianceCompleted =
     compliancePie.find((item) => item.name === "Completate")?.value ?? 0;
   const complianceRate = complianceTotal
@@ -98,12 +101,14 @@ export default function DashboardCharts({
 
   const packageMixTotal = charts.packageMix.reduce(
     (sum, item) => sum + item.count,
-    0
+    0,
   );
   const packageMixData = charts.packageMix.map((item, index) => ({
     ...item,
     fill: MIX_COLORS[index % MIX_COLORS.length],
-    percent: packageMixTotal ? Math.round((item.count / packageMixTotal) * 100) : 0,
+    percent: packageMixTotal
+      ? Math.round((item.count / packageMixTotal) * 100)
+      : 0,
   }));
 
   return (
@@ -121,10 +126,6 @@ export default function DashboardCharts({
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight cf-text sm:text-[2rem]">
                   Operatività e performance del mese
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 cf-muted">
-                  Una cabina di regia per capire cosa sta muovendo sessioni,
-                  ricavi, carico attivo e continuità del business.
-                </p>
               </div>
 
               <div className="rounded-[24px] border cf-surface bg-white/70 px-4 py-3 text-sm capitalize cf-text shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:bg-white/[0.04] dark:shadow-none">
@@ -296,7 +297,9 @@ export default function DashboardCharts({
         <div className="cf-card p-4 sm:p-6">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold cf-text">Mix pacchetti (top)</h2>
+              <h2 className="text-sm font-semibold cf-text">
+                Mix pacchetti (top)
+              </h2>
               <p className="mt-1 text-xs cf-muted">
                 Distribuzione degli acquisti per tipologia
               </p>
@@ -351,7 +354,11 @@ export default function DashboardCharts({
                     </text>
 
                     <Tooltip
-                      formatter={(value: number | string | undefined, _name, item: any) => [
+                      formatter={(
+                        value: number | string | undefined,
+                        _name,
+                        item: any,
+                      ) => [
                         `${Number(value ?? 0)} acquisti`,
                         `${item?.payload?.name ?? ""} • ${item?.payload?.percent ?? 0}%`,
                       ]}

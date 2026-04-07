@@ -37,10 +37,6 @@ export default async function DashboardPage({
                 {tenant.name}
               </span>
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 cf-muted sm:text-base">
-              Una vista unica su sessioni, revenue, compliance e carico
-              operativo, pensata per capire in pochi secondi dove intervenire.
-            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:w-[420px]">
